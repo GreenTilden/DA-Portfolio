@@ -7,12 +7,13 @@ import Contact from '@/views/ContactPage.vue'
 import ParticleDebug from '@/views/ParticleDebug.vue'
 
 const routes = [
-  { path: '/', component: Home },
+  { path: '/', component: Home, alias: '/DA-Portfolio/' },
   { path: '/projects', component: Projects },
   { path: '/demos', component: Demos },
   { path: '/experience', component: Experience },
   { path: '/contact', component: Contact },
-  { path: '/debug', component: ParticleDebug }
+  { path: '/debug', component: ParticleDebug },
+  { path: '/:catchAll(.*)', redirect: '/' }
 ]
 // Import the necessary components for the routes
 const router = createRouter({
