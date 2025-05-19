@@ -1,18 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Redirecting...</title>
+  <meta charset="UTF-8" />
+  <title>Redirecting…</title>
+  <meta http-equiv="refresh" content="0;url=/" />
   <script>
-    // Get the current path without the base path
-    const path = window.location.pathname.replace('/DA-Portfolio/', '/') || '/';
-    // Store the path in session storage
-    sessionStorage.setItem('redirect', path);
-    // Redirect to the base URL
-    window.location.href = '/DA-Portfolio/';
+    // JavaScript fallback
+    window.location.replace("/");
   </script>
 </head>
 <body>
-  Redirecting...
+  <p>Redirecting to <a href="/">homepage</a>…</p>
 </body>
 </html>
