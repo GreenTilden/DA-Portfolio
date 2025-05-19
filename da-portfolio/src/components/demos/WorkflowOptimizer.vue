@@ -1,7 +1,7 @@
 <template>
-    <div class="instrument-control-simulator">
-      <h3>Instrument Control Simulator</h3>
-      <p>This simulation demonstrates laboratory instrument control interfaces.</p>
+    <div class="workflow-optimizer">
+      <h3>Workflow Optimizer Simulation</h3>
+      <p>This simulation demonstrates how laboratory workflows can be optimized.</p>
       <div class="coming-soon">
         Interactive simulation coming soon!
       </div>
@@ -10,12 +10,12 @@
   
   <script>
   export default {
-    name: 'InstrumentControlSimulator'
+    name: 'WorkflowOptimizer'
   }
   </script>
   
   <style scoped>
-  .instrument-control-simulator {
+  .workflow-optimizer {
     padding: 2rem;
     text-align: center;
   }

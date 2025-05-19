@@ -6,7 +6,7 @@
           <div class="logo">
             <router-link to="/">
               <h1>Darren Arney</h1>
-              <p class="tagline">Laboratory Automation & Engineering</p>
+              <p class="tagline">Automation Professional</p>
             </router-link>
           </div>
           
@@ -30,16 +30,18 @@
     </header>
 
     <main class="main-content">
-      <transition name="fade" mode="out-in">
-        <router-view/>
-      </transition>
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
 
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
           <div class="copyright">
-            &copy; {{ new Date().getFullYear() }} Darren Arney | Laboratory Automation
+            &copy; {{ new Date().getFullYear() }} Darren Arney 
           </div>
           <div class="social-links">
             <a href="https://github.com/yourusername" target="_blank" rel="noopener" title="GitHub">
@@ -78,18 +80,24 @@ export default {
 </script>
 
 <style>
+/* Import professional fonts - adding font weights for better typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
 :root {
-  --primary-color: #4A90E2;
-  --primary-dark: #357ABD;
-  --secondary-color: #2C3E50;
-  --text-color: #333333;
-  --text-light: #666666;
-  --bg-color: #F7F9FC;
-  --bg-light: #FFFFFF;
-  --border-color: #E0E6ED;
-  --success-color: #10B981;
-  --error-color: #EF4444;
-  --warning-color: #F59E0B;
+  /* Consistent dark theme based on your style.css */
+  --bg-color: #1e2a38;             /* page background */
+  --section-bg: #2a3648;           /* sections like hero/specialties */
+  --card-bg: #324158;              /* cards & panels */
+  --primary-color: #4a90e2;        /* CTA / highlights */
+  --primary-dark: #3367b2;         /* CTA hover state */
+  --secondary-color: #6e88a6;      /* secondary accents */
+  --text-color: #eaeaea;           /* primary text */
+  --text-light: #eaeaea;           /* emphasized text */
+  --text-faded: #b4b4b4;           /* secondary text */
+  --border-color: #3f4f65;         /* borders */
+  --success-color: #10B981;        /* success messages */
+  --error-color: #EF4444;          /* error messages */
+  --warning-color: #F59E0B;        /* warning messages */
 }
 
 * {
@@ -99,11 +107,12 @@ export default {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  color: var(--text-color);
+  color: var(--text-light);
   background-color: var(--bg-color);
+  min-height: 100vh;
 }
 
 .container {
@@ -116,7 +125,7 @@ body {
 a {
   color: var(--primary-color);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 a:hover {
@@ -124,12 +133,14 @@ a:hover {
 }
 
 .header {
-  background-color: var(--primary-color);
-  color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--section-bg);
+  color: var(--text-light);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 1rem;
 }
 
 .header-content {
@@ -140,7 +151,7 @@ a:hover {
 }
 
 .logo a {
-  color: white;
+  color: var(--text-light);
   display: block;
 }
 
@@ -152,7 +163,7 @@ a:hover {
 
 .tagline {
   font-size: 0.875rem;
-  opacity: 0.9;
+  color: var(--text-faded);
   margin-top: 0.25rem;
 }
 
@@ -171,7 +182,7 @@ a:hover {
 }
 
 .nav-links a {
-  color: white;
+  color: var(--text-light);
   opacity: 0.9;
   font-weight: 500;
   padding: 0.5rem 0;
@@ -181,6 +192,7 @@ a:hover {
 .nav-links a:hover,
 .nav-links a.router-link-active {
   opacity: 1;
+  color: var(--primary-color);
 }
 
 .nav-links a.router-link-active:after {
@@ -190,7 +202,7 @@ a:hover {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: white;
+  background-color: var(--primary-color);
 }
 
 .menu-toggle {
@@ -205,7 +217,7 @@ a:hover {
 .menu-toggle span {
   height: 2px;
   width: 100%;
-  background-color: white;
+  background-color: var(--text-light);
   transition: all 0.3s ease;
 }
 
@@ -216,18 +228,21 @@ a:hover {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s;
+  transition: opacity 0.3s ease;
 }
 
-.fade-enter,
+.fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 
 .footer {
-  background-color: var(--secondary-color);
-  color: white;
+  background-color: var(--section-bg);
+  color: var(--text-faded);
   padding: 1.5rem 0;
+  border-top: 1px solid var(--border-color);
+  border-radius: 1rem;
+  margin-top: 2rem;
 }
 
 .footer-content {
@@ -242,13 +257,36 @@ a:hover {
 }
 
 .social-links a {
-  color: white;
+  color: var(--text-light);
   opacity: 0.8;
   transition: opacity 0.3s ease;
 }
 
 .social-links a:hover {
   opacity: 1;
+  color: var(--primary-color);
+}
+
+/* Consistent button styling in dark theme */
+button, .btn, .el-button {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Add a subtle glass-like effect to cards and panels */
+.el-card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Apply consistent code styling */
+code, pre {
+  font-family: 'Roboto Mono', monospace !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 4px !important;
 }
 
 @media (max-width: 768px) {
@@ -261,13 +299,14 @@ a:hover {
     top: 64px;
     left: 0;
     width: 100%;
-    background-color: var(--primary-color);
+    background-color: var(--section-bg);
     flex-direction: column;
     padding: 1rem;
     transform: translateY(-100%);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .nav-links.active {

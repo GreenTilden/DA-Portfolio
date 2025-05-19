@@ -1,36 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Home from '@/views/HomePage.vue'
+import Projects from '@/views/ProjectsPage.vue'
+import Demos from '@/views/DemosPage.vue'
+import Experience from '@/views/ExperiencePage.vue'
+import Contact from '@/views/ContactPage.vue'
+import ParticleDebug from '@/views/ParticleDebug.vue'
 
 const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView
-  },
-  {
-    path: '/demos',
-    name: 'demos',
-    component: () => import('../views/DemosView.vue')
-  },
-  {
-    path: '/projects',
-    name: 'projects',
-    component: () => import('../views/ProjectsView.vue')
-  },
-  {
-    path: '/experience',
-    name: 'experience',
-    component: () => import('../views/ExperienceView.vue')
-  },
-  {
-    path: '/contact',
-    name: 'contact',
-    component: () => import('../views/ContactView.vue')
-  }
+  { path: '/', component: Home },
+  { path: '/projects', component: Projects },
+  { path: '/demos', component: Demos },
+  { path: '/experience', component: Experience },
+  { path: '/contact', component: Contact },
+  { path: '/debug', component: ParticleDebug }
 ]
-
+// Import the necessary components for the routes
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(),
   routes
 })
 
