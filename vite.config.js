@@ -10,4 +10,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router'],
+          'element-plus': ['element-plus'],
+          'particles': ['vue3-particles', 'tsparticles']
+        }
+      }
+    }
+  }
 })
