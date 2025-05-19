@@ -264,16 +264,21 @@ export default {
 }
 
 .real-world-applications {
-  background-color: #f0f4f8;
+  background-color: var(--card-bg);
   padding: 1.5rem;
   border-radius: 0.5rem;
   margin-top: 2rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 }
 
 .real-world-applications h3 {
   margin-top: 0;
 }
 
+.real-world-applications p {
+  color: var(--text-light);
+}
 @media (max-width: 768px) {
   .page-header h1 {
     font-size: 2rem;
