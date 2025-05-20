@@ -1,10 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import { createHtmlPlugin } from 'vite-plugin-html'
 
 export default defineConfig({
   base: '/',
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    createHtmlPlugin({
+      minify: true,
+      inject: {
+        data: {
+          title: 'Darren Arney - Automation Professional',
+          favicon: '/favicon.png'
+        }
+      }
+    })
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
