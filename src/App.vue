@@ -1,29 +1,29 @@
 <template>
-  <div id="app">
+  <div id="app" @click.self="closeMenu">
     <header class="header">
       <div class="container">
         <div class="header-content">
           <div class="logo">
             <router-link to="/">
-              <h1>Darren Arney</h1>
+              <h1 class="site-title">Darren Arney</h1>
               <p class="tagline">Automation Professional</p>
             </router-link>
           </div>
-          
           <nav class="main-nav">
-            <div class="menu-toggle" @click="toggleMenu">
+            <div class="menu-toggle" @click.stop="toggleMenu">
               <span></span>
               <span></span>
               <span></span>
             </div>
-            
-            <ul class="nav-links" :class="{ 'active': menuActive }">
-              <li><router-link to="/" exact>Home</router-link></li>
-              <li><router-link to="/demos">Interactive Demos</router-link></li>
-              <li><router-link to="/projects">Projects</router-link></li>
-              <li><router-link to="/experience">Experience</router-link></li>
-              <li><router-link to="/contact">Contact</router-link></li>
-            </ul>
+            <transition name="menu-slide-fade">
+              <ul v-show="menuActive" class="nav-links popout" @click.stop>
+                <li><router-link to="/" exact @click.native="closeMenu">Home</router-link></li>
+                <li><router-link to="/demos" @click.native="closeMenu">Interactive Demos</router-link></li>
+                <li><router-link to="/projects" @click.native="closeMenu">Projects</router-link></li>
+                <li><router-link to="/experience" @click.native="closeMenu">Experience</router-link></li>
+                <li><router-link to="/contact" @click.native="closeMenu">Contact</router-link></li>
+              </ul>
+            </transition>
           </nav>
         </div>
       </div>
@@ -45,10 +45,8 @@
           </div>
           <div class="social-links">
             <a href="https://github.com/greentilden" target="_blank" rel="noopener" title="GitHub">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             </a>
             <a href="https://www.linkedin.com/in/darren-arney" target="_blank" rel="noopener" title="LinkedIn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
             </a>
           </div>
         </div>
@@ -65,32 +63,37 @@ export default {
       isMobile: false
     }
   },
-mounted() {
-// Check if mobile on load
-  this.checkIfMobile();
-// Add resize listener
-  window.addEventListener('resize', this.checkIfMobile);
-},
-beforeUnmount() {
-// Remove listener when component is destroyed
-  window.removeEventListener('resize', this.checkIfMobile);
-},
-methods: {
-  checkIfMobile() {
-    this.isMobile = window.innerWidth < 768;
+  mounted() {
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
   },
-  toggleMenu() {
-    this.menuActive = !this.menuActive;
-// Prevent scrolling when menu is open on mobile
-    document.body.style.overflow = this.menuActive && this.isMobile ? 'hidden' : '';
-  }
-},
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
+  },
+  methods: {
+    checkIfMobile() {
+      this.isMobile = window.innerWidth < 768;
+      if (!this.isMobile && this.menuActive) {
+        this.menuActive = false;
+        document.body.style.overflow = '';
+      }
+    },
+    toggleMenu() {
+      this.menuActive = !this.menuActive;
+      document.body.style.overflow = this.menuActive && this.isMobile ? 'hidden' : '';
+    },
+    closeMenu() {
+      this.menuActive = false;
+      document.body.style.overflow = '';
+    }
+  },
   watch: {
     $route() {
-      // Close mobile menu when route changes
       this.menuActive = false;
+      document.body.style.overflow = '';
     }
-  }}
+  }
+}
 </script>
 
 <style>
@@ -121,20 +124,30 @@ methods: {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: var(--text-light);
   background-color: var(--bg-color);
   min-height: 100vh;
+  margin: 0;
 }
 
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
+
+@media (min-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
 
 a {
   color: var(--primary-color);
@@ -149,12 +162,12 @@ a:hover {
 .header {
   background-color: var(--section-bg);
   color: var(--text-light);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
   border-bottom: 1px solid var(--border-color);
   border-radius: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .header-content {
@@ -162,6 +175,14 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
+}
+
+.site-title {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
 }
 
 .logo a {
@@ -226,6 +247,8 @@ a:hover {
   width: 24px;
   height: 18px;
   cursor: pointer;
+  position: relative;
+  z-index: 1100;
 }
 
 .menu-toggle span {
@@ -275,6 +298,8 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .social-links {
@@ -320,11 +345,32 @@ code, pre {
     display: flex;
   }
 
+  .nav-links.popout {
+    position: absolute;
+    top: 60px;
+    right: 1rem;
+    background-color: var(--section-bg);
+    flex-direction: column;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    width: max-content;
+    min-width: 200px;
+    z-index: 1000;
+  }
+
+    .nav-links.popout li {
+    margin: 0.5rem 0;
+  }
   .nav-links {
+    display: flex;
     position: fixed;
+    list-style: none;
     top: 64px;
     left: 0;
     width: 100%;
+    max-width: 1200px;
     background-color: var(--section-bg);
     flex-direction: column;
     padding: 1rem;
@@ -333,6 +379,7 @@ code, pre {
     visibility: hidden;
     transition: all 0.3s ease;
     border-bottom: 1px solid var(--border-color);
+    border-radius: 1 1 1rem 1rem;
   }
 
  .nav-links.active {
@@ -340,6 +387,7 @@ code, pre {
   opacity: 1;
   visibility: visible;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--border-color);
   z-index: 1000;
   }
 
@@ -352,5 +400,15 @@ code, pre {
     gap: 1rem;
     text-align: center;
   }
+}
+
+.menu-slide-fade-enter-active,
+.menu-slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.menu-slide-fade-enter-from,
+.menu-slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

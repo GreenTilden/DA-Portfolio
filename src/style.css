@@ -13,23 +13,27 @@ html {
 
 :root {
   /* Dark theme color palette */
-  --bg-color: #1e2a38;
-  --section-bg: #2a3648;
-  --card-bg: #324158;
-  --primary-color: #4a90e2;
+  --bg-color: #1b2a26;           /* Deep forest green */
+  --section-bg: #253f3a;         /* Dark pine */
+  --card-bg: #2e4a45;            /* Medium forest */
+  --primary-color: #4ecca3;      /* Mint/sage green */
+  --primary-dark: #2e8b67;       /* Darker mint */
+  --secondary-color: #e3b23c;    /* Warm amber/gold */
+
+
+  /* Typography colors */
+  --text-light: #f0f0f0;
+  --text-faded: #c5c5c5;
+  --text-muted: #8696a9;
+
   --primary-10: rgba(74, 144, 226, 0.1);
   --primary-20: rgba(74, 144, 226, 0.2);
   --section-bg-transparent: rgba(42, 54, 72, 0);
-  --primary-dark: #3367b2;
-  --secondary-color: #2fa381;
   --success-color: #10B981;
   --error-color: #EF4444;
   --warning-color: #F59E0B;
 
-  /* Typography colors */
-  --text-light: #eaeaea;
-  --text-faded: #b4b4b4;
-  --text-muted: #8696a9;
+
 
   /* Border and structure */
   --border-color: #3f4f65;
