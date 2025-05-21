@@ -20,25 +20,34 @@ export default {
     this.canvas = this.$refs.canvas;
     this.ctx = this.canvas.getContext('2d');
     this.setupCanvas();
+    const isMobile = window.innerWidth < 768;
     this.initParticles();
     this.animate();
     window.addEventListener('resize', this.setupCanvas);
     this.canvas.addEventListener('mousemove', this.handleMouseMove);
+    this.canvas.addEventListener('touchmove', this.handleTouchMove);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.setupCanvas);
     this.canvas.removeEventListener('mousemove', this.handleMouseMove);
+    this.canvas.removeEventListener('touchmove', this.handleTouchMove);
     cancelAnimationFrame(this.animationId);
   },
   methods: {
+    handleResize() {
+      this.setupCanvas();
+  // Reinitialize particles with appropriate count when resizing
+      const isMobile = window.innerWidth < 768;
+      this.initParticles(isMobile);
+    },
     setupCanvas() {
       const rect = this.canvas.parentElement.getBoundingClientRect();
       this.canvas.width = rect.width;
       this.canvas.height = rect.height;
     },
-    initParticles() {
+    initParticles(isMobile = false) {
       this.particles = [];
-      const counts = [4, 6, 8, 5]; // yellow, blue, green, purple
+      const counts = isMobile ? [2, 3, 4, 2] : [4, 6, 8, 5];// yellow, blue, green, purple
       let index = 0;
       counts.forEach((count, colorIndex) => {
         for (let i = 0; i < count; i++, index++) {
@@ -58,6 +67,14 @@ export default {
       this.mouseX = e.clientX - rect.left;
       this.mouseY = e.clientY - rect.top;
     },
+  handleTouchMove(e) {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouseX = e.touches[0].clientX - rect.left;
+      this.mouseY = e.touches[0].clientY - rect.top;
+    }
+  },
     animate() {
       const ctx = this.ctx;
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

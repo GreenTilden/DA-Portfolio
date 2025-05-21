@@ -718,13 +718,39 @@ body {
 /* Responsive improvements */
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
   }
   
+  .hero-role {
+    font-size: 1.25rem;
+  }
+
+  .intro-paragraph {
+    font-size: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .tagline {
+    font-size: 1rem;
+  }
+
+ 
   .hero-section {
-    padding: 4rem 1.5rem 3rem;
+    padding: 3rem 1rem 2.5rem;
   }
   
+  .cta-buttons {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .cta-buttons .el-button {
+    width: 100%;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
   .specialty-card {
     margin-bottom: 1.5rem;
   }
@@ -737,5 +763,20 @@ body {
     font-size: 2rem;
     margin-bottom: 1rem;
   }
-}
+
+  .specialty-card {
+    margin-bottom: 1.5rem;
+    min-height: 0;
+    padding: 1.5rem;
+  }
+
+  .icon-container {
+    margin-bottom: 1rem;
+  }
+
+  .specialty-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+
 </style>

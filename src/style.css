@@ -1,40 +1,49 @@
 /* Import modern, professional fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
 
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   /* Dark theme color palette */
-  --bg-color: #1e2a38;             /* page background */
-  --section-bg: #2a3648;           /* sections like hero/specialties */
-  --card-bg: #324158;              /* cards & panels */
-  --primary-color: #4a90e2;        /* CTA / highlights */
+  --bg-color: #1e2a38;
+  --section-bg: #2a3648;
+  --card-bg: #324158;
+  --primary-color: #4a90e2;
   --primary-10: rgba(74, 144, 226, 0.1);
   --primary-20: rgba(74, 144, 226, 0.2);
   --section-bg-transparent: rgba(42, 54, 72, 0);
-  --primary-dark: #3367b2;         /* darker primary for hover states */
-  --secondary-color: #2fa381;      /* secondary accents */
-  --success-color: #10B981;        /* success states */
-  --error-color: #EF4444;          /* error states */
-  --warning-color: #F59E0B;        /* warning states */
-  
+  --primary-dark: #3367b2;
+  --secondary-color: #2fa381;
+  --success-color: #10B981;
+  --error-color: #EF4444;
+  --warning-color: #F59E0B;
+
   /* Typography colors */
-  --text-light: #eaeaea;           /* primary text */
-  --text-faded: #b4b4b4;           /* secondary text */
-  --text-muted: #8696a9;           /* tertiary text */
-  
+  --text-light: #eaeaea;
+  --text-faded: #b4b4b4;
+  --text-muted: #8696a9;
+
   /* Border and structure */
-  --border-color: #3f4f65;         /* borders */
-  --border-light: #4a5b75;         /* lighter borders for contrast */
+  --border-color: #3f4f65;
+  --border-light: #4a5b75;
   --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
-  
+
   /* Font families */
   --font-heading: 'Poppins', sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-code: 'Roboto Mono', monospace;
 }
 
-/* Base element styling */
 body {
   margin: 0;
   padding: 0;
@@ -87,7 +96,6 @@ a:hover {
   color: var(--primary-dark);
 }
 
-/* Button styling */
 button {
   font-family: var(--font-body);
   border-radius: 8px;
@@ -99,6 +107,7 @@ button {
   color: var(--text-light);
   cursor: pointer;
   transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:hover {
@@ -113,7 +122,6 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* Card styling */
 .card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -129,7 +137,6 @@ button:focus-visible {
   border-color: var(--border-light);
 }
 
-/* Container and layout */
 #app {
   max-width: 1280px;
   margin: 0 auto;
@@ -143,7 +150,6 @@ button:focus-visible {
   padding: 0 1rem;
 }
 
-/* Form controls */
 input, textarea, select {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -161,7 +167,6 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.25);
 }
 
-/* Code blocks */
 code, pre {
   font-family: var(--font-code);
   font-size: 0.9em;
@@ -180,7 +185,6 @@ pre code {
   padding: 0;
 }
 
-/* Element+ component overrides */
 .el-button--primary {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
@@ -235,7 +239,6 @@ pre code {
   color: var(--primary-color) !important;
 }
 
-/* Utility classes */
 .text-center {
   text-align: center;
 }
@@ -276,7 +279,6 @@ pre code {
   box-shadow: var(--shadow-lg);
 }
 
-/* Animations */
 .fade-in {
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -295,24 +297,27 @@ pre code {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Media queries for responsiveness */
 @media (max-width: 768px) {
+  input, textarea, select, button {
+    font-size: 16px !important;
+  }
+
   h1 {
     font-size: 2rem;
   }
-  
+
   h2 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
-  
+
   h3 {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
-  
+
   .container {
-    padding: 0 0.75rem;
+    padding: 0 1rem;
   }
-  
+
   button {
     width: 100%;
   }

@@ -59,24 +59,38 @@
 
 <script>
 export default {
-  name: 'App',
   data() {
     return {
-      menuActive: false
+      menuActive: false,
+      isMobile: false
     }
   },
-  methods: {
-    toggleMenu() {
-      this.menuActive = !this.menuActive
-    }
+mounted() {
+// Check if mobile on load
+  this.checkIfMobile();
+// Add resize listener
+  window.addEventListener('resize', this.checkIfMobile);
+},
+beforeUnmount() {
+// Remove listener when component is destroyed
+  window.removeEventListener('resize', this.checkIfMobile);
+},
+methods: {
+  checkIfMobile() {
+    this.isMobile = window.innerWidth < 768;
   },
+  toggleMenu() {
+    this.menuActive = !this.menuActive;
+// Prevent scrolling when menu is open on mobile
+    document.body.style.overflow = this.menuActive && this.isMobile ? 'hidden' : '';
+  }
+},
   watch: {
     $route() {
       // Close mobile menu when route changes
-      this.menuActive = false
+      this.menuActive = false;
     }
-  }
-}
+  }}
 </script>
 
 <style>
@@ -221,6 +235,18 @@ a:hover {
   transition: all 0.3s ease;
 }
 
+.menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
 .main-content {
   min-height: calc(100vh - 140px);
   padding: 2rem 0;
@@ -309,10 +335,12 @@ code, pre {
     border-bottom: 1px solid var(--border-color);
   }
 
-  .nav-links.active {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
+ .nav-links.active {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
   }
 
   .nav-links li {
