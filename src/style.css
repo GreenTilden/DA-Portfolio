@@ -138,16 +138,16 @@ button:focus-visible {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: 90%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 .5rem;
 }
 
 input, textarea, select {
@@ -302,6 +302,10 @@ pre code {
     font-size: 16px !important;
   }
 
+  #app {
+    padding: 0.5rem;
+  }
+
   h1 {
     font-size: 2rem;
   }
@@ -315,7 +319,7 @@ pre code {
   }
 
   .container {
-    padding: 0 1rem;
+    padding: 0 0.25rem;
   }
 
   button {
@@ -324,7 +328,10 @@ pre code {
 }
 
 @media (min-width: 1024px) {
+  #app {
+    padding: 0.5rem;
+  }
   .container {
-    padding: 0 2rem;
+    padding: 0 0.25rem;
   }
 }

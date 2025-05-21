@@ -607,11 +607,21 @@ body {
   z-index: 1;
 }
 
+
+/* Ensure proper spacing between Element Plus rows and columns */
+.el-row {
+  margin-bottom: -20px !important;
+}
+
+.el-col {
+  margin-bottom: 20px !important;
+}
+
 /* Specialties Section with added spacing */
 .specialties-section {
   margin-top: 5rem;
   background-color: var(--section-bg);
-  padding: 3.5rem 2rem;
+  padding: 2.5rem 1rem; /* Reduced padding */
   border-radius: 1rem;
   margin-bottom: 3rem;
   text-align: center;
@@ -656,6 +666,10 @@ body {
   color: var(--primary-color);
 }
 
+.specialties-section {
+  padding: 2rem 0.5rem; /* Responsive padding tweak */
+}
+
 .specialty-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -667,6 +681,7 @@ body {
   display: flex;
   flex-direction: column;
   border-radius: 12px;
+  margin-bottom: 105; 
 }
 
 .specialty-card.visible {
@@ -684,7 +699,7 @@ body {
 .specialty-card h3 {
   font-family: 'Poppins', sans-serif;
   color: var(--primary-color);
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   font-weight: 600;
   font-size: 1.25rem;
 }
@@ -738,6 +753,8 @@ body {
   .hero-section {
     padding: 3rem 1rem 2.5rem;
   }
+
+  
   
   .cta-buttons {
     flex-direction: column;
@@ -752,7 +769,7 @@ body {
   }
 }
   .specialty-card {
-    margin-bottom: 1.5rem;
+    margin-bottom:0;
   }
   
   .section-divider {
