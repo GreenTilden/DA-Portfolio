@@ -252,7 +252,7 @@ body {
   background-color: var(--bg-color);
 }
 
-/* Hero Section with Scientific Data Visualization Theme */
+/* Hero Section */
 .hero-section {
   position: relative;
   overflow: hidden;
@@ -263,26 +263,19 @@ body {
   text-align: center;
   z-index: 1;
   margin-bottom: 2rem;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.3),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
   min-height: 400px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-/* Scientific grid pattern - more subtle */
 .hero-section::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(rgba(74, 144, 226, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(74, 144, 226, 0.07) 1px, transparent 1px);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: linear-gradient(rgba(74, 144, 226, 0.07) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(74, 144, 226, 0.07) 1px, transparent 1px);
   background-size: 40px 40px;
   background-position: center center;
   opacity: 0.8;
@@ -290,222 +283,15 @@ body {
   animation: grid-scroll-x 40s infinite linear;
 }
 
-/* Subtle noise texture */
 .hero-section::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   opacity: 0.02;
   z-index: -1;
 }
 
-.particles-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-.particle {
-  position: absolute;
-  background-color: var(--primary-color);
-  border-radius: 50%;
-  opacity: 0.8;
-  box-shadow: 0 0 12px 4px rgba(74, 144, 226, 0.7);
-  transform: translate(-50%, -50%);
-  z-index: 2;
-  filter: blur(0.5px);
-}
-
-/* Particle tail */
-.particle-connection {
-  pointer-events: none;
-  position: absolute;
-  opacity: 0.5;
-  box-shadow: 0 0 4px rgba(74, 144, 226, 0.3);
-}
-.particles-css {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Primary scientific wave gradient - smooth horizontal movement */
-.particles-css::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    var(--section-bg-transparent) 0%,
-    var(--section-bg-transparent) 15%,
-    var(--primary-10) 25%,
-    var(--primary-20) 35%,
-    var(--primary-10) 45%,
-    var(--section-bg-transparent) 55%,
-    var(--section-bg-transparent) 65%,
-    var(--primary-10) 75%,
-    var(--primary-20) 85%,
-    var(--primary-10) 95%,
-    var(--section-bg-transparent) 100%
-  );
-  background-size: 200% 100%;
-  animation: wave-scroll 20s infinite linear;
-  z-index: -1;
-}
-
-/* Secondary wave gradient - subtle complementary movement */
-.particles-css::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(110, 136, 166, 0.05) 30%,
-    rgba(110, 136, 166, 0.1) 45%,
-    rgba(110, 136, 166, 0.05) 60%,
-    transparent 90%
-  );
-  opacity: 0.6;
-  background-size: 300% 100%;
-  animation: gradient-scroll-reverse 25s infinite linear;
-  z-index: -1;
-}
-
-
-/* Position data nodes at key points */
-.particle:nth-child(1) { 
-  top: calc(20% + (10% * var(--random-1, 0.5))); 
-  left: calc(15% + (10% * var(--random-2, 0.3))); 
-  width: 3px; height: 3px; 
-  animation: data-pulse 6s infinite, wave-motion1 15s infinite ease-in-out; 
-}
-
-.particle:nth-child(2) { 
-  top: calc(30% + (15% * var(--random-3, 0.7))); 
-  left: calc(65% + (12% * var(--random-4, 0.2))); 
-  width: 4px; height: 4px; 
-  animation: data-pulse 7s infinite 1s, wave-motion2 18s infinite ease-in-out; 
-}
-
-.particle:nth-child(3) { 
-  top: calc(55% + (10% * var(--random-5, 0.4))); 
-  left: calc(25% + (15% * var(--random-6, 0.6))); 
-  width: 3px; height: 3px; 
-  animation: data-pulse 8s infinite 2s, wave-motion3 20s infinite ease-in-out; 
-}
-
-.particle:nth-child(4) { 
-  top: calc(70% + (12% * var(--random-7, 0.3))); 
-  left: calc(75% + (8% * var(--random-8, 0.5))); 
-  width: 4px; height: 4px; 
-  animation: data-pulse 6.5s infinite 1.5s, wave-motion1 17s infinite ease-in-out reverse; 
-}
-
-.particle:nth-child(5) { 
-  top: calc(15% + (8% * var(--random-9, 0.8))); 
-  left: calc(50% + (15% * var(--random-10, 0.4))); 
-  width: 3px; height: 3px; 
-  animation: data-pulse 7.5s infinite 3s, wave-motion2 16s infinite ease-in-out reverse; 
-}
-
-.particle:nth-child(6) { 
-  top: calc(80% + (10% * var(--random-11, 0.2))); 
-  left: calc(35% + (10% * var(--random-12, 0.7))); 
-  width: 4px; height: 4px; 
-  animation: data-pulse 7s infinite 2.5s, wave-motion3 19s infinite ease-in-out reverse; 
-}
-
-/* Hide any remaining particles */
-.particle:nth-child(n+13) { 
-  display: none; 
-}
-/* Create a data point with trailing indicator */
-.particle::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  height: 1px;
-  width: 12px;
-  background: linear-gradient(to right, var(--primary-color), transparent);
-  transform: translateY(-50%);
-  opacity: 0.7;
-}
-
-.connections-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.particle-connection {
-  position: absolute;
-  height: 1px !important;
-  background-color: rgba(74, 144, 226, 0.4);
-  box-shadow: 0 0 4px rgba(74, 144, 226, 0.3);
-  pointer-events: none;
-}
-
-
-/* Animation definitions */
-@keyframes grid-scroll-x {
-  0% { background-position: 0 0; }
-  100% { background-position: 80px 0; }
-}
-
-@keyframes wave-scroll {
-  0% { background-position: 0% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@keyframes gradient-scroll-reverse {
-  0% { background-position: -100% 0; }
-  100% { background-position: 100% 0; }
-}
-
-@keyframes pulse-fade {
-  0% { transform: scale(1); opacity: 0.7; }
-  100% { transform: scale(2); opacity: 0.1; }
-}
-
-/* Pulse animation for data points */
-@keyframes data-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-  10% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.2; }
-  50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.7; }
-  90% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.2; }
-}
-
-/* Wave motion animation with custom variables */
-@keyframes particle-wave {
-  0%, 100% { transform: translate(calc(-50% + 0px), calc(-50% + 0px)); }
-  50% { transform: translate(calc(-50% + var(--move-x)), calc(-50% + var(--move-y))); }
-}
-
-@keyframes connection-pulse {
-  0%, 100% { opacity: 0.1; }
-  50% { opacity: 0.3; }
-}
-/* Added intro paragraph */
 .intro-paragraph {
   font-size: 1.1rem;
   color: var(--text-light);
@@ -515,7 +301,6 @@ body {
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Added section divider */
 .section-divider {
   height: 1px;
   background: linear-gradient(to right, transparent, var(--border-color), transparent);
@@ -523,7 +308,6 @@ body {
   width: 80%;
 }
 
-/* Title with gradient and animated underline */
 .hero-title {
   position: relative;
   display: inline-block;
@@ -548,37 +332,10 @@ body {
   bottom: -10px;
   width: 100%;
   height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--primary-color) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, var(--primary-color) 50%, transparent 100%);
   animation: slide-underline 3s infinite;
 }
 
-@keyframes tail-grow {
-  0% { width: 0; opacity: 0; }
-  20% { opacity: 0.4; }
-  100% { width: 30px; opacity: 0.8; }
-}
-
-@keyframes slide-underline {
-  0% {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  50% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* Hero content styles */
 .hero-role {
   font-family: 'Inter', sans-serif;
   font-size: 1.5rem;
@@ -607,21 +364,11 @@ body {
   z-index: 1;
 }
 
-
-/* Ensure proper spacing between Element Plus rows and columns */
-.el-row {
-  margin-bottom: -20px !important;
-}
-
-.el-col {
-  margin-bottom: 20px !important;
-}
-
-/* Specialties Section with added spacing */
+/* Specialties Section */
 .specialties-section {
   margin-top: 5rem;
   background-color: var(--section-bg);
-  padding: 2.5rem 1rem; /* Reduced padding */
+  padding: 2.5rem 1rem;
   border-radius: 1rem;
   margin-bottom: 3rem;
   text-align: center;
@@ -631,7 +378,6 @@ body {
   overflow: hidden;
 }
 
-/* Enhanced expertise heading */
 .expertise-heading {
   font-size: 2.5rem;
   margin-bottom: 3rem;
@@ -659,17 +405,15 @@ body {
   border-radius: 3px;
 }
 
-/* Icon container for specialty cards */
-.icon-container {
-  margin-bottom: 1.5rem;
-  font-size: 2.5rem;
-  color: var(--primary-color);
+.el-row {
+  margin-bottom: -20px !important;
 }
 
-.specialties-section {
-  padding: 2rem 0.5rem; /* Responsive padding tweak */
+.el-col {
+  margin-bottom: 20px !important;
 }
 
+/* Specialty Cards */
 .specialty-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -681,7 +425,7 @@ body {
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  margin-bottom: 105; 
+  margin-bottom: 0;
 }
 
 .specialty-card.visible {
@@ -689,7 +433,6 @@ body {
   opacity: 1;
 }
 
-/* Enhanced hover effect */
 .specialty-card:hover {
   transform: translateY(-10px);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
@@ -711,7 +454,13 @@ body {
   flex-grow: 1;
 }
 
-/* Animations */
+.icon-container {
+  margin-bottom: 1.5rem;
+  font-size: 2.5rem;
+  color: var(--primary-color);
+}
+
+/* Animation Classes */
 .fade-enter-active,
 .fade-appear-active {
   transition: opacity 0.5s ease-in, transform 0.5s ease-out;
@@ -730,12 +479,12 @@ body {
   transform: translateY(0);
 }
 
-/* Responsive improvements */
+/* Responsive */
 @media (max-width: 768px) {
   .hero-title {
     font-size: 2.25rem;
   }
-  
+
   .hero-role {
     font-size: 1.25rem;
   }
@@ -749,13 +498,10 @@ body {
     font-size: 1rem;
   }
 
- 
   .hero-section {
     padding: 3rem 1rem 2.5rem;
   }
 
-  
-  
   .cta-buttons {
     flex-direction: column;
     gap: 1rem;
@@ -767,15 +513,15 @@ body {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-}
-  .specialty-card {
-    margin-bottom:0;
+
+  .specialties-section {
+    padding: 2rem 0.5rem;
   }
-  
+
   .section-divider {
     margin: 3rem auto;
   }
-  
+
   .icon-container {
     font-size: 2rem;
     margin-bottom: 1rem;
@@ -783,17 +529,24 @@ body {
 
   .specialty-card {
     margin-bottom: 1.5rem;
-    min-height: 0;
     padding: 1.5rem;
-  }
-
-  .icon-container {
-    margin-bottom: 1rem;
   }
 
   .specialty-card h3 {
     font-size: 1.2rem;
     margin-bottom: 0.75rem;
   }
+}
 
+/* Keyframe Animations */
+@keyframes grid-scroll-x {
+  0% { background-position: 0 0; }
+  100% { background-position: 80px 0; }
+}
+
+@keyframes slide-underline {
+  0% { opacity: 0; transform: translateX(-100%); }
+  50% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(100%); }
+}
 </style>
