@@ -27,29 +27,23 @@
       <!-- Areas of Expertise Section -->
       <section v-if="sections.specialties" class="specialties-section">
         <h2 class="section-heading expertise-heading">Areas of Expertise</h2>
-        <el-row :gutter="20">
-          <el-col
+        <div class="expertise-grid">
+          <div
             v-for="(specialty, index) in specialties"
             :key="'specialty-'+index"
-            :xs="24"
-            :sm="12"
-            :md="12"
-            :lg="6"
+            class="expertise-card"
+            v-observe-visibility="(isVisible) => onVisibilityChange(isVisible, index)"
+            :class="{ visible: visibleCards[index] }"
           >
-            <el-card
-              shadow="hover"
-              class="specialty-card fade-in-up"
-              v-observe-visibility="(isVisible) => onVisibilityChange(isVisible, index)"
-              :class="{ visible: visibleCards[index] }"
-            >
-              <div class="icon-container">
-                <i :class="specialty.icon"></i>
-              </div>
+            <div class="card-icon">
+              <i :class="specialty.icon"></i>
+            </div>
+            <div class="card-content">
               <h3>{{ specialty.title }}</h3>
               <p>{{ specialty.description }}</p>
-            </el-card>
-          </el-col>
-        </el-row>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -178,7 +172,7 @@ export default {
 
       const draw = () => {
         ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-        // Draw connections
+        // Draw connections between particles to create a network effect
         particles.forEach((p1, i) => {
           const nearest = particles
             .filter((_, j) => j !== i)
@@ -202,7 +196,7 @@ export default {
           });
         });
 
-        // Draw particles
+        // Draw the individual particles
         particles.forEach(p => {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
@@ -210,7 +204,7 @@ export default {
           ctx.fill();
         });
 
-        // Update positions
+        // Update particle positions for continuous animation
         particles.forEach(p => {
           p.x += p.dx;
           p.y += p.dy;
@@ -246,13 +240,13 @@ export default {
 };
 </script>
 
-
 <style>
+/* Page background - ensures consistent dark theme */
 body {
   background-color: var(--bg-color);
 }
 
-/* Hero Section */
+/* Hero Section - creates the main banner area with particle background */
 .hero-section {
   position: relative;
   overflow: hidden;
@@ -270,6 +264,7 @@ body {
   justify-content: center;
 }
 
+/* Hero background effects - creates subtle grid pattern and texture */
 .hero-section::before {
   content: '';
   position: absolute;
@@ -292,6 +287,7 @@ body {
   z-index: -1;
 }
 
+/* Hero content - styles the main heading and introductory text */
 .intro-paragraph {
   font-size: 1.1rem;
   color: var(--text-light);
@@ -364,11 +360,11 @@ body {
   z-index: 1;
 }
 
-/* Specialties Section */
+/* Specialties Section - contains the expertise cards in a clean layout */
 .specialties-section {
   margin-top: 5rem;
   background-color: var(--section-bg);
-  padding: 2.5rem 1rem;
+  padding: 3rem 2rem;
   border-radius: 1rem;
   margin-bottom: 3rem;
   text-align: center;
@@ -405,62 +401,113 @@ body {
   border-radius: 3px;
 }
 
-.el-row {
-  margin-bottom: -20px !important;
+/* Expertise Grid - responsive grid system with consistent heights */
+.expertise-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
 }
 
-.el-col {
-  margin-bottom: 20px !important;
-}
-
-/* Specialty Cards */
-.specialty-card {
-  background-color: var(--card-bg);
+/* Expertise Cards - enhanced design with consistent heights */
+.expertise-card {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(50, 65, 88, 0.8) 100%);
   border: 1px solid var(--border-color);
-  transition: transform 0.4s ease, opacity 0.4s ease, box-shadow 0.4s ease;
+  border-radius: 16px;
+  padding: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateY(20px);
   opacity: 0;
-  padding: 2rem 1.5rem;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  margin-bottom: 0;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
 }
 
-.specialty-card.visible {
+.expertise-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.expertise-card.visible {
   transform: translateY(0);
   opacity: 1;
 }
 
-.specialty-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-  border-color: rgba(74, 144, 226, 0.4);
+.expertise-card:hover {
+  transform: translateY(-12px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.12);
+  border-color: rgba(74, 144, 226, 0.6);
 }
 
-.specialty-card h3 {
-  font-family: 'Poppins', sans-serif;
-  color: var(--primary-color);
-  margin-bottom: 0;
-  font-weight: 600;
-  font-size: 1.25rem;
+.expertise-card:hover::before {
+  opacity: 1;
 }
 
-.specialty-card p {
-  color: var(--text-faded);
-  font-size: 0.95rem;
-  line-height: 1.7;
-  flex-grow: 1;
-}
-
-.icon-container {
-  margin-bottom: 1.5rem;
+/* Card Icon - enhanced with gradient background and better positioning */
+.card-icon {
+  flex-shrink: 0;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 2.5rem;
-  color: var(--primary-color);
+  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  position: relative;
 }
 
-/* Animation Classes */
+.card-icon::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+/* Card Content - enhanced typography and spacing */
+.card-content {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-content h3 {
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-light);
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.card-content p {
+  color: var(--text-faded);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Animation Classes - handles the fade-in effects for page transitions */
 .fade-enter-active,
 .fade-appear-active {
   transition: opacity 0.5s ease-in, transform 0.5s ease-out;
@@ -479,8 +526,68 @@ body {
   transform: translateY(0);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive Design - adapts layout for different screen sizes */
+
+/* Large screens - 2 cards per row with enhanced spacing and sizing */
+@media (min-width: 1200px) {
+  .expertise-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+    grid-auto-rows: minmax(200px, 1fr);
+  }
+  
+  .expertise-card {
+    padding: 3rem;
+    min-height: 200px;
+  }
+  
+  .card-icon {
+    width: 80px;
+    height: 80px;
+    font-size: 3rem;
+  }
+  
+  .card-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .card-content p {
+    font-size: 1.1rem;
+  }
+}
+
+/* Medium screens - 2 cards per row with optimized sizing */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .expertise-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+    grid-auto-rows: minmax(180px, 1fr);
+  }
+  
+  .expertise-card {
+    padding: 2.25rem;
+    min-height: 180px;
+  }
+  
+  .card-icon {
+    width: 65px;
+    height: 65px;
+    font-size: 2.25rem;
+  }
+  
+  .card-content h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .card-content p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile screens - single column with vertical card layout */
+@media (max-width: 767px) {
   .hero-title {
     font-size: 2.25rem;
   }
@@ -515,30 +622,54 @@ body {
   }
 
   .specialties-section {
-    padding: 2rem 0.5rem;
+    padding: 2rem 1rem;
   }
 
   .section-divider {
     margin: 3rem auto;
   }
 
-  .icon-container {
+  .expertise-heading {
     font-size: 2rem;
-    margin-bottom: 1rem;
   }
 
-  .specialty-card {
-    margin-bottom: 1.5rem;
-    padding: 1.5rem;
+  .expertise-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    grid-auto-rows: auto;
   }
 
-  .specialty-card h3 {
-    font-size: 1.2rem;
-    margin-bottom: 0.75rem;
+  .expertise-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    min-height: auto;
+    gap: 1.5rem;
+  }
+
+  .card-icon {
+    width: 80px;
+    height: 80px;
+    font-size: 3rem;
+    margin: 0 auto;
+  }
+
+  .card-content {
+    text-align: center;
+  }
+
+  .card-content h3 {
+    font-size: 1.375rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-content p {
+    font-size: 1rem;
+    line-height: 1.6;
   }
 }
 
-/* Keyframe Animations */
+/* Keyframe Animations - creates the moving background effects */
 @keyframes grid-scroll-x {
   0% { background-position: 0 0; }
   100% { background-position: 80px 0; }
