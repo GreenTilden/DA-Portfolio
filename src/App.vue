@@ -1,60 +1,63 @@
-<template>
+.logo a {
+  color: var(--text-light);
+  display<template>
   <div id="app" @click.self="closeMenu">
-    <!-- Theme Selector -->
-    <div class="theme-selector">
-      <button @click="toggleThemeMenu" class="theme-button" :class="{ active: showThemeMenu }">
-        {{ getThemeDisplayName(currentTheme) }}
-        <svg class="dropdown-icon" :class="{ rotated: showThemeMenu }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6,9 12,15 18,9"></polyline>
-        </svg>
-      </button>
-      <div v-show="showThemeMenu" class="theme-menu">
-        <button 
-          v-for="theme in availableThemes" 
-          :key="theme"
-          @click="selectTheme(theme)"
-          class="theme-option"
-          :class="{ active: currentTheme === theme }"
-        >
-          {{ getThemeDisplayName(theme) }}
-        </button>
-      </div>
-    </div>
-
     <header class="header">
       <div class="content-container">
         <div class="header-content">
-          <div class="logo">
-            <router-link to="/">
-              <h1 class="site-title">Darren Arney</h1>
-              <p class="tagline">Automation Professional</p>
-            </router-link>
+          <div class="header-left">
+            <div class="logo">
+              <router-link to="/">
+                <h1 class="site-title">Darren Arney</h1>
+                <p class="tagline">Automation Professional</p>
+              </router-link>
+            </div>
+            <!-- Theme Selector anchored to bottom -->
+            <div class="header-theme-selector">
+              <button @click="toggleThemeMenu" class="theme-toggle" :class="{ active: showThemeMenu }">
+                {{ getThemeDisplayName(currentTheme) }}
+                <svg class="dropdown-icon" :class="{ rotated: showThemeMenu }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6,9 12,15 18,9"></polyline>
+                </svg>
+              </button>
+              <div v-show="showThemeMenu" class="theme-dropdown">
+                <button 
+                  v-for="theme in availableThemes" 
+                  :key="theme"
+                  @click="selectTheme(theme)"
+                  class="theme-choice"
+                  :class="{ active: currentTheme === theme }"
+                >
+                  {{ getThemeDisplayName(theme) }}
+                </button>
+              </div>
+            </div>
           </div>
-            <nav class="main-nav">
-              <div class="menu-toggle" @click.stop="toggleMenu" :class="{ 'active': menuActive }">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <ul class="nav-links desktop-links">
-                <li><router-link to="/" exact>Home</router-link></li>
-                <li><router-link to="/demos">Interactive Demos</router-link></li>
-                <li><router-link to="/projects">Projects</router-link></li>
-                <li><router-link to="/experience">Experience</router-link></li>
-                <li><router-link to="/contact">Contact</router-link></li>
+          <nav class="main-nav">
+            <div class="menu-toggle" @click.stop="toggleMenu" :class="{ 'active': menuActive }">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <ul class="nav-links desktop-links">
+              <li><router-link to="/" exact>Home</router-link></li>
+              <li><router-link to="/demos">Interactive Demos</router-link></li>
+              <li><router-link to="/projects">Projects</router-link></li>
+              <li><router-link to="/experience">Experience</router-link></li>
+              <li><router-link to="/contact">Contact</router-link></li>
+            </ul>
+          </nav>
+          <transition name="menu-slide">
+            <div v-show="menuActive && isMobile" class="mobile-menu-container" @click.stop>
+              <ul class="nav-links mobile-links">
+                <li><router-link to="/" exact @click.native="closeMenu">Home</router-link></li>
+                <li><router-link to="/demos" @click.native="closeMenu">Interactive Demos</router-link></li>
+                <li><router-link to="/projects" @click.native="closeMenu">Projects</router-link></li>
+                <li><router-link to="/experience" @click.native="closeMenu">Experience</router-link></li>
+                <li><router-link to="/contact" @click.native="closeMenu">Contact</router-link></li>
               </ul>
-            </nav>
-            <transition name="menu-slide">
-              <div v-show="menuActive && isMobile" class="mobile-menu-container" @click.stop>
-                <ul class="nav-links mobile-links">
-                  <li><router-link to="/" exact @click.native="closeMenu">Home</router-link></li>
-                  <li><router-link to="/demos" @click.native="closeMenu">Interactive Demos</router-link></li>
-                  <li><router-link to="/projects" @click.native="closeMenu">Projects</router-link></li>
-                  <li><router-link to="/experience" @click.native="closeMenu">Experience</router-link></li>
-                  <li><router-link to="/contact" @click.native="closeMenu">Contact</router-link></li>
-                </ul>
-              </div>
-            </transition>
+            </div>
+          </transition>
         </div>
       </div>
     </header>
@@ -150,7 +153,7 @@ export default {
       this.showThemeMenu = false;
     },
     closeThemeMenu(event) {
-      if (!event.target.closest('.theme-selector')) {
+      if (!event.target.closest('.header-theme-selector')) {
         this.showThemeMenu = false;
       }
     }
@@ -186,92 +189,6 @@ export default {
   --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
-
-/* Theme Selector - positioned in top-right corner for easy access */
-.theme-selector {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 2000;
-}
-
-.theme-button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  box-shadow: var(--shadow-md);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 140px;
-  justify-content: space-between;
-}
-
-.theme-button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.theme-button.active {
-  background-color: var(--primary-dark);
-}
-
-.dropdown-icon {
-  transition: transform 0.3s ease;
-}
-
-.dropdown-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.theme-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  min-width: 160px;
-}
-
-.theme-option {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  color: var(--text-light);
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  text-align: left;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.theme-option:last-child {
-  border-bottom: none;
-}
-
-.theme-option:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.theme-option.active {
-  background-color: var(--primary-color);
-  color: white;
-  font-weight: 600;
 }
 
 /* Base elements - sets up fundamental styling for the entire application */
@@ -351,42 +268,158 @@ a:hover {
   border-radius: 1rem 1rem 0.5rem 0.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   overflow: visible;
+  padding: 0.25rem 0;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0.5rem;
-  min-height: 60px;
+  align-items: flex-start;
+  padding: 0.75rem 0.5rem;
+  position: relative;
+}
+
+/* Header left section - column layout with theme selector anchored to bottom */
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: auto;
+  padding: 0;
+  gap: 0;
 }
 
 /* Logo styles - ensures consistent branding presentation */
 .logo a {
   color: var(--text-light);
   display: block;
-  line-height: 1.2;
+  width: 100%;
+  line-height: 1;
 }
 
 .site-title, .logo h1 {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .tagline {
   font-size: 0.875rem;
   color: var(--text-faded);
-  margin: 0.25rem 0 0 0;
-  line-height: 1.2;
+  margin: 0;
+  line-height: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Header theme selector - positioned directly under the tagline */
+.header-theme-selector {
+  position: relative;
+  margin-top: -0.1rem;
+  align-self: flex-start;
+}
+
+.theme-toggle {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 120px;
+  justify-content: space-between;
+  text-align: left;
+  position: relative;
+  z-index: 1;
+}
+
+/* Improve contrast for monochrome theme */
+[data-theme="monochrome"] .theme-toggle {
+  color: #000000;
+  background-color: #d0d0d0;
+  border: 1px solid #707070;
+}
+
+[data-theme="monochrome"] .theme-toggle:hover {
+  background-color: #e0e0e0;
+}
+
+.theme-toggle:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.theme-toggle.active {
+  background-color: var(--primary-dark);
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.4rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.4rem;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  min-width: 140px;
+  z-index: 1100;
+}
+
+.theme-choice {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  color: var(--text-light);
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.theme-choice:last-child {
+  border-bottom: none;
+}
+
+.theme-choice:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.theme-choice.active {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
 }
 
 /* Main navigation - handles both desktop and mobile navigation states */
 .main-nav {
   display: flex;
-  align-items: center;
-  position: relative;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  align-self: stretch;
 }
 
 .nav-links {
@@ -395,6 +428,9 @@ a:hover {
   margin: 0;
   padding: 0;
   gap: 1.25rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .nav-links li {
@@ -550,6 +586,27 @@ code, pre {
   
   .header-content {
     padding: 1rem 0.5rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* Header left section adjustments for mobile */
+  .header-left {
+    flex: 1;
+    width: auto;
+    max-width: 70%;
+  }
+  
+  .main-nav {
+    flex: 0 0 auto;
+    align-items: center;
+  }
+
+  .theme-toggle {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+    min-width: 110px;
   }
 
   /* Show hamburger menu on mobile */
@@ -585,48 +642,39 @@ code, pre {
     gap: 1rem;
     text-align: center;
   }
-
-  /* Mobile theme selector adjustments */
-  .theme-selector {
-    top: 10px;
-    right: 10px;
-  }
-
-  .theme-button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-    min-width: 120px;
-  }
-
-  .theme-menu {
-    min-width: 140px;
-  }
 }
 
 /* Medium screen navigation adjustments - handles the tricky middle screen sizes */
 @media (min-width: 768px) and (max-width: 1024px) {
   .header-content {
-    align-items: center;
-    gap: 2rem;
+    align-items: flex-start;
+  }
+  
+  .header-left {
+    align-items: flex-start;
   }
   
   .nav-links {
     flex-wrap: wrap;
     gap: 0.5rem 1rem;
-    max-width: 300px;
     justify-content: flex-end;
+    margin-top: 0.5rem;
   }
 
-  .nav-links li:nth-child(3),
-  .nav-links li:nth-child(4),
-  .nav-links li:nth-child(5) {
-    flex-basis: calc(33.333% - 0.5rem);
-    text-align: center;
+  .nav-links li {
+    margin-left: 0;
   }
 
   .nav-links a {
     font-size: 0.85rem;
     padding: 0.375rem 0.25rem;
+  }
+}
+
+/* Responsive tuning for tighter control */
+@media (max-width: 880px) {
+  .header-left {
+    align-items: flex-start;
   }
 }
 </style>

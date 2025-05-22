@@ -8,7 +8,9 @@
           <div class="hero-content">
             <h1 class="hero-title">Automation Excellence</h1>
             <h2 class="hero-role">{{ currentRole }}</h2>
-            <p class="intro-paragraph">Specializing in the design and implementation of laboratory automation systems that optimize workflows, increase efficiency, and enhance data quality.</p>
+            <p class="intro-paragraph">Leveraging 10+ years of experience in laboratory automation to design, implement, and optimize 
+  high-throughput workflows that increase efficiency by up to 300% while ensuring data integrity 
+  and regulatory compliance.</p>
             <p class="tagline">{{ currentTagline }}</p>
             <el-space wrap alignment="center" class="cta-buttons">
               <router-link to="/projects">
