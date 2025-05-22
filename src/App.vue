@@ -1,5 +1,26 @@
 <template>
   <div id="app" @click.self="closeMenu">
+    <!-- Theme Selector -->
+    <div class="theme-selector">
+      <button @click="toggleThemeMenu" class="theme-button" :class="{ active: showThemeMenu }">
+        {{ getThemeDisplayName(currentTheme) }}
+        <svg class="dropdown-icon" :class="{ rotated: showThemeMenu }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </button>
+      <div v-show="showThemeMenu" class="theme-menu">
+        <button 
+          v-for="theme in availableThemes" 
+          :key="theme"
+          @click="selectTheme(theme)"
+          class="theme-option"
+          :class="{ active: currentTheme === theme }"
+        >
+          {{ getThemeDisplayName(theme) }}
+        </button>
+      </div>
+    </div>
+
     <header class="header">
       <div class="content-container">
         <div class="header-content">
@@ -69,19 +90,36 @@
 </template>
 
 <script>
+import { useTheme } from '@/composables/useTheme';
+
 export default {
+  setup() {
+    const { currentTheme, setTheme, availableThemes, getThemeDisplayName } = useTheme();
+    return {
+      currentTheme,
+      setTheme,
+      availableThemes,
+      getThemeDisplayName
+    };
+  },
   data() {
     return {
       menuActive: false,
-      isMobile: false
+      isMobile: false,
+      showThemeMenu: false
     }
   },
   mounted() {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
+    // Close theme menu when clicking outside
+    document.addEventListener('click', this.closeThemeMenu);
+    // Initialize the forest theme on mount
+    this.setTheme('forest');
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
+    document.removeEventListener('click', this.closeThemeMenu);
   },
   methods: {
     checkIfMobile() {
@@ -98,6 +136,23 @@ export default {
     closeMenu() {
       this.menuActive = false;
       document.body.style.overflow = '';
+    },
+    switchTheme() {
+      const newTheme = this.currentTheme === 'forest' ? 'ocean' : 'forest';
+      this.setTheme(newTheme);
+    },
+    toggleThemeMenu(event) {
+      event.stopPropagation();
+      this.showThemeMenu = !this.showThemeMenu;
+    },
+    selectTheme(theme) {
+      this.setTheme(theme);
+      this.showThemeMenu = false;
+    },
+    closeThemeMenu(event) {
+      if (!event.target.closest('.theme-selector')) {
+        this.showThemeMenu = false;
+      }
     }
   },
   watch: {
@@ -115,15 +170,15 @@ export default {
 
 /* Root variables - this provides the foundation colors and spacing for the entire app */
 :root {
-  --bg-color: #1e2a38;             /* Main page background */
-  --section-bg: #2a3648;           /* Hero and specialty sections */
-  --card-bg: #324158;              /* Individual cards */
-  --primary-color: #4a90e2;        /* CTA buttons and highlights */
-  --primary-dark: #3367b2;         /* Hover states */
-  --secondary-color: #6e88a6;      /* Secondary accents */
-  --text-color: #eaeaea;           /* Primary text */
-  --text-light: #eaeaea;           /* Emphasized text */
-  --text-faded: #b4b4b4;           /* Secondary/muted text */
+  --bg-color: #1b2a26;             /* Deep forest green - Main page background */
+  --section-bg: #253f3a;           /* Dark pine - Hero and specialty sections */
+  --card-bg: #2e4a45;              /* Medium forest - Individual cards */
+  --primary-color: #4ecca3;        /* Mint/sage green - CTA buttons and highlights */
+  --primary-dark: #2e8b67;         /* Darker mint - Hover states */
+  --secondary-color: #e3b23c;      /* Warm amber/gold - Secondary accents */
+  --text-color: #f0f0f0;           /* Light text - Primary text */
+  --text-light: #f0f0f0;           /* Light text - Emphasized text */
+  --text-faded: #c5c5c5;           /* Muted text - Secondary/muted text */
   --border-color: #3f4f65;         /* Card borders and dividers */
   --success-color: #10B981;
   --error-color: #EF4444;
@@ -131,6 +186,92 @@ export default {
   --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Theme Selector - positioned in top-right corner for easy access */
+.theme-selector {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+}
+
+.theme-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 140px;
+  justify-content: space-between;
+}
+
+.theme-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-button.active {
+  background-color: var(--primary-dark);
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.theme-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  min-width: 160px;
+}
+
+.theme-option {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: var(--text-light);
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.theme-option:last-child {
+  border-bottom: none;
+}
+
+.theme-option:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.theme-option.active {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
 }
 
 /* Base elements - sets up fundamental styling for the entire application */
@@ -443,6 +584,22 @@ code, pre {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+  }
+
+  /* Mobile theme selector adjustments */
+  .theme-selector {
+    top: 10px;
+    right: 10px;
+  }
+
+  .theme-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    min-width: 120px;
+  }
+
+  .theme-menu {
+    min-width: 140px;
   }
 }
 

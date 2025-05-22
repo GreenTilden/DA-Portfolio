@@ -23,7 +23,8 @@
   .coming-soon {
     margin-top: 2rem;
     padding: 3rem;
-    background-color: #f0f4f8;
+    background-color: var(--card-bg);
+    color: var(--text-light);
     border-radius: 0.5rem;
     font-weight: 500;
   }

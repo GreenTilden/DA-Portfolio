@@ -412,7 +412,7 @@ body {
 
 /* Expertise Cards - enhanced design with consistent heights */
 .expertise-card {
-  background: linear-gradient(135deg, var(--text-light) 0%, var(--primary-color) 100%);
+  background: linear-gradient(135deg, var(--card-bg) 0%, var(--primary-color) 100%);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 2.5rem;
@@ -464,21 +464,13 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 2.5rem;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: var(--secondary-color);
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 10%);
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
   position: relative;
 }
 
-.card-icon::after {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  background: linear-gradient(135deg, var(--text-light) 0%, var(--primary-color) 100%);
-  border-radius: 14px;
-  pointer-events: none;
-}
 
 /* Card Content - enhanced typography and spacing */
 .card-content {
