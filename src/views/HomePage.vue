@@ -250,7 +250,7 @@ body {
 .hero-section {
   position: relative;
   overflow: hidden;
-  background-color: rgba(42, 54, 72, 0.7);
+  background-color: var(--card-bg);
   backdrop-filter: blur(8px);
   border-radius: 1rem;
   padding: 5rem 2rem 4rem;
@@ -412,7 +412,7 @@ body {
 
 /* Expertise Cards - enhanced design with consistent heights */
 .expertise-card {
-  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(50, 65, 88, 0.8) 100%);
+  background: linear-gradient(135deg, var(--text-light) 0%, var(--primary-color) 100%);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 2.5rem;
@@ -475,7 +475,7 @@ body {
   content: '';
   position: absolute;
   inset: 2px;
-  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(135deg, var(--text-light) 0%, var(--primary-color) 100%);
   border-radius: 14px;
   pointer-events: none;
 }

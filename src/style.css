@@ -32,7 +32,8 @@ html {
   --success-color: #10B981;
   --error-color: #EF4444;
   --warning-color: #F59E0B;
-
+  --bg-light: var(--card-bg);
+  --text-color: var(--text-light);
 
 
   /* Border and structure */
