@@ -14,10 +14,10 @@
             <p class="tagline">{{ currentTagline }}</p>
             <el-space wrap alignment="center" class="cta-buttons">
               <router-link to="/projects">
-                <el-button type="primary" size="large">View Projects</el-button>
+                <button class="theme-button primary-button">View Projects</button>
               </router-link>
               <router-link to="/contact">
-                <el-button plain size="large">Contact Me</el-button>
+                <button class="theme-button secondary-button">Contact Me</button>
               </router-link>
             </el-space>
           </div>
@@ -37,7 +37,7 @@
             v-observe-visibility="(isVisible) => onVisibilityChange(isVisible, index)"
             :class="{ visible: visibleCards[index] }"
           >
-            <div class="card-icon">
+            <div class="card-icon expertise-icon">
               <i :class="specialty.icon"></i>
             </div>
             <div class="card-content">
@@ -68,6 +68,28 @@ export default {
       viewType: this.$route.query.view || 'general',
       visibleCards: [],
       animationFrameId: null,
+      themeRgbColors: {
+        'purdue': {
+          primary: '207, 181, 59',
+          secondary: '139, 115, 85'
+        },
+        'pacers': {
+          primary: '253, 187, 48',
+          secondary: '74, 144, 226'
+        },
+        'forest': {
+          primary: '78, 204, 163',
+          secondary: '227, 178, 60'
+        },
+        'ocean': {
+          primary: '74, 144, 226',
+          secondary: '110, 136, 166'
+        },
+        'monochrome': {
+          primary: '208, 208, 208',
+          secondary: '160, 160, 160'
+        }
+      },
       roleConfigs: {
         general: {
           role: 'Laboratory Automation Specialist',
@@ -146,6 +168,21 @@ export default {
   methods: {
     onVisibilityChange(isVisible, index) {
       if (isVisible) this.visibleCards[index] = true;
+    },
+    hexToRgb(hex) {
+      // Remove # if present
+      hex = hex.replace('#', '');
+      
+      // Handle shorthand hex (#fff)
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      return `${r}, ${g}, ${b}`;
     },
     initParticleCanvas() {
       const canvas = this.$refs.particleCanvas;
@@ -230,6 +267,20 @@ export default {
     if (this.specialties && Array.isArray(this.specialties)) {
       this.visibleCards = new Array(this.specialties.length).fill(false);
     }
+    
+    // Get current theme from data attribute
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'pacers';
+    
+    // Add RGB versions of theme colors for better opacity control
+    if (this.themeRgbColors[currentTheme]) {
+      document.documentElement.style.setProperty('--primary-color-rgb', this.themeRgbColors[currentTheme].primary);
+      document.documentElement.style.setProperty('--secondary-color-rgb', this.themeRgbColors[currentTheme].secondary);
+    } else {
+      // Fallback to calculating RGB values
+      document.documentElement.style.setProperty('--primary-color-rgb', this.hexToRgb(getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim()));
+      document.documentElement.style.setProperty('--secondary-color-rgb', this.hexToRgb(getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim()));
+    }
+    
     this.$nextTick(() => {
       this.initParticleCanvas();
     });
@@ -362,6 +413,65 @@ body {
   z-index: 1;
 }
 
+/* Standardized Theme-Aware Buttons */
+.theme-button {
+  padding: 0.7rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.theme-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Primary button styling */
+.primary-button {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.primary-button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Secondary button styling */
+.secondary-button {
+  background-color: transparent;
+  color: var(--text-light);
+  border: 2px solid var(--primary-color);
+}
+
+.secondary-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-dark);
+}
+
+/* Special handling for monochrome theme */
+[data-theme="monochrome"] .primary-button {
+  color: #000;
+}
+
+[data-theme="monochrome"] .secondary-button {
+  border-color: var(--primary-color);
+}
+
 /* Specialties Section - contains the expertise cards in a clean layout */
 .specialties-section {
   margin-top: 5rem;
@@ -374,6 +484,56 @@ body {
   border: 1px solid var(--border-color);
   position: relative;
   overflow: hidden;
+}
+
+/* Specific theme overrides for cards */
+[data-theme="purdue"] .expertise-card {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(207, 181, 59, 0.7) 100%);
+  border: 1px solid rgba(207, 181, 59, 0.4);
+}
+
+[data-theme="purdue"] .card-content h3 {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="purdue"] .card-content p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="purdue"] .card-icon {
+  background: rgba(207, 181, 59, 0.2);
+  border: 1px solid rgba(207, 181, 59, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="purdue"] .expertise-icon i {
+  color: var(--primary-color);
+}
+
+/* Purdue theme button overrides */
+[data-theme="purdue"] .primary-button {
+  background-color: var(--primary-color);
+  color: #1a1612;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(207, 181, 59, 0.3);
+}
+
+[data-theme="purdue"] .secondary-button {
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  font-weight: 600;
+}
+
+[data-theme="purdue"] .primary-button:hover {
+  background-color: #e0c649;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(207, 181, 59, 0.4);
+}
+
+[data-theme="purdue"] .secondary-button:hover {
+  background-color: rgba(207, 181, 59, 0.15);
+  border-color: #e0c649;
 }
 
 .expertise-heading {
@@ -430,6 +590,12 @@ body {
   min-height: 180px;
 }
 
+/* Special handling for monochrome theme cards */
+[data-theme="monochrome"] .expertise-card {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(70, 70, 70, 0.9) 100%);
+  border: 1px solid var(--border-color);
+}
+
 .expertise-card::before {
   content: '';
   position: absolute;
@@ -467,12 +633,39 @@ body {
   justify-content: center;
   font-size: 2.5rem;
   color: var(--secondary-color);
-  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 10%);
+  background: linear-gradient(135deg, rgba(var(--secondary-color-rgb, 110, 136, 166), 0.2) 0%, rgba(var(--primary-color-rgb, 74, 144, 226), 0.1) 100%);
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   position: relative;
 }
 
+/* Icon colors for themes */
+[data-theme="ocean"] .expertise-icon i {
+  color: var(--icon-color, #5fa4ff);
+}
+
+[data-theme="monochrome"] .expertise-card {
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="monochrome"] .card-content h3 {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="monochrome"] .card-content p {
+  color: #e0e0e0;
+}
+
+[data-theme="monochrome"] .card-icon {
+  background: linear-gradient(135deg, #505050 0%, #303030 100%);
+  border: 1px solid #606060;
+}
+
+[data-theme="monochrome"] .expertise-icon i {
+  color: #ffffff;
+}
 
 /* Card Content - enhanced typography and spacing */
 .card-content {
@@ -609,10 +802,11 @@ body {
     width: 100%;
   }
 
-  .cta-buttons .el-button {
+  .theme-button {
     width: 100%;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    min-width: 130px;
   }
 
   .specialties-section {

@@ -118,7 +118,7 @@ export default {
     // Close theme menu when clicking outside
     document.addEventListener('click', this.closeThemeMenu);
     // Initialize the forest theme on mount
-    this.setTheme('forest');
+    this.setTheme('monochrome');
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
@@ -317,7 +317,7 @@ a:hover {
 /* Header theme selector - positioned directly under the tagline */
 .header-theme-selector {
   position: relative;
-  margin-top: -0.1rem;
+  margin-top: -1.5rem;
   align-self: flex-start;
 }
 
