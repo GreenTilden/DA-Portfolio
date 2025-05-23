@@ -67,7 +67,7 @@ export default {
       demos: [
         {
           title: 'Predictive Maintenance AI',
-          placeholder: 'Interactive visualization of LSTM-based anomaly detection for laboratory instruments.',
+          component: InstrumentControlSimulator, // Placeholder until AI component is ready
           description: 'This demonstration showcases an AI system that can predict equipment failures before they occur by analyzing historical sensor data and identifying anomalous patterns.',
           technicalDetails: 'Built using TensorFlow and Python, this LSTM (Long Short-Term Memory) neural network model analyzes time-series data from laboratory instruments to detect subtle anomalies that precede equipment failures. The model is trained on historical sensor data with labeled failure events.',
           features: [
@@ -111,6 +111,7 @@ export default {
     }
   },
   mounted() {
+    // Check if a specific demo was requested in the URL
     const demoParam = this.$route.query.demo;
     if (demoParam) {
       const demoIndex = this.demos.findIndex(demo => 
@@ -120,8 +121,10 @@ export default {
         this.activeDemo = demoIndex;
       }
     }
-
+    
+    // Check if view parameter is set (for content customization)
     if (this.$route.query.view === 'ai-lead') {
+      // Ensure AI demo is first in the list
       const aiDemoIndex = this.demos.findIndex(demo => 
         demo.title === 'Predictive Maintenance AI'
       );
@@ -200,38 +203,6 @@ export default {
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-}
-
-.demo-placeholder {
-  padding: 2rem;
-  min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.placeholder-content {
-  text-align: center;
-}
-
-.placeholder-content h3 {
-  margin-bottom: 1rem;
-  color: var(--secondary-color);
-}
-
-.placeholder-content p {
-  margin-bottom: 2rem;
-  color: var(--text-light);
-  max-width: 600px;
-}
-
-.placeholder-image {
-  width: 100%;
-  height: 250px;
-  background-color: #e0e6ed;
-  border-radius: 0.5rem;
-  margin: 0 auto;
-  max-width: 700px;
 }
 
 .demo-explanation {

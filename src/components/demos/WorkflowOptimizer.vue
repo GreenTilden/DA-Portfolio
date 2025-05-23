@@ -12,50 +12,51 @@
         <el-button size="small" @click="resetWorkflows">
           <i class="fas fa-undo"></i> Reset
         </el-button>
-        <div class="instructions-panel" v-if="showInstructions">
-        <div class="instructions-header">
-          <h3>How to Use the Workflow Optimizer</h3>
-          <button class="close-button" @click="showInstructions = false">×</button>
-        </div>
-        <div class="instructions-content">
-          <ol>
-            <li><strong>Create Workflows:</strong> The demo includes pre-built workflows. You can modify them by dragging instruments from the palette to the workflow lanes.</li>
-            <li><strong>Configure Instruments:</strong> Click the "Configure Instruments" button to adjust how many instances of each instrument are available.</li>
-            <li><strong>Optimize Schedule:</strong> Click the "Optimize" button to generate an optimized schedule based on instrument availability and workflow priorities.</li>
-            <li><strong>Analyze Results:</strong> Review the Gantt chart to see the scheduled tasks and check for conflicts. The metrics section shows total time, conflicts, and resource utilization.</li>
-            <li><strong>Experiment:</strong> Try different configurations to see how they affect the schedule. Higher priority workflows (1 is highest) are scheduled first.</li>
-          </ol>
-          <div class="feature-highlights">
-            <div class="highlight">
-              <span class="highlight-icon">🔄</span>
-              <div>
-                <strong>Drag & Drop</strong>
-                <p>Drag instruments from the palette to the workflow lanes to create or modify steps.</p>
-              </div>
+      </div>
+    </div>
+
+    <div class="instructions-panel" v-if="showInstructions">
+      <div class="instructions-header">
+        <h3>How to Use the Workflow Optimizer</h3>
+        <button class="close-button" @click="showInstructions = false">×</button>
+      </div>
+      <div class="instructions-content">
+        <ol>
+          <li><strong>Create Workflows:</strong> The demo includes pre-built workflows. You can modify them by dragging instruments from the palette to the workflow lanes.</li>
+          <li><strong>Configure Instruments:</strong> Click the "Configure Instruments" button to adjust how many instances of each instrument are available.</li>
+          <li><strong>Optimize Schedule:</strong> Click the "Optimize" button to generate an optimized schedule based on instrument availability and workflow priorities.</li>
+          <li><strong>Analyze Results:</strong> Review the Gantt chart to see the scheduled tasks and check for conflicts. The metrics section shows total time, conflicts, and resource utilization.</li>
+          <li><strong>Experiment:</strong> Try different configurations to see how they affect the schedule. Higher priority workflows (1 is highest) are scheduled first.</li>
+        </ol>
+        <div class="feature-highlights">
+          <div class="highlight">
+            <span class="highlight-icon">🔄</span>
+            <div>
+              <strong>Drag & Drop</strong>
+              <p>Drag instruments from the palette to the workflow lanes to create or modify steps.</p>
             </div>
-            <div class="highlight">
-              <span class="highlight-icon">⚙️</span>
-              <div>
-                <strong>Resource Management</strong>
-                <p>Configure the number of available instruments to simulate real lab constraints.</p>
-              </div>
+          </div>
+          <div class="highlight">
+            <span class="highlight-icon">⚙️</span>
+            <div>
+              <strong>Resource Management</strong>
+              <p>Configure the number of available instruments to simulate real lab constraints.</p>
             </div>
-            <div class="highlight">
-              <span class="highlight-icon">📊</span>
-              <div>
-                <strong>Bottleneck Detection</strong>
-                <p>The optimizer identifies scheduling conflicts and bottlenecks in your workflows.</p>
-              </div>
+          </div>
+          <div class="highlight">
+            <span class="highlight-icon">📊</span>
+            <div>
+              <strong>Bottleneck Detection</strong>
+              <p>The optimizer identifies scheduling conflicts and bottlenecks in your workflows.</p>
             </div>
           </div>
         </div>
       </div>
-
-      <button class="help-button" @click="showInstructions = !showInstructions" v-if="!showInstructions">
-        <i class="fas fa-question-circle"></i> How to Use
-      </button>
-      </div>
     </div>
+
+    <button class="help-button" @click="showInstructions = !showInstructions" v-if="!showInstructions">
+      <i class="fas fa-question-circle"></i> How to Use
+    </button>
 
     <!-- Instrument Palette -->
     <div class="instrument-palette">
@@ -708,7 +709,7 @@ export default {
     onMounted(() => {
       initializeInstrumentPalette()
       loadFromLocalStorage()
-      showInstructions()
+      // No need to call showInstructions as it's a ref, not a method
       nextTick(() => {
         updateSvgSize()
         drawConnections()
@@ -736,6 +737,7 @@ export default {
       timeMarkers,
       connectionsSvg,
       ganttTimeline,
+      showInstructions,
       getInstrumentIcon,
       getWorkflowTagType,
       removeStep,
@@ -1310,4 +1312,38 @@ export default {
   border-color: var(--border-color);
   color: var(--text-light);
 }
+
+/* Fix for instrument palette */
+.instrument-palette .el-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10px;
+}
+
+.instrument-palette .el-col {
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+
+/* Ensure draggable components are visible */
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: var(--primary-color) !important;
+}
+
+.sortable-drag {
+  opacity: 0.8;
+}
+
+/* Fix z-index for dialogs */
+.el-dialog__wrapper {
+  z-index: 2500 !important;
+}
+
+.v-modal {
+  z-index: 2400 !important;
+}
+
+/* Add these styles to the end of the <style> section in WorkflowOptimizer.vue */
+
 </style>

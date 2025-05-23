@@ -3,10 +3,10 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import './style.css'
 import App from './App.vue'
-import router from './router' // Add this if you have router
+import router from './router'
 import ObserveVisibility from 'vue3-observe-visibility'
 import Particles from 'vue3-particles'
-import { VueDraggableNext as draggable } from 'vue-draggable-next'
+import { VueDraggableNext } from 'vue-draggable-next'
 
 const redirect = sessionStorage.getItem('redirect');
 if (redirect) {
@@ -19,7 +19,8 @@ if (redirect) {
 
 const app = createApp(App)
 app.use(ElementPlus)
-app.use(router) // Add this if you have router
+app.use(router)
 app.use(ObserveVisibility)
 app.use(Particles)
+app.component('draggable', VueDraggableNext)
 app.mount('#app')
