@@ -11,7 +11,10 @@ const themes = {
     '--text-color': '#f0f0f0',
     '--text-light': '#f0f0f0',
     '--text-faded': '#c5c5c5',
-    '--border-color': '#3f4f65'
+    '--border-color': '#3f4f65',
+    '--primary-color-rgb': '78, 204, 163',
+    '--secondary-color-rgb': '227, 178, 60',
+    '--icon-color': '#4ecca3'  // Match primary color
   },
   ocean: {
     '--bg-color': '#1e2a38',
@@ -24,19 +27,24 @@ const themes = {
     '--text-light': '#f0f0f0',
     '--text-faded': '#c5c5c5',
     '--border-color': '#4a5568',
+    '--primary-color-rgb': '74, 144, 226',
+    '--secondary-color-rgb': '110, 136, 166',
     '--icon-color': '#5fa4ff'  // Brighter icon color for better visibility
   },
   monochrome: {
     '--bg-color': '#1a1a1a',
     '--section-bg': '#2d2d2d',
     '--card-bg': '#3a3a3a',
-    '--primary-color': '#d0d0d0',  // Changed from #ffffff for better button appearance
-    '--primary-dark': '#b0b0b0',   // Adjusted to match new primary color
+    '--primary-color': '#d0d0d0',
+    '--primary-dark': '#b0b0b0',
     '--secondary-color': '#a0a0a0',
     '--text-color': '#f0f0f0',
     '--text-light': '#f0f0f0',
     '--text-faded': '#b0b0b0',
-    '--border-color': '#555555'    // Added for better card definition
+    '--border-color': '#555555',
+    '--primary-color-rgb': '208, 208, 208',
+    '--secondary-color-rgb': '160, 160, 160',
+    '--icon-color': '#909090'  // Medium gray for better contrast
   },
   purdue: {
     '--bg-color': '#1a1612',
@@ -50,7 +58,8 @@ const themes = {
     '--text-faded': '#c5c5c5',
     '--border-color': '#5d4a37',
     '--primary-color-rgb': '207, 181, 59',
-    '--secondary-color-rgb': '139, 115, 85'
+    '--secondary-color-rgb': '139, 115, 85',
+    '--icon-color': '#8a7429'  // Darker gold for better contrast
   },
   pacers: {
     '--bg-color': '#0a1929',
@@ -62,7 +71,10 @@ const themes = {
     '--text-color': '#f0f0f0',
     '--text-light': '#f0f0f0',
     '--text-faded': '#c5c5c5',
-    '--border-color': '#3d4b61'
+    '--border-color': '#3d4b61',
+    '--primary-color-rgb': '253, 187, 48',
+    '--secondary-color-rgb': '74, 144, 226',
+    '--icon-color': '#00285e'  // Darker navy blue (official Pacers color)
   }
 }
 

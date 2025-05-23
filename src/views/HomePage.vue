@@ -8,8 +8,8 @@
           <div class="hero-content">
             <h1 class="hero-title">Automation Excellence</h1>
             <h2 class="hero-role">{{ currentRole }}</h2>
-            <p class="intro-paragraph">Leveraging 10+ years of experience in laboratory automation to design, implement, and optimize 
-  high-throughput workflows that increase efficiency by up to 300% while ensuring data integrity 
+            <p class="intro-paragraph">Leveraging over 10 years in laboratory automation designing, implementing, and optimizing scientific workflows for labratories. </p>
+            <p class="intro-paragraph">My mission is to empower laboratories to achieve their goals through innovative solutions that enhance productivity, accuracy, 
   and regulatory compliance.</p>
             <p class="tagline">{{ currentTagline }}</p>
             <el-space wrap alignment="center" class="cta-buttons">
@@ -93,7 +93,7 @@ export default {
       roleConfigs: {
         general: {
           role: 'Laboratory Automation Specialist',
-          tagline: 'Designing and implementing advanced automated systems for high-throughput workflows',
+          tagline: 'To blessed to be stressed and too grateful to be hateful',
           sections: { specialties: true },
           specialties: [
             {
@@ -667,6 +667,8 @@ body {
   color: #ffffff;
 }
 
+
+
 /* Card Content - enhanced typography and spacing */
 .card-content {
   flex: 1;
@@ -867,5 +869,30 @@ body {
   0% { opacity: 0; transform: translateX(-100%); }
   50% { opacity: 1; transform: translateX(0); }
   100% { opacity: 0; transform: translateX(100%); }
+}
+
+/* Pacers theme icon styles */
+[data-theme="pacers"] .expertise-icon i {
+  color: var(--icon-color, #00285e);
+}
+
+[data-theme="pacers"] .card-icon {
+  background: rgba(0, 40, 94, 0.2);
+  border: 1px solid rgba(0, 40, 94, 0.4);
+}
+
+[data-theme="pacers"] .expertise-card {
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(253, 187, 48, 0.7) 100%);
+  border: 1px solid rgba(253, 187, 48, 0.4);
+}
+
+/* Purdue theme icon styles */
+[data-theme="purdue"] .expertise-icon i {
+  color: var(--icon-color, #8a7429);
+}
+
+[data-theme="purdue"] .card-icon {
+  background: rgba(138, 116, 41, 0.2);
+  border: 1px solid rgba(138, 116, 41, 0.4);
 }
 </style>

@@ -1,6 +1,4 @@
-.logo a {
-  color: var(--text-light);
-  display<template>
+<template>
   <div id="app" @click.self="closeMenu">
     <header class="header">
       <div class="content-container">
@@ -47,17 +45,28 @@
               <li><router-link to="/contact">Contact</router-link></li>
             </ul>
           </nav>
-          <transition name="menu-slide">
-            <div v-show="menuActive && isMobile" class="mobile-menu-container" @click.stop>
+          
+          <!-- Custom mobile menu pop-out -->
+          <div class="mobile-menu-overlay" v-if="menuActive" :class="{ 'active': menuActive }" @click.self="closeMenu">
+            <div class="mobile-menu-popout">
+              <div class="mobile-menu-header">
+                <div class="mobile-menu-title">Menu</div>
+                <button class="mobile-menu-close" @click="closeMenu">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
               <ul class="nav-links mobile-links">
-                <li><router-link to="/" exact @click.native="closeMenu">Home</router-link></li>
-                <li><router-link to="/demos" @click.native="closeMenu">Interactive Demos</router-link></li>
-                <li><router-link to="/projects" @click.native="closeMenu">Projects</router-link></li>
-                <li><router-link to="/experience" @click.native="closeMenu">Experience</router-link></li>
-                <li><router-link to="/contact" @click.native="closeMenu">Contact</router-link></li>
+                <li><router-link to="/" exact @click="closeMenu">Home</router-link></li>
+                <li><router-link to="/demos" @click="closeMenu">Interactive Demos</router-link></li>
+                <li><router-link to="/projects" @click="closeMenu">Projects</router-link></li>
+                <li><router-link to="/experience" @click="closeMenu">Experience</router-link></li>
+                <li><router-link to="/contact" @click="closeMenu">Contact</router-link></li>
               </ul>
             </div>
-          </transition>
+          </div>
         </div>
       </div>
     </header>
@@ -96,6 +105,7 @@
 import { useTheme } from '@/composables/useTheme';
 
 export default {
+  components: {},
   setup() {
     const { currentTheme, setTheme, availableThemes, getThemeDisplayName } = useTheme();
     return {
@@ -117,7 +127,7 @@ export default {
     window.addEventListener('resize', this.checkIfMobile);
     // Close theme menu when clicking outside
     document.addEventListener('click', this.closeThemeMenu);
-    // Initialize the forest theme on mount
+    // Initialize the theme on mount
     this.setTheme('monochrome');
   },
   beforeUnmount() {
@@ -134,15 +144,14 @@ export default {
     },
     toggleMenu() {
       this.menuActive = !this.menuActive;
-      document.body.style.overflow = this.menuActive && this.isMobile ? 'hidden' : '';
+      // Prevent body scroll when menu is active on mobile
+      if (this.isMobile) {
+        document.body.style.overflow = this.menuActive ? 'hidden' : '';
+      }
     },
     closeMenu() {
       this.menuActive = false;
       document.body.style.overflow = '';
-    },
-    switchTheme() {
-      const newTheme = this.currentTheme === 'forest' ? 'ocean' : 'forest';
-      this.setTheme(newTheme);
     },
     toggleThemeMenu(event) {
       event.stopPropagation();
@@ -227,34 +236,6 @@ a:hover {
   margin: 0 auto;
   padding: 0 1rem;
   box-sizing: border-box;
-}
-
-/* Mobile menu - creates the dropdown menu for mobile navigation */
-.mobile-menu-container {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: var(--section-bg);
-  border: 1px solid var(--border-color);
-  border-top: none;
-  border-radius: 0 0 1rem 1rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  margin: 0 0.5rem;
-  background: linear-gradient(to bottom, var(--section-bg) 0%, var(--section-bg) 100%);
-}
-
-.mobile-menu-container::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(to bottom, var(--section-bg), transparent);
-  z-index: 1;
 }
 
 /* Header & Navigation - creates the sticky header with responsive navigation */
@@ -370,6 +351,7 @@ a:hover {
   transform: rotate(180deg);
 }
 
+/* Theme dropdown improvements */
 .theme-dropdown {
   position: absolute;
   top: 100%;
@@ -407,10 +389,20 @@ a:hover {
   color: white;
 }
 
+[data-theme="monochrome"] .theme-choice:hover {
+  background-color: #d0d0d0;
+  color: #000000;
+}
+
 .theme-choice.active {
   background-color: var(--primary-color);
   color: white;
   font-weight: 600;
+}
+
+[data-theme="monochrome"] .theme-choice.active {
+  background-color: #d0d0d0;
+  color: #000000;
 }
 
 /* Main navigation - handles both desktop and mobile navigation states */
@@ -465,36 +457,243 @@ a:hover {
   border-radius: 1px;
 }
 
-/* Hamburger menu toggle - creates the animated mobile menu button */
+/* Hamburger menu toggle - Enhanced styling */
 .menu-toggle {
   display: none;
   flex-direction: column;
-  justify-content: space-between;
-  width: 24px;
-  height: 18px;
+  justify-content: center;
+  align-items: center;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   position: relative;
-  z-index: 1100;
+  z-index: 2100;
+  background: var(--primary-color);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  gap: 4px;
+}
+
+.menu-toggle:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .menu-toggle span {
+  display: block;
   height: 2px;
-  width: 100%;
-  background-color: var(--text-light);
-  transition: all 0.3s ease;
+  width: 20px;
+  background-color: white;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border-radius: 2px;
+  transform-origin: center;
+  position: relative;
+}
+
+.menu-toggle.active {
+  background: var(--primary-dark);
 }
 
 .menu-toggle.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+  transform: rotate(45deg) translate(0px, 6px);
 }
 
 .menu-toggle.active span:nth-child(2) {
   opacity: 0;
+  transform: scale(0);
 }
 
 .menu-toggle.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(6px, -6px);
+  transform: rotate(-45deg) translate(0px, -6px);
 }
+
+/* Monochrome theme adjustments */
+[data-theme="monochrome"] .menu-toggle {
+  background: #d0d0d0;
+  border: 1px solid #707070;
+}
+
+[data-theme="monochrome"] .menu-toggle span {
+  background-color: #000000;
+}
+
+[data-theme="monochrome"] .menu-toggle:hover {
+  background: #e0e0e0;
+}
+
+[data-theme="monochrome"] .menu-toggle.active {
+  background: #b0b0b0;
+}
+
+/* Mobile Menu Pop-out Styling */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.mobile-menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-popout {
+  width: 80%;
+  max-width: 320px;
+  height: 100%;
+  background-color: var(--section-bg);
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  padding: 0;
+  border-left: 1px solid var(--border-color);
+}
+
+.mobile-menu-overlay.active .mobile-menu-popout {
+  transform: translateX(0);
+}
+
+.mobile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-menu-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.mobile-menu-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+[data-theme="monochrome"] .mobile-menu-close {
+  background-color: #d0d0d0;
+  color: #000000;
+}
+
+.mobile-menu-close:hover {
+  transform: rotate(90deg);
+  background-color: var(--primary-dark);
+}
+
+[data-theme="monochrome"] .mobile-menu-close:hover {
+  background-color: #b0b0b0;
+}
+
+.mobile-links {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 0.5rem;
+}
+
+.mobile-links li {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="monochrome"] .mobile-links li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mobile-links li:last-child {
+  border-bottom: none;
+}
+
+.mobile-links a {
+  display: block;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--text-light);
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.mobile-links a:hover {
+  background-color: var(--primary-color);
+  color: white;
+  transform: translateX(8px);
+}
+
+[data-theme="monochrome"] .mobile-links a:hover {
+  background-color: #d0d0d0;
+  color: #000000;
+}
+
+.mobile-links a.router-link-active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+[data-theme="monochrome"] .mobile-links a.router-link-active {
+  color: #000000;
+}
+
+/* Animation for menu items */
+.mobile-links li {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition-delay: 0s;
+}
+
+.mobile-menu-overlay.active .mobile-links li {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: calc(0.1s + (0.05s * var(--index, 0)));
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Apply animation delays to each menu item */
+.mobile-links li:nth-child(1) { --index: 1; }
+.mobile-links li:nth-child(2) { --index: 2; }
+.mobile-links li:nth-child(3) { --index: 3; }
+.mobile-links li:nth-child(4) { --index: 4; }
+.mobile-links li:nth-child(5) { --index: 5; }
 
 /* Main content - provides consistent spacing for page content */
 .main-content {
@@ -544,17 +743,6 @@ a:hover {
 
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0;
-}
-
-.menu-slide-enter-active,
-.menu-slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.menu-slide-enter-from,
-.menu-slide-leave-to {
-  transform: translateY(-10px);
   opacity: 0;
 }
 
@@ -617,23 +805,6 @@ code, pre {
   /* Hide desktop links on mobile */
   .desktop-links {
     display: none;
-  }
-  
-  /* Mobile navigation menu styling */
-  .mobile-links {
-    flex-direction: column;
-    padding: 1.5rem;
-    margin: 0;
-  }
-
-  .mobile-links li {
-    margin: 0.75rem 0;
-    text-align: left;
-  }
-
-  .mobile-links a {
-    display: block;
-    padding: 0.5rem 0;
   }
 
   /* Mobile footer adjustments */
