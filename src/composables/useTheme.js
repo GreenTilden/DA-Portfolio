@@ -14,7 +14,18 @@ const themes = {
     '--border-color': '#3f4f65',
     '--primary-color-rgb': '78, 204, 163',
     '--secondary-color-rgb': '227, 178, 60',
-    '--icon-color': '#4ecca3'  // Match primary color
+    '--icon-color': '#4ecca3',
+    '--icon-bg': 'rgba(78, 204, 163, 0.2)',
+    '--icon-border': 'rgba(78, 204, 163, 0.4)',
+    '--bg-light': '#2e4a45',
+    '--card-gradient-start': '#2e4a45',
+    '--card-gradient-end': 'rgba(78, 204, 163, 0.7)',
+    '--button-text-dark': '#ffffff',
+    '--button-text-light': '#1b2a26',
+    '--hover-bg': 'rgba(78, 204, 163, 0.1)',
+    '--success-color': '#10B981',
+    '--error-color': '#EF4444',
+    '--warning-color': '#F59E0B'
   },
   ocean: {
     '--bg-color': '#1e2a38',
@@ -29,7 +40,18 @@ const themes = {
     '--border-color': '#4a5568',
     '--primary-color-rgb': '74, 144, 226',
     '--secondary-color-rgb': '110, 136, 166',
-    '--icon-color': '#5fa4ff'  // Brighter icon color for better visibility
+    '--icon-color': '#5fa4ff',
+    '--icon-bg': 'rgba(74, 144, 226, 0.2)',
+    '--icon-border': 'rgba(74, 144, 226, 0.4)',
+    '--bg-light': '#324158',
+    '--card-gradient-start': '#324158',
+    '--card-gradient-end': 'rgba(74, 144, 226, 0.7)',
+    '--button-text-dark': '#ffffff',
+    '--button-text-light': '#1e2a38',
+    '--hover-bg': 'rgba(74, 144, 226, 0.1)',
+    '--success-color': '#10B981',
+    '--error-color': '#EF4444',
+    '--warning-color': '#F59E0B'
   },
   monochrome: {
     '--bg-color': '#1a1a1a',
@@ -44,7 +66,18 @@ const themes = {
     '--border-color': '#555555',
     '--primary-color-rgb': '208, 208, 208',
     '--secondary-color-rgb': '160, 160, 160',
-    '--icon-color': '#909090'  // Medium gray for better contrast
+    '--icon-color': '#d0d0d0',
+    '--icon-bg': 'rgba(208, 208, 208, 0.2)',
+    '--icon-border': 'rgba(208, 208, 208, 0.4)',
+    '--bg-light': '#3a3a3a',
+    '--card-gradient-start': '#3a3a3a',
+    '--card-gradient-end': 'rgba(70, 70, 70, 0.9)',
+    '--button-text-dark': '#000000',
+    '--button-text-light': '#ffffff',
+    '--hover-bg': 'rgba(208, 208, 208, 0.1)',
+    '--success-color': '#10B981',
+    '--error-color': '#EF4444',
+    '--warning-color': '#F59E0B'
   },
   purdue: {
     '--bg-color': '#1a1612',
@@ -59,7 +92,18 @@ const themes = {
     '--border-color': '#5d4a37',
     '--primary-color-rgb': '207, 181, 59',
     '--secondary-color-rgb': '139, 115, 85',
-    '--icon-color': '#8a7429'  // Darker gold for better contrast
+    '--icon-color': '#3d342a',  // Fixed to match background
+    '--icon-bg': 'rgba(207, 181, 59, 0.2)',
+    '--icon-border': 'rgba(207, 181, 59, 0.6)',
+    '--bg-light': '#3d342a',
+    '--card-gradient-start': '#3d342a',
+    '--card-gradient-end': 'rgba(207, 181, 59, 0.7)',
+    '--button-text-dark': '#1a1612',
+    '--button-text-light': '#ffffff',
+    '--hover-bg': 'rgba(207, 181, 59, 0.15)',
+    '--success-color': '#10B981',
+    '--error-color': '#EF4444',
+    '--warning-color': '#F59E0B'
   },
   pacers: {
     '--bg-color': '#0a1929',
@@ -74,7 +118,18 @@ const themes = {
     '--border-color': '#3d4b61',
     '--primary-color-rgb': '253, 187, 48',
     '--secondary-color-rgb': '74, 144, 226',
-    '--icon-color': '#00285e'  // Darker navy blue (official Pacers color)
+    '--icon-color': '#00285e',
+    '--icon-bg': 'rgba(0, 40, 94, 0.2)',
+    '--icon-border': 'rgba(0, 40, 94, 0.4)',
+    '--bg-light': '#2d3748',
+    '--card-gradient-start': '#2d3748',
+    '--card-gradient-end': 'rgba(253, 187, 48, 0.7)',
+    '--button-text-dark': '#0a1929',
+    '--button-text-light': '#ffffff',
+    '--hover-bg': 'rgba(253, 187, 48, 0.1)',
+    '--success-color': '#10B981',
+    '--error-color': '#EF4444',
+    '--warning-color': '#F59E0B'
   }
 }
 
@@ -85,9 +140,7 @@ export function useTheme() {
     if (themes[themeName]) {
       currentTheme.value = themeName
       const root = document.documentElement
-      // Set the theme as a data attribute for more specific CSS targeting
       root.setAttribute('data-theme', themeName)
-      // Apply all CSS variables
       Object.entries(themes[themeName]).forEach(([property, value]) => {
         root.style.setProperty(property, value)
       })

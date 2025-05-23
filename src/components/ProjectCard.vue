@@ -107,7 +107,7 @@
   }
   
   .tech-tag {
-    background-color: var(--card-bg);
+    background-color: var(--hover-bg);
     color: var(--primary-color);
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;

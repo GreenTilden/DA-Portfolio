@@ -62,87 +62,49 @@ export default {
   },
   components: {
     ParticlesCanvas
-  },  
+  },
   data() {
     return {
       viewType: this.$route.query.view || 'general',
       visibleCards: [],
       animationFrameId: null,
-      themeRgbColors: {
-        'purdue': {
-          primary: '207, 181, 59',
-          secondary: '139, 115, 85'
-        },
-        'pacers': {
-          primary: '253, 187, 48',
-          secondary: '74, 144, 226'
-        },
-        'forest': {
-          primary: '78, 204, 163',
-          secondary: '227, 178, 60'
-        },
-        'ocean': {
-          primary: '74, 144, 226',
-          secondary: '110, 136, 166'
-        },
-        'monochrome': {
-          primary: '208, 208, 208',
-          secondary: '160, 160, 160'
-        }
-      },
       roleConfigs: {
         general: {
           role: 'Laboratory Automation Specialist',
-          tagline: 'To blessed to be stressed and too grateful to be hateful',
+          tagline: 'asdfasdfsaf',
           sections: { specialties: true },
           specialties: [
-            {
-              title: 'Automation System Design',
-              description: 'Designing and implementing customized automation solutions tailored to specific laboratory requirements.',
-              icon: 'fas fa-robot'
-            },
-            {
-              title: 'Workflow Optimization',
-              description: 'Analyzing existing workflows to identify bottlenecks and implementing automation strategies.',
-              icon: 'fas fa-chart-line'
-            },
-            {
-              title: 'Technical Leadership',
-              description: 'Leading teams in designing and delivering automation solutions with strategic guidance.',
-              icon: 'fas fa-users-cog'
-            },
-            {
-              title: 'Cross-functional Collaboration',
-              description: 'Mentoring, onboarding, and supporting teams across marketing, sales, and engineering.',
-              icon: 'fas fa-handshake'
-            }
-          ]
-        },
+              {
+                title: 'Automation System Design',
+                description: 'Crafting and deploying tailored automation systems that meet the unique needs of laboratory environments, ensuring precision, scalability, and efficiency.',
+                icon: 'fas fa-robot'
+              },
+              {
+                title: 'Workflow Optimization',
+                description: 'Evaluating and streamlining existing processes to eliminate bottlenecks and introduce automation techniques that boost productivity and reliability.',
+                icon: 'fas fa-chart-line'
+              },
+              {
+                title: 'Technical Leadership',
+                description: 'Driving innovation and results by leading cross-disciplinary teams in the strategic development and execution of automation initiatives.',
+                icon: 'fas fa-users-cog'
+              },
+              {
+                title: 'Cross-functional Collaboration',
+                description: 'Facilitating seamless collaboration across engineering, marketing, and sales by mentoring, onboarding, and enabling cohesive teamwork.',
+                icon: 'fas fa-handshake'
+              }
+            ]
+          },
         'ai-lead': {
           role: 'AI Strategy & Laboratory Automation Leadership',
           tagline: 'Bridging advanced automation expertise with emerging AI technologies',
           sections: { specialties: true },
           specialties: [
-            {
-              title: 'AI Strategy Development',
-              description: 'Creating roadmaps for AI integration into laboratory systems with implementation pathways.',
-              icon: 'fas fa-brain'
-            },
-            {
-              title: 'Predictive Maintenance Systems',
-              description: 'Using analytics to anticipate equipment failures and optimize maintenance schedules.',
-              icon: 'fas fa-chart-bar'
-            },
-            {
-              title: 'Workflow Intelligence',
-              description: 'Applying ML to optimize workflows and intelligently schedule operations.',
-              icon: 'fas fa-network-wired'
-            },
-            {
-              title: 'Team Leadership & Transformation',
-              description: 'Driving digital transformation through AI technology adoption and team collaboration.',
-              icon: 'fas fa-users'
-            }
+            { title: 'AI Strategy Development', description: '...', icon: 'fas fa-brain' },
+            { title: 'Predictive Maintenance Systems', description: '...', icon: 'fas fa-chart-bar' },
+            { title: 'Workflow Intelligence', description: '...', icon: 'fas fa-network-wired' },
+            { title: 'Team Leadership & Transformation', description: '...', icon: 'fas fa-users' }
           ]
         }
       }
@@ -169,21 +131,6 @@ export default {
     onVisibilityChange(isVisible, index) {
       if (isVisible) this.visibleCards[index] = true;
     },
-    hexToRgb(hex) {
-      // Remove # if present
-      hex = hex.replace('#', '');
-      
-      // Handle shorthand hex (#fff)
-      if (hex.length === 3) {
-        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-      }
-      
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      
-      return `${r}, ${g}, ${b}`;
-    },
     initParticleCanvas() {
       const canvas = this.$refs.particleCanvas;
       const ctx = canvas.getContext('2d');
@@ -196,31 +143,24 @@ export default {
       resize();
       window.addEventListener('resize', resize);
 
-      const colors = ['#FFD700', '#4A90E2']; // yellow, blue
-      const particles = Array.from({ length: 10 }).map((_, i) => {
-        const isYellow = i < 4;
-        return {
-          x: Math.random() * canvas.offsetWidth,
-          y: Math.random() * canvas.offsetHeight,
-          dx: (Math.random() - 0.5) * 0.5,
-          dy: (Math.random() - 0.5) * 0.5,
-          radius: 3 + Math.random() * 2,
-          color: isYellow ? colors[0] : colors[1]
-        };
-      });
+      const colors = ['#FFD700', '#4A90E2'];
+      const particles = Array.from({ length: 10 }).map((_, i) => ({
+        x: Math.random() * canvas.offsetWidth,
+        y: Math.random() * canvas.offsetHeight,
+        dx: (Math.random() - 0.5) * 0.5,
+        dy: (Math.random() - 0.5) * 0.5,
+        radius: 3 + Math.random() * 2,
+        color: i < 4 ? colors[0] : colors[1]
+      }));
 
       const draw = () => {
         ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-        // Draw connections between particles to create a network effect
         particles.forEach((p1, i) => {
-          const nearest = particles
-            .filter((_, j) => j !== i)
-            .sort((a, b) => {
-              const d1 = Math.hypot(p1.x - a.x, p1.y - a.y);
-              const d2 = Math.hypot(p1.x - b.x, p1.y - b.y);
-              return d1 - d2;
-            })
-            .slice(0, 2);
+          const nearest = particles.filter((_, j) => j !== i).sort((a, b) => {
+            const d1 = Math.hypot(p1.x - a.x, p1.y - a.y);
+            const d2 = Math.hypot(p1.x - b.x, p1.y - b.y);
+            return d1 - d2;
+          }).slice(0, 2);
 
           nearest.forEach(p2 => {
             const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
@@ -235,7 +175,6 @@ export default {
           });
         });
 
-        // Draw the individual particles
         particles.forEach(p => {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
@@ -243,7 +182,6 @@ export default {
           ctx.fill();
         });
 
-        // Update particle positions for continuous animation
         particles.forEach(p => {
           p.x += p.dx;
           p.y += p.dy;
@@ -267,20 +205,6 @@ export default {
     if (this.specialties && Array.isArray(this.specialties)) {
       this.visibleCards = new Array(this.specialties.length).fill(false);
     }
-    
-    // Get current theme from data attribute
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'pacers';
-    
-    // Add RGB versions of theme colors for better opacity control
-    if (this.themeRgbColors[currentTheme]) {
-      document.documentElement.style.setProperty('--primary-color-rgb', this.themeRgbColors[currentTheme].primary);
-      document.documentElement.style.setProperty('--secondary-color-rgb', this.themeRgbColors[currentTheme].secondary);
-    } else {
-      // Fallback to calculating RGB values
-      document.documentElement.style.setProperty('--primary-color-rgb', this.hexToRgb(getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim()));
-      document.documentElement.style.setProperty('--secondary-color-rgb', this.hexToRgb(getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim()));
-    }
-    
     this.$nextTick(() => {
       this.initParticleCanvas();
     });
@@ -486,55 +410,7 @@ body {
   overflow: hidden;
 }
 
-/* Specific theme overrides for cards */
-[data-theme="purdue"] .expertise-card {
-  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(207, 181, 59, 0.7) 100%);
-  border: 1px solid rgba(207, 181, 59, 0.4);
-}
 
-[data-theme="purdue"] .card-content h3 {
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="purdue"] .card-content p {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-[data-theme="purdue"] .card-icon {
-  background: rgba(207, 181, 59, 0.2);
-  border: 1px solid rgba(207, 181, 59, 0.6);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="purdue"] .expertise-icon i {
-  color: var(--primary-color);
-}
-
-/* Purdue theme button overrides */
-[data-theme="purdue"] .primary-button {
-  background-color: var(--primary-color);
-  color: #1a1612;
-  font-weight: 700;
-  box-shadow: 0 4px 10px rgba(207, 181, 59, 0.3);
-}
-
-[data-theme="purdue"] .secondary-button {
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-  font-weight: 600;
-}
-
-[data-theme="purdue"] .primary-button:hover {
-  background-color: #e0c649;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(207, 181, 59, 0.4);
-}
-
-[data-theme="purdue"] .secondary-button:hover {
-  background-color: rgba(207, 181, 59, 0.15);
-  border-color: #e0c649;
-}
 
 .expertise-heading {
   font-size: 2.5rem;
@@ -574,8 +450,7 @@ body {
 
 /* Expertise Cards - enhanced design with consistent heights */
 .expertise-card {
-  background: linear-gradient(135deg, var(--card-bg) 0%, var(--primary-color) 100%);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--card-gradient-start) 0%, var(--card-gradient-end) 100%);  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 2.5rem;
   display: flex;
@@ -633,40 +508,11 @@ body {
   justify-content: center;
   font-size: 2.5rem;
   color: var(--secondary-color);
-  background: linear-gradient(135deg, rgba(var(--secondary-color-rgb, 110, 136, 166), 0.2) 0%, rgba(var(--primary-color-rgb, 74, 144, 226), 0.1) 100%);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--icon-bg) 0%, var(--icon-bg) 100%);  border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   position: relative;
+  border: 1px solid var(--icon-border);
 }
-
-/* Icon colors for themes */
-[data-theme="ocean"] .expertise-icon i {
-  color: var(--icon-color, #5fa4ff);
-}
-
-[data-theme="monochrome"] .expertise-card {
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-}
-
-[data-theme="monochrome"] .card-content h3 {
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="monochrome"] .card-content p {
-  color: #e0e0e0;
-}
-
-[data-theme="monochrome"] .card-icon {
-  background: linear-gradient(135deg, #505050 0%, #303030 100%);
-  border: 1px solid #606060;
-}
-
-[data-theme="monochrome"] .expertise-icon i {
-  color: #ffffff;
-}
-
 
 
 /* Card Content - enhanced typography and spacing */

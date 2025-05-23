@@ -12,38 +12,7 @@ html {
 }
 
 :root {
-  /* Dark theme color palette */
-  --bg-color: #1b2a26;           /* Deep forest green */
-  --section-bg: #253f3a;         /* Dark pine */
-  --card-bg: #2e4a45;            /* Medium forest */
-  --primary-color: #4ecca3;      /* Mint/sage green */
-  --primary-dark: #2e8b67;       /* Darker mint */
-  --secondary-color: #e3b23c;    /* Warm amber/gold */
-
-
-  /* Typography colors */
-  --text-light: #f0f0f0;
-  --text-faded: #c5c5c5;
-  --text-muted: #8696a9;
-
-  --primary-10: rgba(74, 144, 226, 0.1);
-  --primary-20: rgba(74, 144, 226, 0.2);
-  --section-bg-transparent: rgba(42, 54, 72, 0);
-  --success-color: #10B981;
-  --error-color: #EF4444;
-  --warning-color: #F59E0B;
-  --bg-light: var(--card-bg);
-  --text-color: var(--text-light);
-
-
-  /* Border and structure */
-  --border-color: #3f4f65;
-  --border-light: #4a5b75;
-  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
-
-  /* Font families */
+/* Font families */
   --font-heading: 'Poppins', sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-code: 'Roboto Mono', monospace;

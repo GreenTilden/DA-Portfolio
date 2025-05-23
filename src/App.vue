@@ -10,7 +10,6 @@
                 <p class="tagline">Automation Professional</p>
               </router-link>
             </div>
-            <!-- Theme Selector anchored to bottom -->
             <div class="header-theme-selector">
               <button @click="toggleThemeMenu" class="theme-toggle" :class="{ active: showThemeMenu }">
                 {{ getThemeDisplayName(currentTheme) }}
@@ -32,10 +31,21 @@
             </div>
           </div>
           <nav class="main-nav">
-            <div class="menu-toggle" @click.stop="toggleMenu" :class="{ 'active': menuActive }">
+            <div class="menu-toggle" ref="menuToggle" @click.stop="toggleMenu" :class="{ 'active': menuActive }">
               <span></span>
               <span></span>
               <span></span>
+              <div v-if="menuActive" class="mobile-menu-popout-float" @click.self="closeMenu">
+                <div class="mobile-menu-popout">
+                  <ul class="nav-links mobile-links">
+                    <li><router-link to="/" exact @click="closeMenu">Home</router-link></li>
+                    <li><router-link to="/demos" @click="closeMenu">Interactive Demos</router-link></li>
+                    <li><router-link to="/projects" @click="closeMenu">Projects</router-link></li>
+                    <li><router-link to="/experience" @click="closeMenu">Experience</router-link></li>
+                    <li><router-link to="/contact" @click="closeMenu">Contact</router-link></li>
+                  </ul>
+                </div>
+              </div>
             </div>
             <ul class="nav-links desktop-links">
               <li><router-link to="/" exact>Home</router-link></li>
@@ -45,32 +55,10 @@
               <li><router-link to="/contact">Contact</router-link></li>
             </ul>
           </nav>
-          
-          <!-- Custom mobile menu pop-out -->
-          <div class="mobile-menu-overlay" v-if="menuActive" :class="{ 'active': menuActive }" @click.self="closeMenu">
-            <div class="mobile-menu-popout">
-              <div class="mobile-menu-header">
-                <div class="mobile-menu-title">Menu</div>
-                <button class="mobile-menu-close" @click="closeMenu">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              <ul class="nav-links mobile-links">
-                <li><router-link to="/" exact @click="closeMenu">Home</router-link></li>
-                <li><router-link to="/demos" @click="closeMenu">Interactive Demos</router-link></li>
-                <li><router-link to="/projects" @click="closeMenu">Projects</router-link></li>
-                <li><router-link to="/experience" @click="closeMenu">Experience</router-link></li>
-                <li><router-link to="/contact" @click="closeMenu">Contact</router-link></li>
-              </ul>
-            </div>
-          </div>
         </div>
       </div>
     </header>
-    
+
     <main class="main-content">
       <div class="content-container">
         <router-view v-slot="{ Component }">
@@ -101,11 +89,11 @@
   </div>
 </template>
 
+
 <script>
 import { useTheme } from '@/composables/useTheme';
 
 export default {
-  components: {},
   setup() {
     const { currentTheme, setTheme, availableThemes, getThemeDisplayName } = useTheme();
     return {
@@ -125,9 +113,7 @@ export default {
   mounted() {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
-    // Close theme menu when clicking outside
     document.addEventListener('click', this.closeThemeMenu);
-    // Initialize the theme on mount
     this.setTheme('monochrome');
   },
   beforeUnmount() {
@@ -144,7 +130,6 @@ export default {
     },
     toggleMenu() {
       this.menuActive = !this.menuActive;
-      // Prevent body scroll when menu is active on mobile
       if (this.isMobile) {
         document.body.style.overflow = this.menuActive ? 'hidden' : '';
       }
@@ -179,26 +164,6 @@ export default {
 <style>
 /* Import professional fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
-
-/* Root variables - this provides the foundation colors and spacing for the entire app */
-:root {
-  --bg-color: #1b2a26;             /* Deep forest green - Main page background */
-  --section-bg: #253f3a;           /* Dark pine - Hero and specialty sections */
-  --card-bg: #2e4a45;              /* Medium forest - Individual cards */
-  --primary-color: #4ecca3;        /* Mint/sage green - CTA buttons and highlights */
-  --primary-dark: #2e8b67;         /* Darker mint - Hover states */
-  --secondary-color: #e3b23c;      /* Warm amber/gold - Secondary accents */
-  --text-color: #f0f0f0;           /* Light text - Primary text */
-  --text-light: #f0f0f0;           /* Light text - Emphasized text */
-  --text-faded: #c5c5c5;           /* Muted text - Secondary/muted text */
-  --border-color: #3f4f65;         /* Card borders and dividers */
-  --success-color: #10B981;
-  --error-color: #EF4444;
-  --warning-color: #F59E0B;
-  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
 
 /* Base elements - sets up fundamental styling for the entire application */
 body {
@@ -458,54 +423,51 @@ a:hover {
 }
 
 /* Hamburger menu toggle - Enhanced styling */
-.menu-toggle {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 44px;
-  height: 44px;
-  cursor: pointer;
-  position: relative;
-  z-index: 2100;
+.menu-toggle{
+  position: relative;                   /* for absolute bars              */
+  display: flex; justify-content:center; align-items:center;
+  width: 44px; height: 44px;
   background: var(--primary-color);
   border-radius: 8px;
-  transition: all 0.3s ease;
-  gap: 4px;
+  cursor: pointer;
+  transition: background .3s ease, box-shadow .3s ease, transform .3s ease;
 }
-
-.menu-toggle:hover {
+.menu-toggle:hover{
   background: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
-
-.menu-toggle span {
-  display: block;
-  height: 2px;
-  width: 20px;
-  background-color: white;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+.menu-toggle span{           /* bar baseline */
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 2px;
+  background: white;
   border-radius: 2px;
   transform-origin: center;
-  position: relative;
+  transition: transform .3s ease, opacity .25s ease;
 }
 
-.menu-toggle.active {
-  background: var(--primary-dark);
+/* initial 3-bar stack (translate up / middle / down) */
+.menu-toggle span:nth-child(1){ transform: translate(-50% , -50%) translateY(-6px); }
+.menu-toggle span:nth-child(2){ transform: translate(-50% , -50%);              }
+.menu-toggle span:nth-child(3){ transform: translate(-50% , -50%) translateY( 6px); }
+
+
+.menu-toggle.active { gap: 0; } /* container rule just to be safe */
+
+.menu-toggle.active { gap: 0; }            /* bars now overlap */
+.menu-toggle.active span         {               /* overlay all bars */
+  position: absolute;
+  top: 50%; left: 50%;
+  transform-origin: center;
 }
 
-.menu-toggle.active span:nth-child(1) {
-  transform: rotate(45deg) translate(0px, 6px);
+.menu-toggle.active span:nth-child(1){
+  transform: translate(-50%, -50%) rotate(45deg);
 }
-
-.menu-toggle.active span:nth-child(2) {
-  opacity: 0;
-  transform: scale(0);
-}
-
-.menu-toggle.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(0px, -6px);
+.menu-toggle.active span:nth-child(2){ opacity: 0; }
+.menu-toggle.active span:nth-child(3){
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 /* Monochrome theme adjustments */
@@ -550,79 +512,41 @@ a:hover {
 }
 
 .mobile-menu-popout {
-  width: 80%;
-  max-width: 320px;
-  height: 100%;
-  background-color: var(--section-bg);
-  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
-  transform: translateX(100%);
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  position: relative;
-  padding: 0;
-  border-left: 1px solid var(--border-color);
+  padding: .5rem;
+}
+
+.mobile-menu-popout-float {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: var(--section-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-lg);
+  min-width: 220px;
+  max-width: 80vw;
+  z-index: 2100;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: fadeInDown 0.25s ease;
 }
 
 .mobile-menu-overlay.active .mobile-menu-popout {
   transform: translateX(0);
 }
 
-.mobile-menu-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.mobile-menu-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-light);
-}
-
-.mobile-menu-close {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-[data-theme="monochrome"] .mobile-menu-close {
-  background-color: #d0d0d0;
-  color: #000000;
-}
-
-.mobile-menu-close:hover {
-  transform: rotate(90deg);
-  background-color: var(--primary-dark);
-}
-
-[data-theme="monochrome"] .mobile-menu-close:hover {
-  background-color: #b0b0b0;
-}
-
 .mobile-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
   gap: 0.5rem;
 }
 
-.mobile-links li {
-  margin: 0;
-  padding: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
 
 [data-theme="monochrome"] .mobile-links li {
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -634,19 +558,20 @@ a:hover {
 
 .mobile-links a {
   display: block;
-  padding: 0.75rem 1rem;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: var(--text-light);
-  transition: all 0.3s ease;
-  border-radius: 0.5rem;
-  margin: 0.5rem 0;
+  border-radius: 0.3rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  padding: 0.5rem;        /* equal on both sides */
+  margin: 0 auto;         /* centre the inline-block */
+  width: max-content;     /* shrink to text width   */
+
 }
 
 .mobile-links a:hover {
-  background-color: var(--primary-color);
-  color: white;
-  transform: translateX(8px);
+  color: var(--primary-color);
+  transform: translateX(5px);
 }
 
 [data-theme="monochrome"] .mobile-links a:hover {
@@ -654,47 +579,10 @@ a:hover {
   color: #000000;
 }
 
-.mobile-links a.router-link-active {
-  color: var(--primary-color);
-  font-weight: 600;
-}
 
 [data-theme="monochrome"] .mobile-links a.router-link-active {
   color: #000000;
 }
-
-/* Animation for menu items */
-.mobile-links li {
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  transition-delay: 0s;
-}
-
-.mobile-menu-overlay.active .mobile-links li {
-  opacity: 1;
-  transform: translateX(0);
-  transition-delay: calc(0.1s + (0.05s * var(--index, 0)));
-}
-
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Apply animation delays to each menu item */
-.mobile-links li:nth-child(1) { --index: 1; }
-.mobile-links li:nth-child(2) { --index: 2; }
-.mobile-links li:nth-child(3) { --index: 3; }
-.mobile-links li:nth-child(4) { --index: 4; }
-.mobile-links li:nth-child(5) { --index: 5; }
-
 /* Main content - provides consistent spacing for page content */
 .main-content {
   min-height: calc(100vh - 140px);
@@ -847,5 +735,10 @@ code, pre {
   .header-left {
     align-items: flex-start;
   }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
