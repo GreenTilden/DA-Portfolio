@@ -195,6 +195,11 @@ export default {
   border-radius: 0.5rem;
   overflow: hidden;
   background-color: var(--bg-light);
+  min-height: 650px;
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .demo-placeholder {

@@ -12,6 +12,48 @@
         <el-button size="small" @click="resetWorkflows">
           <i class="fas fa-undo"></i> Reset
         </el-button>
+        <div class="instructions-panel" v-if="showInstructions">
+        <div class="instructions-header">
+          <h3>How to Use the Workflow Optimizer</h3>
+          <button class="close-button" @click="showInstructions = false">×</button>
+        </div>
+        <div class="instructions-content">
+          <ol>
+            <li><strong>Create Workflows:</strong> The demo includes pre-built workflows. You can modify them by dragging instruments from the palette to the workflow lanes.</li>
+            <li><strong>Configure Instruments:</strong> Click the "Configure Instruments" button to adjust how many instances of each instrument are available.</li>
+            <li><strong>Optimize Schedule:</strong> Click the "Optimize" button to generate an optimized schedule based on instrument availability and workflow priorities.</li>
+            <li><strong>Analyze Results:</strong> Review the Gantt chart to see the scheduled tasks and check for conflicts. The metrics section shows total time, conflicts, and resource utilization.</li>
+            <li><strong>Experiment:</strong> Try different configurations to see how they affect the schedule. Higher priority workflows (1 is highest) are scheduled first.</li>
+          </ol>
+          <div class="feature-highlights">
+            <div class="highlight">
+              <span class="highlight-icon">🔄</span>
+              <div>
+                <strong>Drag & Drop</strong>
+                <p>Drag instruments from the palette to the workflow lanes to create or modify steps.</p>
+              </div>
+            </div>
+            <div class="highlight">
+              <span class="highlight-icon">⚙️</span>
+              <div>
+                <strong>Resource Management</strong>
+                <p>Configure the number of available instruments to simulate real lab constraints.</p>
+              </div>
+            </div>
+            <div class="highlight">
+              <span class="highlight-icon">📊</span>
+              <div>
+                <strong>Bottleneck Detection</strong>
+                <p>The optimizer identifies scheduling conflicts and bottlenecks in your workflows.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="help-button" @click="showInstructions = !showInstructions" v-if="!showInstructions">
+        <i class="fas fa-question-circle"></i> How to Use
+      </button>
       </div>
     </div>
 
@@ -295,6 +337,7 @@ export default {
     const showInstrumentConfig = ref(false)
     const connectionsSvg = ref(null)
     const ganttTimeline = ref(null)
+    const showInstructions = ref(true);
     
     // Instrument configuration
     const instrumentConfig = reactive({
@@ -665,7 +708,7 @@ export default {
     onMounted(() => {
       initializeInstrumentPalette()
       loadFromLocalStorage()
-      
+      showInstructions()
       nextTick(() => {
         updateSvgSize()
         drawConnections()
@@ -1083,6 +1126,131 @@ export default {
   font-size: 0.875rem;
 }
 
+/* Instructions Panel */
+.instructions-panel {
+  position: absolute;
+  top: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.instructions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.instructions-header h3 {
+  margin: 0;
+  color: white;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+}
+
+.instructions-content {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.instructions-content ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.instructions-content li {
+  margin-bottom: 0.75rem;
+  color: var(--text-light);
+}
+
+.feature-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.highlight {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-color);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.highlight-icon {
+  font-size: 1.5rem;
+}
+
+.highlight strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.highlight p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.help-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  z-index: 10;
+  width: auto;
+}
+
+.help-button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Adjust for mobile */
+@media (max-width: 768px) {
+  .instructions-panel {
+    width: 95%;
+    top: 3rem;
+  }
+  
+  .feature-highlights {
+    grid-template-columns: 1fr;
+  }
+  
+  .help-button {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
 /* Responsive */
 @media (max-width: 768px) {
   .optimizer-header {
