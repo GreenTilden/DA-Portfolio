@@ -6,6 +6,7 @@ import App from './App.vue'
 import router from './router' // Add this if you have router
 import ObserveVisibility from 'vue3-observe-visibility'
 import Particles from 'vue3-particles'
+import { VueDraggableNext as draggable } from 'vue-draggable-next'
 
 const redirect = sessionStorage.getItem('redirect');
 if (redirect) {

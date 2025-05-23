@@ -21,14 +21,7 @@
       </div>
 
       <div class="demo-container">
-        <div class="demo-placeholder">
-          <!-- This would be replaced with actual interactive demos -->
-          <div class="placeholder-content">
-            <h3>{{ demos[activeDemo].title }}</h3>
-            <p>{{ demos[activeDemo].placeholder }}</p>
-            <div class="placeholder-image"></div>
-          </div>
-        </div>
+        <component :is="demos[activeDemo].component"></component>
       </div>
 
       <div class="demo-explanation">
@@ -57,8 +50,17 @@
 </template>
 
 <script>
+import InstrumentControlSimulator from '@/components/demos/InstrumentControlSimulator.vue'
+import LiquidHandlerVisualizer from '@/components/demos/LiquidHandlerVisualizer.vue'
+import WorkflowOptimizer from '@/components/demos/WorkflowOptimizer.vue'
+
 export default {
   name: 'DemosView',
+  components: {
+    InstrumentControlSimulator,
+    LiquidHandlerVisualizer,
+    WorkflowOptimizer
+  },
   data() {
     return {
       activeDemo: 0,
@@ -79,7 +81,7 @@ export default {
         },
         {
           title: 'Laboratory Instrument Control',
-          placeholder: 'Interactive simulation of laboratory instrument control interfaces and automation scripts.',
+          component: InstrumentControlSimulator,
           description: 'This simulator demonstrates how I develop automation scripts for controlling laboratory instruments, showcasing real-time communication, error handling, and recovery procedures.',
           technicalDetails: 'The simulator demonstrates the object-oriented approach I use when developing laboratory automation scripts, including proper error handling, logging, and recovery procedures. In real applications, these scripts are written in Python and C# to interface with instrument SDKs.',
           features: [
@@ -93,7 +95,7 @@ export default {
         },
         {
           title: 'Workflow Optimization',
-          placeholder: 'Interactive workflow modeling and optimization tool for laboratory processes.',
+          component: WorkflowOptimizer,
           description: 'This tool demonstrates how I approach laboratory workflow optimization by modeling, simulating, and visualizing complex multi-instrument processes to identify bottlenecks and improve efficiency.',
           technicalDetails: 'The workflow optimizer uses discrete event simulation techniques to model laboratory operations. It calculates resource utilization, identifies bottlenecks, and simulates the effects of different optimization strategies on overall throughput and turnaround time.',
           features: [
@@ -109,7 +111,6 @@ export default {
     }
   },
   mounted() {
-    // Check if a specific demo was requested in the URL
     const demoParam = this.$route.query.demo;
     if (demoParam) {
       const demoIndex = this.demos.findIndex(demo => 
@@ -119,10 +120,8 @@ export default {
         this.activeDemo = demoIndex;
       }
     }
-    
-    // Check if view parameter is set (for content customization)
+
     if (this.$route.query.view === 'ai-lead') {
-      // Ensure AI demo is first in the list
       const aiDemoIndex = this.demos.findIndex(demo => 
         demo.title === 'Predictive Maintenance AI'
       );

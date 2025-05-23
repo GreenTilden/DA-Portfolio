@@ -71,7 +71,7 @@ export default {
       roleConfigs: {
         general: {
           role: 'Laboratory Automation Specialist',
-          tagline: 'asdfasdfsaf',
+          tagline: 'Go Pacers! 1-0',
           sections: { specialties: true },
           specialties: [
               {
