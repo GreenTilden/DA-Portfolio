@@ -1,7 +1,12 @@
 <template>
   <div class="workflow-optimizer">
     <div class="optimizer-header">
-      <h3>Workflow Optimizer</h3>
+      <div class="header-left">
+        <h3>Workflow Optimizer</h3>
+        <button class="help-button" @click="showInstructions = !showInstructions" v-if="!showInstructions">
+          <i class="fas fa-question-circle"></i> How to Use
+        </button>
+      </div>
       <div class="control-buttons">
         <el-button size="small" @click="showInstrumentConfig = true">
           <i class="fas fa-cog"></i> Configure Instruments
@@ -11,6 +16,9 @@
         </el-button>
         <el-button size="small" @click="resetWorkflows">
           <i class="fas fa-undo"></i> Reset
+        </el-button>
+        <el-button size="small" @click="initializeInstrumentPalette">
+          <i class="fas fa-sync"></i> Refresh
         </el-button>
       </div>
     </div>
@@ -54,28 +62,117 @@
       </div>
     </div>
 
-    <button class="help-button" @click="showInstructions = !showInstructions" v-if="!showInstructions">
-      <i class="fas fa-question-circle"></i> How to Use
-    </button>
-
-    <!-- Instrument Palette -->
+    <!-- Enhanced Condensed Instrument Palette -->
     <div class="instrument-palette">
       <h4>Instrument Palette</h4>
-      <div class="palette-grid">
-        <draggable
-          v-model="instrumentPalette"
-          :group="{ name: 'instruments', pull: 'clone', put: false }"
-          :sort="false"
-          item-key="id"
-        >
-          <template #item="{ element }">
-            <div class="instrument-card">
-              <i :class="getInstrumentIcon(element.type)"></i>
-              <span>{{ element.type }}</span>
-              <small>{{ element.duration }}min</small>
+      <p class="palette-instructions">Drag these instrument templates to workflow lanes below</p>
+      
+      <!-- Custom Task Creator -->
+      <div class="custom-task-creator">
+        <div class="creator-header" @click="toggleCustomTaskForm">
+          <h5>
+            <i class="fas fa-plus-circle"></i>
+            Create Custom Task
+          </h5>
+          <i :class="showCustomTaskForm ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+        </div>
+        
+        <div class="creator-form" v-if="showCustomTaskForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Instrument Type</label>
+              <select v-model="customTask.type" class="form-control">
+                <option v-for="(tasks, instrument) in INSTRUMENTS" :key="instrument" :value="instrument">
+                  {{ instrument }}
+                </option>
+              </select>
             </div>
-          </template>
-        </draggable>
+            <div class="form-group">
+              <label>Task Name</label>
+              <input type="text" v-model="customTask.task" class="form-control" placeholder="Enter task name">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Duration (minutes)</label>
+              <input type="number" v-model.number="customTask.duration" class="form-control" min="1" step="1">
+            </div>
+            <div class="form-group">
+              <label>Custom Icon</label>
+              <select v-model="customTask.customIcon" class="form-control">
+                <option value="">Use Default Icon</option>
+                <option v-for="(icon, index) in AVAILABLE_ICONS" :key="index" :value="icon.class">
+                  {{ icon.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group icon-preview">
+              <label>Icon Preview</label>
+              <div class="preview-icon">
+                <i :class="customTask.customIcon || getInstrumentIcon(customTask.type)"></i>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-actions">
+                <button @click="addCustomTask" class="add-task-btn" :disabled="!isCustomTaskValid">
+                  <i class="fas fa-plus"></i> Add to Palette
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Condensed Instrument Drawers Grid -->
+      <div class="instrument-drawers">
+        <div v-for="(tasks, instrument) in INSTRUMENTS" :key="instrument" 
+             class="instrument-drawer" 
+             :class="{ 'drawer-open': isDrawerOpen(instrument) }">
+          <div class="drawer-header" @click="toggleDrawer(instrument)">
+            <div class="drawer-title">
+              <i :class="getInstrumentIcon(instrument)"></i>
+              <span>{{ instrument }}</span>
+            </div>
+            <i :class="isDrawerOpen(instrument) ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+          </div>
+          
+          <div class="drawer-content">
+            <div class="palette-grid">
+              <!-- Standard Tasks -->
+              <div 
+                v-for="(task, index) in tasks" 
+                :key="instrument + '-' + task + '-' + index"
+                class="instrument-card" 
+                draggable="true" 
+                @dragstart="onDragStart($event, {type: instrument, task, duration: DEFAULT_DURATIONS[instrument]})"
+              >
+                <i :class="getInstrumentIcon(instrument)"></i>
+                <span>{{ instrument }}</span>
+                <small>{{ task }}</small>
+                <small>{{ DEFAULT_DURATIONS[instrument] }}min</small>
+              </div>
+              
+              <!-- Custom Tasks for this instrument -->
+              <div 
+                v-for="(customTaskItem, index) in getCustomTasksForInstrument(instrument)" 
+                :key="'custom-' + instrument + '-' + index"
+                class="instrument-card custom-card" 
+                draggable="true" 
+                @dragstart="onDragStart($event, customTaskItem)"
+              >
+                <i :class="customTaskItem.customIcon || getInstrumentIcon(customTaskItem.type)"></i>
+                <span>{{ customTaskItem.type }}</span>
+                <small>{{ customTaskItem.task }}</small>
+                <small>{{ customTaskItem.duration }}min</small>
+                <button @click.stop="removeCustomTask(customTaskItem)" class="remove-custom-task">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -83,48 +180,94 @@
     <div class="workflows-container">
       <div v-for="workflow in workflows" :key="workflow.id" class="workflow-section">
         <div class="workflow-header">
-          <h4>{{ workflow.name }}</h4>
-          <el-tag :type="getWorkflowTagType(workflow.priority)" size="small">
-            Priority {{ workflow.priority }}
-          </el-tag>
+          <div class="workflow-name-container">
+            <h4 v-if="!workflow.isEditingName" @click="startEditingWorkflowName(workflow)">
+              {{ workflow.name }}
+              <i class="fas fa-pen edit-icon"></i>
+            </h4>
+            <div v-else class="edit-name-container">
+              <input 
+                type="text" 
+                v-model="workflow.editName" 
+                @keyup.enter="saveWorkflowName(workflow)" 
+                ref="workflowNameInput"
+                class="edit-name-input"
+              />
+              <div class="edit-actions">
+                <button @click="saveWorkflowName(workflow)" class="edit-action-btn save-btn">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button @click="cancelEditWorkflowName(workflow)" class="edit-action-btn cancel-btn">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="workflow-controls">
+            <el-tag :type="getWorkflowTagType(workflow.priority)" size="small">
+              Priority {{ workflow.priority }}
+            </el-tag>
+            <button class="add-lane-btn" @click="addNewLane(workflow)">
+              <i class="fas fa-plus"></i> Add Lane
+            </button>
+          </div>
         </div>
         
         <div class="workflow-lanes">
           <div v-for="lane in workflow.lanes" :key="lane.id" class="labware-lane">
             <div class="lane-header">
-              <i class="fas fa-flask"></i>
-              {{ lane.name }}
-            </div>
-            <draggable
-              v-model="lane.steps"
-              :group="{ name: 'instruments' }"
-              item-key="id"
-              class="lane-steps"
-              @change="onStepsChange"
-            >
-              <template #item="{ element, index }">
-                <div 
-                  class="device-step"
-                  :class="{ 'liquid-handler': element.type === 'Liquid Handler' }"
-                  :data-step-id="element.id"
-                >
-                  <div class="step-content">
-                    <span class="step-name">{{ element.task || element.type }}</span>
-                    <span class="step-duration">{{ element.duration }}min</span>
+              <div class="lane-name-container">
+                <span v-if="!lane.isEditingName" @click="startEditingLaneName(lane)">
+                  <i class="fas fa-flask"></i>
+                  {{ lane.name }}
+                  <i class="fas fa-pen edit-icon"></i>
+                </span>
+                <div v-else class="edit-name-container">
+                  <input 
+                    type="text" 
+                    v-model="lane.editName" 
+                    @keyup.enter="saveLaneName(lane)" 
+                    ref="laneNameInput"
+                    class="edit-name-input"
+                  />
+                  <div class="edit-actions">
+                    <button @click="saveLaneName(lane)" class="edit-action-btn save-btn">
+                      <i class="fas fa-check"></i>
+                    </button>
+                    <button @click="cancelEditLaneName(lane)" class="edit-action-btn cancel-btn">
+                      <i class="fas fa-times"></i>
+                    </button>
                   </div>
-                  <el-button
-                    circle
-                    size="small"
-                    type="danger"
-                    plain
-                    class="remove-step"
-                    @click="removeStep(workflow.id, lane.id, index)"
-                  >
-                    <i class="fas fa-times"></i>
-                  </el-button>
                 </div>
-              </template>
-            </draggable>
+              </div>
+              <button class="remove-lane-btn" @click="removeLane(workflow, lane)" v-if="workflow.lanes.length > 1">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+            <div 
+              class="lane-steps" 
+              @dragover.prevent="handleDragOver($event)" 
+              @dragleave="handleDragLeave($event)" 
+              @drop="onDrop($event, workflow, lane)"
+            >
+              <div 
+                v-for="(step, stepIndex) in lane.steps" 
+                :key="step.id"
+                class="device-step"
+                :class="{ 'liquid-handler': step.type === 'Liquid Handler' }"
+                :data-step-id="step.id"
+                draggable="true"
+                @dragstart="onDragStart($event, step, true)"
+              >
+                <div class="step-content">
+                  <span class="step-name">{{ step.task || step.type }}</span>
+                  <span class="step-duration">{{ step.duration }}min</span>
+                </div>
+                <button class="remove-step-btn" @click="removeStep(workflow.id, lane.id, stepIndex)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -199,6 +342,7 @@
       v-model="showInstrumentConfig" 
       title="Configure Instrument Nests"
       width="600px"
+      class="instrument-config-dialog"
     >
       <div class="config-content">
         <div v-for="(config, instrument) in instrumentConfig" :key="instrument" class="config-row">
@@ -221,11 +365,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
-import { VueDraggableNext as draggable } from 'vue-draggable-next'
-import InstrumentControlSimulator from '@/components/demos/InstrumentControlSimulator.vue'
-import LiquidHandlerVisualizer from '@/components/demos/LiquidHandlerVisualizer.vue'
-import WorkflowOptimizer from '@/components/demos/WorkflowOptimizer.vue'
+import { ref, reactive, computed, onMounted, nextTick, watch, onUnmounted } from 'vue'
 
 // Instrument definitions
 const INSTRUMENTS = {
@@ -236,7 +376,8 @@ const INSTRUMENTS = {
   'Plate Peeler': ['Peel Seal', 'Remove Film'],
   'Incubator': ['Incubate', 'Set Temperature', 'Orbital Shake'],
   'Plate Shaker': ['Orbital Mix', 'Linear Shake', 'Vortex'],
-  'Bulk Dispenser': ['Dispense Reagent', 'Prime Lines', 'Load Tips']
+  'Bulk Dispenser': ['Dispense Reagent', 'Prime Lines', 'Load Tips'],
+  'Storage': ['Get', 'Store', 'Transfer']
 }
 
 const DEFAULT_DURATIONS = {
@@ -247,8 +388,43 @@ const DEFAULT_DURATIONS = {
   'Plate Peeler': 2,
   'Incubator': 60,
   'Plate Shaker': 20,
-  'Bulk Dispenser': 8
+  'Bulk Dispenser': 8,
+  'Storage': 2
 }
+
+// Available icons for custom tasks
+const AVAILABLE_ICONS = [
+  { name: 'Flask', class: 'fas fa-flask' },
+  { name: 'Vial', class: 'fas fa-vial' },
+  { name: 'Atom', class: 'fas fa-atom' },
+  { name: 'Test Tube', class: 'fas fa-test-tube' },
+  { name: 'Fire', class: 'fas fa-fire' },
+  { name: 'Snowflake', class: 'fas fa-snowflake' },
+  { name: 'Lightning', class: 'fas fa-bolt' },
+  { name: 'Magnet', class: 'fas fa-magnet' },
+  { name: 'Radiation', class: 'fas fa-radiation' },
+  { name: 'Biohazard', class: 'fas fa-biohazard' },
+  { name: 'Virus', class: 'fas fa-virus' },
+  { name: 'DNA', class: 'fas fa-dna' },
+  { name: 'Prescription', class: 'fas fa-prescription' },
+  { name: 'Pills', class: 'fas fa-pills' },
+  { name: 'Capsules', class: 'fas fa-capsules' },
+  { name: 'Syringe', class: 'fas fa-syringe' },
+  { name: 'Heartbeat', class: 'fas fa-heartbeat' },
+  { name: 'Stethoscope', class: 'fas fa-stethoscope' },
+  { name: 'X-Ray', class: 'fas fa-x-ray' },
+  { name: 'Microscope', class: 'fas fa-microscope' },
+  { name: 'Funnel', class: 'fas fa-filter' },
+  { name: 'Hourglass', class: 'fas fa-hourglass-half' },
+  { name: 'Thermometer', class: 'fas fa-thermometer-half' },
+  { name: 'Scale', class: 'fas fa-weight' },
+  { name: 'Droplet', class: 'fas fa-tint' },
+  { name: 'Sun', class: 'fas fa-sun' },
+  { name: 'Moon', class: 'fas fa-moon' },
+  { name: 'Star', class: 'fas fa-star' },
+  { name: 'Cog', class: 'fas fa-cog' },
+  { name: 'Tools', class: 'fas fa-tools' }
+]
 
 // Pre-built workflows
 const DEFAULT_WORKFLOWS = [
@@ -256,10 +432,14 @@ const DEFAULT_WORKFLOWS = [
     id: 'workflow-a',
     name: 'Workflow A: Protein Binding',
     priority: 1,
+    isEditingName: false,
+    editName: '',
     lanes: [
       {
         id: 'lane-a1',
         name: 'Compound Plate',
+        isEditingName: false,
+        editName: '',
         steps: [
           { id: 'step-a1-1', type: 'Storage', task: 'Get', duration: 2 },
           { id: 'step-a1-2', type: 'Liquid Handler', task: 'Transfer', duration: 15 },
@@ -269,6 +449,8 @@ const DEFAULT_WORKFLOWS = [
       {
         id: 'lane-a2',
         name: 'Assay Plate',
+        isEditingName: false,
+        editName: '',
         steps: [
           { id: 'step-a2-1', type: 'Liquid Handler', task: 'Prep', duration: 5 },
           { id: 'step-a2-2', type: 'Incubator', task: 'Incubate', duration: 60 },
@@ -282,10 +464,14 @@ const DEFAULT_WORKFLOWS = [
     id: 'workflow-b',
     name: 'Workflow B: Cell Viability',
     priority: 2,
+    isEditingName: false,
+    editName: '',
     lanes: [
       {
         id: 'lane-b1',
         name: 'Source Plate',
+        isEditingName: false,
+        editName: '',
         steps: [
           { id: 'step-b1-1', type: 'Storage', task: 'Get', duration: 2 },
           { id: 'step-b1-2', type: 'Bulk Dispenser', task: 'Dispense', duration: 12 },
@@ -295,6 +481,8 @@ const DEFAULT_WORKFLOWS = [
       {
         id: 'lane-b2',
         name: 'Read Plate',
+        isEditingName: false,
+        editName: '',
         steps: [
           { id: 'step-b2-1', type: 'Liquid Handler', task: 'Prep', duration: 3 },
           { id: 'step-b2-2', type: 'Plate Shaker', task: 'Shake', duration: 20 },
@@ -308,10 +496,14 @@ const DEFAULT_WORKFLOWS = [
     id: 'workflow-c',
     name: 'Workflow C: QC Analysis',
     priority: 3,
+    isEditingName: false,
+    editName: '',
     lanes: [
       {
         id: 'lane-c1',
         name: 'Sample Plate',
+        isEditingName: false,
+        editName: '',
         steps: [
           { id: 'step-c1-1', type: 'Storage', task: 'Get', duration: 2 },
           { id: 'step-c1-2', type: 'Centrifuge', task: 'Centrifuge', duration: 12 },
@@ -325,9 +517,6 @@ const DEFAULT_WORKFLOWS = [
 
 export default {
   name: 'WorkflowOptimizer',
-  components: {
-    draggable
-  },
   setup() {
     // State
     const workflows = ref(JSON.parse(JSON.stringify(DEFAULT_WORKFLOWS)))
@@ -338,7 +527,20 @@ export default {
     const showInstrumentConfig = ref(false)
     const connectionsSvg = ref(null)
     const ganttTimeline = ref(null)
-    const showInstructions = ref(true);
+    const showInstructions = ref(false) // Changed to false initially
+    const currentDragItem = ref(null)
+    
+    // Enhanced instrument palette state
+    const openDrawers = ref(['Liquid Handler']) // Initially open the Liquid Handler drawer
+    const customTasks = ref([])
+    const showCustomTaskForm = ref(false)
+    const customTask = reactive({
+      type: 'Liquid Handler',
+      task: '',
+      duration: 15,
+      customIcon: '', // New field for custom icon
+      id: ''
+    })
     
     // Instrument configuration
     const instrumentConfig = reactive({
@@ -370,6 +572,17 @@ export default {
       return markers
     })
 
+    // Enhanced instrument palette computed properties
+    const isCustomTaskValid = computed(() => {
+      return (
+        customTask.type && 
+        customTask.task && 
+        customTask.task.trim() !== '' && 
+        customTask.duration && 
+        customTask.duration >= 1
+      )
+    })
+
     // Methods
     const initializeInstrumentPalette = () => {
       const palette = []
@@ -380,7 +593,7 @@ export default {
           palette.push({
             id: `palette-${id++}`,
             type: instrument,
-            task: task,
+            task,
             duration: DEFAULT_DURATIONS[instrument]
           })
         })
@@ -405,7 +618,176 @@ export default {
     }
 
     const getWorkflowTagType = (priority) => {
-      return priority === 1 ? 'danger' : priority === 2 ? 'warning' : ''
+      return priority === 1 ? 'danger' : priority === 2 ? 'warning' : 'info'
+    }
+
+    // Enhanced instrument palette methods
+    const toggleDrawer = (instrument) => {
+      const index = openDrawers.value.indexOf(instrument)
+      if (index === -1) {
+        openDrawers.value.push(instrument)
+      } else {
+        openDrawers.value.splice(index, 1)
+      }
+    }
+
+    const isDrawerOpen = (instrument) => {
+      return openDrawers.value.includes(instrument)
+    }
+
+    const toggleCustomTaskForm = () => {
+      showCustomTaskForm.value = !showCustomTaskForm.value
+    }
+
+    const addCustomTask = () => {
+      if (!isCustomTaskValid.value) return
+      
+      // Create a new custom task with a unique ID
+      const newCustomTask = {
+        ...customTask,
+        id: `custom-${Date.now()}`
+      }
+      
+      // Add to custom tasks
+      customTasks.value.push(newCustomTask)
+      
+      // Reset form (except for the instrument type)
+      customTask.task = ''
+      customTask.duration = 15
+      customTask.customIcon = ''
+      customTask.id = ''
+      
+      // Save to localStorage
+      saveToLocalStorage()
+    }
+
+    const getCustomTasksForInstrument = (instrument) => {
+      return customTasks.value.filter(task => task.type === instrument)
+    }
+
+    const removeCustomTask = (taskToRemove) => {
+      const index = customTasks.value.findIndex(task => task.id === taskToRemove.id)
+      if (index !== -1) {
+        customTasks.value.splice(index, 1)
+        saveToLocalStorage()
+      }
+    }
+
+    const onDragStart = (event, item, isExistingStep = false) => {
+      currentDragItem.value = { ...item, isExistingStep }
+      // Set drag data
+      event.dataTransfer.setData('text/plain', JSON.stringify(item))
+      event.dataTransfer.effectAllowed = isExistingStep ? 'move' : 'copy'
+    }
+
+    const onDrop = (event, workflow, lane) => {
+      event.preventDefault()
+      event.currentTarget.classList.remove('drag-over')
+      removeDropIndicators() // Remove drop indicators
+      
+      if (!currentDragItem.value) return
+      
+      const item = currentDragItem.value
+      
+      // If it's an existing step, remove it from its current location
+      if (item.isExistingStep) {
+        // Find and remove the step from its original location
+        let found = false
+        workflows.value.forEach(w => {
+          if (found) return
+          w.lanes.forEach(l => {
+            if (found) return
+            const stepIndex = l.steps.findIndex(s => s.id === item.id)
+            if (stepIndex !== -1) {
+              l.steps.splice(stepIndex, 1)
+              found = true
+            }
+          })
+        })
+      }
+      
+      // Create a new step from the palette item
+      const newStep = {
+        id: `${lane.id}-step-${Date.now()}-${lane.steps.length}`,
+        type: item.type,
+        task: item.task,
+        duration: item.duration,
+        customIcon: item.customIcon || null // Preserve custom icon if it exists
+      }
+      
+      // Add the new step to the lane
+      lane.steps.push(newStep)
+      
+      // Update connections after adding
+      nextTick(() => {
+        drawConnections()
+      })
+      
+      // Save to localStorage for dev
+      saveToLocalStorage()
+      
+      // Reset drag item
+      currentDragItem.value = null
+    }
+
+    // New drag and drop enhancement methods
+    const handleDragOver = (event) => {
+      event.preventDefault()
+      event.currentTarget.classList.add('drag-over')
+      
+      // Find the closest device step if any
+      const closestStep = findClosestStepElement(event)
+      
+      // Remove any existing drop indicators
+      removeDropIndicators()
+      
+      if (closestStep) {
+        // Determine if we should place before or after
+        const rect = closestStep.getBoundingClientRect()
+        const midpoint = rect.left + rect.width / 2
+        
+        // Create and position the indicator
+        const indicator = document.createElement('div')
+        indicator.className = 'drop-indicator'
+        
+        if (event.clientX < midpoint) {
+          // Place before
+          closestStep.before(indicator)
+        } else {
+          // Place after
+          closestStep.after(indicator)
+        }
+      }
+    }
+
+    const handleDragLeave = (event) => {
+      // Only remove the class if we're leaving the container itself, not just moving between children
+      if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove('drag-over')
+        removeDropIndicators()
+      }
+    }
+
+    const findClosestStepElement = (event) => {
+      // Get all steps in this lane
+      const steps = Array.from(event.currentTarget.querySelectorAll('.device-step'))
+      if (steps.length === 0) return null
+      
+      // Find the closest step based on horizontal position
+      return steps.reduce((closest, step) => {
+        const rect = step.getBoundingClientRect()
+        const centerX = rect.left + rect.width / 2
+        const distance = Math.abs(event.clientX - centerX)
+        
+        if (!closest || distance < closest.distance) {
+          return { element: step, distance }
+        }
+        return closest
+      }, null)?.element
+    }
+
+    const removeDropIndicators = () => {
+      document.querySelectorAll('.drop-indicator').forEach(el => el.remove())
     }
 
     const removeStep = (workflowId, laneId, stepIndex) => {
@@ -541,6 +923,37 @@ export default {
         })
       })
       
+      // Add dependencies for Liquid Handler tasks that need to be paired
+      const liquidHandlerTasks = allTasks.filter(task => task.type === 'Liquid Handler')
+      const liquidHandlersByWorkflow = {}
+      
+      // Group Liquid Handler tasks by workflow
+      liquidHandlerTasks.forEach(task => {
+        if (!liquidHandlersByWorkflow[task.workflowId]) {
+          liquidHandlersByWorkflow[task.workflowId] = []
+        }
+        liquidHandlersByWorkflow[task.workflowId].push(task)
+      })
+      
+      // For each workflow, add dependencies between Liquid Handler tasks
+      Object.values(liquidHandlersByWorkflow).forEach(tasks => {
+        if (tasks.length > 1) {
+          // Add all other liquid handler tasks in this workflow as dependencies
+          tasks.forEach(task => {
+            const liquidHandlerDependencies = tasks
+              .filter(t => t.id !== task.id)
+              .map(t => t.id)
+              
+            // Add these dependencies if they don't already exist
+            liquidHandlerDependencies.forEach(depId => {
+              if (!task.dependencies.includes(depId)) {
+                task.dependencies.push(depId)
+              }
+            })
+          })
+        }
+      })
+      
       // Sort by workflow priority and step order
       allTasks.sort((a, b) => {
         if (a.workflowPriority !== b.workflowPriority) {
@@ -567,6 +980,18 @@ export default {
             earliestStart = Math.max(earliestStart, taskCompletionTimes[depId])
           }
         })
+        
+        // For Liquid Handler tasks, make sure multiple LH tasks within the same workflow start at the same time
+        if (task.type === 'Liquid Handler' && liquidHandlersByWorkflow[task.workflowId]?.length > 1) {
+          const workflowLHTasks = liquidHandlersByWorkflow[task.workflowId]
+          const earliestLHStarts = workflowLHTasks
+            .filter(t => t.id !== task.id && taskCompletionTimes[t.id])
+            .map(t => taskCompletionTimes[t.id] - t.duration)
+          
+          if (earliestLHStarts.length > 0) {
+            earliestStart = Math.max(earliestStart, ...earliestLHStarts)
+          }
+        }
         
         // Find available nest
         const instrument = task.type
@@ -676,7 +1101,8 @@ export default {
       if (process.env.NODE_ENV === 'development') {
         localStorage.setItem('workflow-optimizer-state', JSON.stringify({
           workflows: workflows.value,
-          instrumentConfig: instrumentConfig
+          instrumentConfig: instrumentConfig,
+          customTasks: customTasks.value
         }))
       }
     }
@@ -688,6 +1114,7 @@ export default {
           const data = JSON.parse(saved)
           workflows.value = data.workflows || workflows.value
           Object.assign(instrumentConfig, data.instrumentConfig || {})
+          customTasks.value = data.customTasks || []
         }
       }
     }
@@ -705,17 +1132,124 @@ export default {
       }
     }
 
+    // Name editing functions
+    const startEditingWorkflowName = (workflow) => {
+      // First cancel any other editing in progress
+      workflows.value.forEach(w => {
+        w.isEditingName = false
+      })
+      
+      // Set edit mode and prepare edit value
+      workflow.isEditingName = true
+      workflow.editName = workflow.name
+      
+      // Focus the input on next tick
+      nextTick(() => {
+        const input = document.querySelector('.workflow-name-container .edit-name-input')
+        if (input) input.focus()
+      })
+    }
+    
+    const saveWorkflowName = (workflow) => {
+      if (workflow.editName && workflow.editName.trim() !== '') {
+        workflow.name = workflow.editName.trim()
+      }
+      workflow.isEditingName = false
+    }
+    
+    const cancelEditWorkflowName = (workflow) => {
+      workflow.isEditingName = false
+    }
+    
+    const startEditingLaneName = (lane) => {
+      // First cancel any other editing in progress
+      workflows.value.forEach(w => {
+        w.lanes.forEach(l => {
+          l.isEditingName = false
+        })
+      })
+      
+      // Set edit mode and prepare edit value
+      lane.isEditingName = true
+      lane.editName = lane.name
+      
+      // Focus the input on next tick
+      nextTick(() => {
+        const input = document.querySelector('.lane-name-container .edit-name-input')
+        if (input) input.focus()
+      })
+    }
+    
+    const saveLaneName = (lane) => {
+      if (lane.editName && lane.editName.trim() !== '') {
+        lane.name = lane.editName.trim()
+      }
+      lane.isEditingName = false
+    }
+    
+    const cancelEditLaneName = (lane) => {
+      lane.isEditingName = false
+    }
+    
+    // Lane management
+    const addNewLane = (workflow) => {
+      const newLaneId = `lane-${workflow.id}-${Date.now()}`
+      workflow.lanes.push({
+        id: newLaneId,
+        name: `New Lane ${workflow.lanes.length + 1}`,
+        isEditingName: false,
+        editName: '',
+        steps: []
+      })
+      
+      // Start editing the name of the new lane
+      nextTick(() => {
+        const newLane = workflow.lanes[workflow.lanes.length - 1]
+        startEditingLaneName(newLane)
+      })
+    }
+    
+    const removeLane = (workflow, lane) => {
+      // Don't allow removing the last lane
+      if (workflow.lanes.length <= 1) return
+      
+      const laneIndex = workflow.lanes.findIndex(l => l.id === lane.id)
+      if (laneIndex !== -1) {
+        workflow.lanes.splice(laneIndex, 1)
+        
+        // Update connections after removal
+        nextTick(() => {
+          drawConnections()
+        })
+      }
+    }
+
     // Lifecycle
     onMounted(() => {
       initializeInstrumentPalette()
       loadFromLocalStorage()
-      // No need to call showInstructions as it's a ref, not a method
+      
+      // Ensure workflows have editing properties
+      workflows.value.forEach(workflow => {
+        workflow.isEditingName = false
+        workflow.editName = ''
+        workflow.lanes.forEach(lane => {
+          lane.isEditingName = false
+          lane.editName = ''
+        })
+      })
+      
       nextTick(() => {
         updateSvgSize()
         drawConnections()
       })
       
       window.addEventListener('resize', updateSvgSize)
+    })
+    
+    // Clean up
+    onUnmounted(() => {
+      window.removeEventListener('resize', updateSvgSize)
     })
 
     // Watch for workflow changes
@@ -738,6 +1272,22 @@ export default {
       connectionsSvg,
       ganttTimeline,
       showInstructions,
+      currentDragItem,
+      // Enhanced instrument palette
+      openDrawers,
+      customTasks,
+      showCustomTaskForm,
+      customTask,
+      isCustomTaskValid,
+      toggleDrawer,
+      isDrawerOpen,
+      toggleCustomTaskForm,
+      addCustomTask,
+      getCustomTasksForInstrument,
+      removeCustomTask,
+      INSTRUMENTS,
+      DEFAULT_DURATIONS,
+      AVAILABLE_ICONS, // New export for icon selection
       getInstrumentIcon,
       getWorkflowTagType,
       removeStep,
@@ -746,7 +1296,25 @@ export default {
       getUniqueInstruments,
       getTasksForInstrument,
       resetWorkflows,
-      saveInstrumentConfig
+      saveInstrumentConfig,
+      initializeInstrumentPalette,
+      onDragStart,
+      onDrop,
+      // New drag and drop handlers
+      handleDragOver,
+      handleDragLeave,
+      findClosestStepElement,
+      removeDropIndicators,
+      // Name editing functions
+      startEditingWorkflowName,
+      saveWorkflowName,
+      cancelEditWorkflowName,
+      startEditingLaneName,
+      saveLaneName,
+      cancelEditLaneName,
+      // Lane management
+      addNewLane,
+      removeLane
     }
   }
 }
@@ -768,6 +1336,12 @@ export default {
   margin-bottom: 2rem;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .optimizer-header h3 {
   margin: 0;
   color: var(--text-light);
@@ -778,24 +1352,245 @@ export default {
   gap: 0.5rem;
 }
 
-/* Instrument Palette */
+/* Help button */
+.help-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  z-index: 10;
+  margin-left: 1rem;
+}
+
+.help-button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Enhanced Condensed Instrument Palette */
 .instrument-palette {
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 1rem;
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .instrument-palette h4 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   color: var(--text-light);
   font-size: 1rem;
 }
 
+.palette-instructions {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem 0;
+  font-style: italic;
+}
+
+/* Custom Task Creator */
+.custom-task-creator {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.creator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.creator-header:hover {
+  background-color: var(--primary-dark);
+}
+
+.creator-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.creator-form {
+  padding: 1rem;
+  background-color: var(--bg-color);
+  border-top: 1px solid var(--border-color);
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.form-control {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.icon-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preview-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--section-bg);
+  border-radius: 0.25rem;
+  font-size: 1.25rem;
+  color: var(--primary-color);
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.add-task-btn {
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.add-task-btn:hover:not(:disabled) {
+  background-color: #0e9f6e;
+}
+
+.add-task-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Condensed Instrument Drawers Grid with Sliding Effect */
+.instrument-drawers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  position: relative;
+}
+
+.instrument-drawer {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
+.instrument-drawer.drawer-open {
+  z-index: 10;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--section-bg);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.drawer-header:hover {
+  background-color: var(--card-bg);
+}
+
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.drawer-title i {
+  font-size: 1rem;
+  color: var(--primary-color);
+}
+
+.drawer-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 20;
+  min-width: 320px;
+}
+
+.instrument-drawer.drawer-open .drawer-content {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
 .palette-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: 0.5rem;
 }
 
@@ -811,11 +1606,20 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .instrument-card:hover {
   border-color: var(--primary-color);
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.instrument-card.custom-card {
+  border-color: var(--primary-color);
+  border-style: dashed;
+  background-color: var(--section-bg);
 }
 
 .instrument-card i {
@@ -826,11 +1630,36 @@ export default {
 .instrument-card span {
   font-size: 0.875rem;
   color: var(--text-light);
+  font-weight: 500;
 }
 
 .instrument-card small {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.remove-custom-task {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--error-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.instrument-card.custom-card:hover .remove-custom-task {
+  opacity: 1;
 }
 
 /* Workflows */
@@ -873,8 +1702,8 @@ export default {
 
 .lane-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
   margin-bottom: 0.5rem;
   color: var(--secondary-color);
   font-weight: 500;
@@ -882,12 +1711,14 @@ export default {
 
 .lane-steps {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  min-height: 50px;
+  min-height: 60px;
   padding: 0.5rem;
   background-color: var(--bg-color);
   border: 1px dashed var(--border-color);
   border-radius: 0.25rem;
+  transition: all 0.2s ease;
 }
 
 .device-step {
@@ -926,20 +1757,26 @@ export default {
   opacity: 0.9;
 }
 
-.remove-step {
+.remove-step-btn {
   position: absolute;
   top: -8px;
   right: -8px;
   width: 20px;
   height: 20px;
-  padding: 0;
+  background-color: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
   display: none;
-}
-
-.device-step:hover .remove-step {
-  display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+.device-step:hover .remove-step-btn {
+  display: flex;
 }
 
 /* Connections */
@@ -1216,44 +2053,156 @@ export default {
   color: var(--text-light);
 }
 
-.help-button {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background-color: var(--primary-color);
+/* Name editing */
+.workflow-name-container,
+.lane-name-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.edit-icon {
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  color: var(--primary-color);
+}
+
+.workflow-name-container:hover .edit-icon,
+.lane-name-container:hover .edit-icon {
+  opacity: 1;
+}
+
+.edit-name-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-name-input {
+  background-color: var(--bg-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  color: var(--text-light);
+  width: 200px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.edit-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.75rem;
+}
+
+.save-btn {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.cancel-btn {
+  background-color: var(--error-color);
+  color: white;
+}
+
+/* Lane management */
+.workflow-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-lane-btn {
+  background-color: var(--success-color);
   color: white;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   cursor: pointer;
-  font-size: 0.9rem;
-  z-index: 10;
-  width: auto;
+  margin-left: 0.5rem;
 }
 
-.help-button:hover {
-  background-color: var(--primary-dark);
+.remove-lane-btn {
+  background-color: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
 }
 
-/* Adjust for mobile */
-@media (max-width: 768px) {
-  .instructions-panel {
-    width: 95%;
-    top: 3rem;
-  }
-  
-  .feature-highlights {
-    grid-template-columns: 1fr;
-  }
-  
-  .help-button {
-    top: 0.5rem;
-    right: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-  }
+/* Dialog header fix */
+:deep(.instrument-config-dialog .el-dialog__header) {
+  background-color: var(--primary-color);
+  padding: 15px 20px;
 }
+
+:deep(.instrument-config-dialog .el-dialog__title) {
+  color: white;
+  font-weight: 500;
+}
+
+:deep(.instrument-config-dialog .el-dialog__headerbtn .el-dialog__close) {
+  color: white;
+}
+
+/* Drag and drop visual improvements */
+.lane-steps.drag-over {
+  background-color: var(--hover-bg);
+  border: 1px solid var(--primary-color);
+}
+
+.drop-indicator {
+  width: 4px;
+  height: 40px;
+  background-color: var(--primary-color);
+  border-radius: 2px;
+  margin: 0 6px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.device-step:active {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
 /* Responsive */
+@media (max-width: 1200px) {
+  .instrument-drawers {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .optimizer-header {
     flex-direction: column;
@@ -1264,6 +2213,19 @@ export default {
   .control-buttons {
     width: 100%;
     justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .control-buttons .el-button {
+    margin-bottom: 0.5rem;
+  }
+
+  .instrument-drawers {
+    grid-template-columns: 1fr;
+  }
+
+  .drawer-content {
+    min-width: 280px;
   }
 
   .palette-grid {
@@ -1281,69 +2243,49 @@ export default {
   .metric-value {
     font-size: 1.5rem;
   }
+  
+  .workflow-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .workflow-name-container {
+    width: 100%;
+  }
+  
+  .lane-header {
+    flex-wrap: wrap;
+  }
+  
+  .device-step {
+    min-width: 90px;
+  }
+  
+  .instructions-panel {
+    width: 95%;
+    top: 3rem;
+  }
+  
+  .feature-highlights {
+    grid-template-columns: 1fr;
+  }
+  
+  .help-button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  /* Enhanced instrument palette responsive */
+  .form-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
-
-/* Dark theme adjustments */
-:deep(.el-dialog) {
-  background-color: var(--card-bg);
-}
-
-:deep(.el-dialog__header) {
-  border-bottom: 1px solid var(--border-color);
-}
-
-:deep(.el-dialog__body) {
-  color: var(--text-light);
-}
-
-:deep(.el-input-number) {
-  background-color: var(--bg-color);
-}
-
-:deep(.el-input-number__decrease),
-:deep(.el-input-number__increase) {
-  background-color: var(--bg-color);
-  color: var(--text-light);
-  border-color: var(--border-color);
-}
-
-:deep(.el-input__inner) {
-  background-color: var(--bg-color);
-  border-color: var(--border-color);
-  color: var(--text-light);
-}
-
-/* Fix for instrument palette */
-.instrument-palette .el-row {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0 -10px;
-}
-
-.instrument-palette .el-col {
-  padding: 0 10px;
-  margin-bottom: 10px;
-}
-
-/* Ensure draggable components are visible */
-.sortable-ghost {
-  opacity: 0.4;
-  background-color: var(--primary-color) !important;
-}
-
-.sortable-drag {
-  opacity: 0.8;
-}
-
-/* Fix z-index for dialogs */
-.el-dialog__wrapper {
-  z-index: 2500 !important;
-}
-
-.v-modal {
-  z-index: 2400 !important;
-}
-
-/* Add these styles to the end of the <style> section in WorkflowOptimizer.vue */
-
 </style>
