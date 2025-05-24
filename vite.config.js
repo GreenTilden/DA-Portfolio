@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import VueDevTools from 'vite-plugin-vue-devtools'
 import path from 'path'
 import { createHtmlPlugin } from 'vite-plugin-html'
 
@@ -7,6 +8,7 @@ export default defineConfig({
   base: '/',
   plugins: [
     vue(),
+    VueDevTools(),
     createHtmlPlugin({
       minify: true,
       inject: {
