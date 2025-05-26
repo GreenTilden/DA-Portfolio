@@ -399,8 +399,29 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
 }
 
 .lane-steps.drag-over {
-  background-color: var(--hover-bg);
-  border-color: var(--primary-color);
+  background-color: rgba(74, 144, 226, 0.1);
+  border: 2px dashed var(--primary-color);
+  box-shadow: inset 0 0 20px rgba(74, 144, 226, 0.2);
+}
+
+.lane-steps::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.lane-steps.drag-over::before {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(74, 144, 226, 0.1) 0%,
+    transparent 70%
+  );
 }
 
 .empty-lane-hint {
@@ -504,11 +525,39 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
 /* Drop indicator */
 :deep(.drop-indicator) {
   width: 4px;
-  height: 40px;
+  height: 50px; /* Taller for better visibility */
   background-color: var(--primary-color);
   border-radius: 2px;
-  margin: 0 6px;
-  animation: pulse 1.5s infinite;
+  margin: 0 8px;
+  animation: pulse 1s infinite;
+  box-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+  position: relative;
+}
+
+:deep(.drop-indicator)::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 10px solid var(--primary-color);
+}
+
+:deep(.drop-indicator)::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid var(--primary-color);
 }
 
 @keyframes pulse {
@@ -533,5 +582,18 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   .edit-name-input {
     width: 150px;
   }
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 0.8; 
+    transform: scaleX(1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scaleX(1.5);
+  }
+
+
+}
 }
 </style>

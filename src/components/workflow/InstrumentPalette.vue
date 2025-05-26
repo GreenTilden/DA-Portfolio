@@ -117,7 +117,7 @@
         :title="instrument"
         :icon="getInstrumentIcon(instrument)"
         :items="getCombinedTasksForInstrument(instrument)"
-        :default-open="instrument === 'Liquid Handler'"
+        :default-open="instrument === ''"
         class="instrument-drawer-item"
       >
         <template #default="{ items }">
@@ -391,20 +391,50 @@ const handleRemoveCustomTask = (task: CustomTask) => {
   margin-top: 1rem;
 }
 
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem; /* Reduced padding */
+  background-color: var(--section-bg);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Reduced gap */
+  color: var(--text-light);
+  font-weight: 500;
+  font-size: 0.875rem; /* Smaller font */
+  flex: 1;
+  min-width: 0;
+}
+
+.drawer-title i {
+  font-size: 0.875rem; /* Smaller icon */
+  color: var(--primary-color);
+}
+
+
+
 /* Instrument Drawers */
 .instrument-drawers {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
 }
 
 .instrument-drawer-item {
   background-color: var(--card-bg);
+  min-width: 0; /* Prevent grid blowout */
 }
 
 .tasks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   padding: 0.5rem;
 }
@@ -424,20 +454,19 @@ const handleRemoveCustomTask = (task: CustomTask) => {
 
 /* Responsive */
 @media (max-width: 1200px) {
-  .tasks-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  .instrument-drawers {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 768px) {
   .form-row {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
   
-  .tasks-grid {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
+  .instrument-drawers {
+    grid-template-columns: repeat(3, 1fr);
   }
   
   .form-actions {

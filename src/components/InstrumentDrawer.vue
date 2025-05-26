@@ -60,10 +60,11 @@ defineExpose({
 
 <style scoped>
 .instrument-drawer {
+  position: relative;
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden */
   transition: all 0.3s ease;
 }
 
@@ -82,30 +83,49 @@ defineExpose({
   background-color: var(--card-bg);
 }
 
-.drawer-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--text-light);
-  font-weight: 500;
+.drawer-title span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
+
+
 
 .drawer-title i {
   font-size: 1rem;
   color: var(--primary-color);
+  flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.drawer-title span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .item-count {
   font-size: 0.875rem;
   color: var(--text-muted);
   font-weight: normal;
+  flex-shrink: 0; /* Prevent count from shrinking */
 }
 
 .drawer-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   background-color: var(--bg-color);
-  border-top: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
   max-height: 400px;
   overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .drawer-items {

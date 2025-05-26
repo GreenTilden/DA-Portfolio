@@ -102,14 +102,48 @@ export class OptimizationEngine {
     })
     
     // Add cross-dependencies for liquid handler tasks in same workflow
-    Object.values(liquidHandlersByWorkflow).forEach(workflowTasks => {
-      if (workflowTasks.length > 1) {
+  Object.values(liquidHandlersByWorkflow).forEach(workflowTasks => {
+    if (workflowTasks.length > 1) {
+      // Find all tasks with "Transfer" in their name
+      const transferTasks = workflowTasks.filter(t => 
+        t.task.toLowerCase().includes('transfer')
+      )
+      
+      // If we have transfer tasks, they must be connected to at least one other LH task
+      if (transferTasks.length > 0) {
+        transferTasks.forEach(transferTask => {
+          // Find the nearest non-transfer LH task in the same workflow
+          const otherLHTasks = workflowTasks.filter(t => 
+            t.id !== transferTask.id && !t.task.toLowerCase().includes('transfer')
+          )
+          
+          if (otherLHTasks.length > 0) {
+            // Add bidirectional dependencies to ensure they run together
+            otherLHTasks.forEach(otherTask => {
+              if (!transferTask.dependencies.includes(otherTask.id)) {
+                transferTask.dependencies.push(otherTask.id)
+              }
+              if (!otherTask.dependencies.includes(transferTask.id)) {
+                otherTask.dependencies.push(transferTask.id)
+              }
+            })
+          } else {
+            // If no other non-transfer tasks, connect all transfer tasks together
+            const otherTransferTasks = transferTasks.filter(t => t.id !== transferTask.id)
+            otherTransferTasks.forEach(otherTask => {
+              if (!transferTask.dependencies.includes(otherTask.id)) {
+                transferTask.dependencies.push(otherTask.id)
+              }
+            })
+          }
+        })
+      } else {
+        // Original logic for non-transfer liquid handler tasks
         workflowTasks.forEach(task => {
           const otherTaskIds = workflowTasks
             .filter(t => t.id !== task.id)
             .map(t => t.id)
           
-          // Add dependencies if they don't already exist
           otherTaskIds.forEach(depId => {
             if (!task.dependencies.includes(depId)) {
               task.dependencies.push(depId)
@@ -117,8 +151,9 @@ export class OptimizationEngine {
           })
         })
       }
-    })
-  }
+    }
+  })
+}
   
   /**
    * Sort tasks by workflow priority and step order

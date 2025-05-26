@@ -465,6 +465,7 @@ watch(workflows, () => {
 .control-buttons {
   display: flex;
   gap: 0.5rem;
+  align-items: center ;
 }
 
 /* Help button */
@@ -662,7 +663,24 @@ watch(workflows, () => {
   }
 
   .control-buttons .el-button {
-    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+    .control-buttons .el-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .control-buttons .el-button--primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border: none;
+  }
+
+  .control-buttons .el-button--primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
   }
   
   .help-button {
