@@ -3,6 +3,7 @@
     class="workflow-step"
     :class="{ 
       'liquid-handler': step.type === 'Liquid Handler',
+      'connected': isConnectedLiquidHandler,
       'dragging': isDragging 
     }"
     :data-step-id="step.id"
@@ -45,6 +46,11 @@ interface Props {
   step: Step
   stepIndex: number
 }
+
+const isConnectedLiquidHandler = computed(() => {
+  return props.step.type === 'Liquid Handler' && 
+         props.step.task.toLowerCase().includes('transfer')
+})
 
 const props = defineProps<Props>()
 
@@ -106,6 +112,25 @@ const handleDragEnd = () => {
 
 .workflow-step.liquid-handler {
   background-color: var(--secondary-color);
+}
+
+.workflow-step.liquid-handler::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--warning-color);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.workflow-step.liquid-handler.connected::after {
+  opacity: 1;
 }
 
 .step-icon {

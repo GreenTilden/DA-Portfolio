@@ -83,6 +83,16 @@ defineExpose({
   background-color: var(--card-bg);
 }
 
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-light);
+  font-weight: 500;
+  min-width: 0; /* Enable text shrinking */
+  overflow: hidden;
+}
+
 .drawer-title span {
   white-space: nowrap;
   overflow: hidden;

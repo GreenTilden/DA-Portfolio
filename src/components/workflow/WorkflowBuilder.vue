@@ -251,21 +251,26 @@ const handleDragLeave = (event: DragEvent) => {
 }
 
 const handleDrop = (event: DragEvent, workflow: Workflow, lane: Lane) => {
-  const draggedItem = onDrop(event)
-  if (!draggedItem) return
+  event.preventDefault()
+  event.stopPropagation() // Add this
+  
+  const target = event.currentTarget as HTMLElement
+  if (target) {
+    target.classList.remove('drag-over')
+  }
   
   removeDropIndicators()
   
-  // If it's an existing step, remove it from its current location
-  if (draggedItem.isExistingStep) {
-    props.workflows.forEach(w => {
-      w.lanes.forEach(l => {
-        const stepIndex = l.steps.findIndex(s => s.id === draggedItem.id)
-        if (stepIndex !== -1) {
-          l.steps.splice(stepIndex, 1)
-        }
-      })
-    })
+  // Get drag data
+  const dragData = event.dataTransfer?.getData('text/plain')
+  if (!dragData) return
+  
+  let draggedItem
+  try {
+    draggedItem = JSON.parse(dragData)
+  } catch (e) {
+    console.error('Failed to parse drag data:', e)
+    return
   }
   
   // Create a new step
@@ -392,7 +397,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   min-height: 60px;
   padding: 0.5rem;
   background-color: var(--bg-color);
-  border: 1px dashed var(--border-color);
+  border: 2px dashed var(--border-color);
   border-radius: 0.25rem;
   transition: all 0.2s ease;
   position: relative;
@@ -400,9 +405,11 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
 
 .lane-steps.drag-over {
   background-color: rgba(74, 144, 226, 0.1);
-  border: 2px dashed var(--primary-color);
-  box-shadow: inset 0 0 20px rgba(74, 144, 226, 0.2);
+  border-color: var(--primary-color);
+  border-width: 2px;
+  border-style: solid;
 }
+
 
 .lane-steps::before {
   content: '';

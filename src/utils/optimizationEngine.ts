@@ -86,22 +86,23 @@ export class OptimizationEngine {
     return tasks
   }
   
-  /**
-   * Add dependencies between liquid handler tasks in the same workflow
-   */
-  private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
-    const liquidHandlerTasks = tasks.filter(task => task.type === 'Liquid Handler')
-    const liquidHandlersByWorkflow: Record<string, TaskToSchedule[]> = {}
-    
-    // Group by workflow
-    liquidHandlerTasks.forEach(task => {
-      if (!liquidHandlersByWorkflow[task.workflowId]) {
-        liquidHandlersByWorkflow[task.workflowId] = []
-      }
-      liquidHandlersByWorkflow[task.workflowId].push(task)
-    })
-    
-    // Add cross-dependencies for liquid handler tasks in same workflow
+/**
+ * Add dependencies between liquid handler tasks in the same workflow
+ * Ensures liquid handler tasks are paired/synchronized
+ */
+private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
+  const liquidHandlerTasks = tasks.filter(task => task.type === 'Liquid Handler')
+  const liquidHandlersByWorkflow: Record<string, TaskToSchedule[]> = {}
+  
+  // Group by workflow
+  liquidHandlerTasks.forEach(task => {
+    if (!liquidHandlersByWorkflow[task.workflowId]) {
+      liquidHandlersByWorkflow[task.workflowId] = []
+    }
+    liquidHandlersByWorkflow[task.workflowId].push(task)
+  })
+  
+  // For each workflow, ensure liquid handler tasks are connected
   Object.values(liquidHandlersByWorkflow).forEach(workflowTasks => {
     if (workflowTasks.length > 1) {
       // Find all tasks with "Transfer" in their name
