@@ -73,41 +73,65 @@
       </div>
     </transition>
 
-    <!-- Instrument Palette -->
-    <InstrumentPalette
-      :custom-tasks="customTasks"
-      @task-created="handleCustomTaskCreated"
-      @task-edited="handleCustomTaskEdited"
-      @task-removed="handleCustomTaskRemoved"
-      @drag-start="handlePaletteDragStart"
-    />
-
-    <!-- Workflows Section -->
-    <WorkflowBuilder
-      :workflows="workflows"
-      :drag-item="currentDragItem"
-      @update:workflows="updateWorkflows"
-      @step-edited="handleStepEdited"
-      @workflows-changed="handleWorkflowsChanged"
-    />
-
-    <!-- Connection Lines Canvas -->
-    <svg class="connections-svg" ref="connectionsSvg"></svg>
-
-    <!-- Gantt Chart -->
-    <div class="gantt-section">
-      <GanttChart
-        :schedule="schedule"
-        :workflows="workflows"
-        @task-clicked="handleTaskClicked"
-      />
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button 
+        class="tab-button"
+        :class="{ active: activeTab === 'builder' }"
+        @click="activeTab = 'builder'"
+      >
+        <i class="fas fa-tools"></i> Workflow Builder
+      </button>
+      <button 
+        class="tab-button"
+        :class="{ active: activeTab === 'results' }"
+        @click="activeTab = 'results'"
+      >
+        <i class="fas fa-chart-gantt"></i> Schedule Results
+      </button>
     </div>
 
-    <!-- Metrics -->
-    <OptimizationMetrics
-      :metrics="metrics"
-      @metric-clicked="handleMetricClicked"
-    />
+    <!-- Builder Tab Content -->
+    <div v-show="activeTab === 'builder'" class="tab-content">
+      <!-- Instrument Palette -->
+      <InstrumentPalette
+        :custom-tasks="customTasks"
+        @task-created="handleCustomTaskCreated"
+        @task-edited="handleCustomTaskEdited"
+        @task-removed="handleCustomTaskRemoved"
+        @drag-start="handlePaletteDragStart"
+      />
+
+      <!-- Workflows Section -->
+      <WorkflowBuilder
+        :workflows="workflows"
+        :drag-item="currentDragItem"
+        @update:workflows="updateWorkflows"
+        @step-edited="handleStepEdited"
+        @workflows-changed="handleWorkflowsChanged"
+      />
+
+      <!-- Connection Lines Canvas -->
+      <svg class="connections-svg" ref="connectionsSvg"></svg>
+    </div>
+
+    <!-- Results Tab Content -->
+    <div v-show="activeTab === 'results'" class="tab-content">
+      <!-- Gantt Chart -->
+      <div class="gantt-section">
+        <GanttChart
+          :schedule="schedule"
+          :workflows="workflows"
+          @task-clicked="handleTaskClicked"
+        />
+      </div>
+
+      <!-- Metrics -->
+      <OptimizationMetrics
+        :metrics="metrics"
+        @metric-clicked="handleMetricClicked"
+      />
+    </div>
 
     <!-- Instrument Configuration Dialog -->
     <el-dialog 
@@ -253,6 +277,7 @@ const DEFAULT_WORKFLOWS: Workflow[] = [
 ]
 
 // Component state
+const activeTab = ref<'builder' | 'results'>('builder')
 const showInstructions = ref(false)
 const showInstrumentConfig = ref(false)
 const showStepDurationEditor = ref(false)
@@ -313,6 +338,9 @@ const handleOptimizeSchedule = async () => {
     // Get bottleneck analysis
     const bottlenecks = engine.getBottleneckAnalysis(optimizedSchedule)
     console.log('Bottleneck analysis:', bottlenecks)
+    
+    // Switch to results tab after optimization
+    activeTab.value = 'results'
     
   } catch (error) {
     console.error('Optimization error:', error)
@@ -444,10 +472,22 @@ onUnmounted(() => {
 
 // Watch for workflow changes
 watch(workflows, () => {
-  nextTick(() => {
-    drawConnections()
-  })
+  if (activeTab.value === 'builder') {
+    nextTick(() => {
+      drawConnections()
+    })
+  }
 }, { deep: true })
+
+// Watch for tab changes
+watch(activeTab, (newTab) => {
+  if (newTab === 'builder') {
+    nextTick(() => {
+      updateSvgSize()
+      drawConnections()
+    })
+  }
+})
 </script>
 
 <style scoped>
@@ -827,5 +867,92 @@ watch(workflows, () => {
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   flex-shrink: 0;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-button {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-button:hover {
+  background-color: var(--bg-color);
+  color: var(--text-light);
+  transform: translateY(-1px);
+}
+
+.tab-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.tab-button.active:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.tab-button i {
+  font-size: 1rem;
+}
+
+/* Tab Content */
+.tab-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Tab Styles */
+@media (max-width: 768px) {
+  .tab-navigation {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .tab-button {
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+    justify-content: center;
+  }
+
+  .tab-button i {
+    font-size: 0.9rem;
+  }
 }
 </style>

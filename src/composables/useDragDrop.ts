@@ -1,4 +1,4 @@
-import { ref, Ref } from 'vue'
+import { ref } from 'vue'
 import type { DragItem, Step } from '@/types/workflow'
 
 export function useDragDrop() {
@@ -6,7 +6,7 @@ export function useDragDrop() {
   const dragOverElement = ref<HTMLElement | null>(null)
 
   // Start dragging
-  const onDragStart = (event: DragEvent, item: DragItem | Step, isExistingStep = false) => {
+  const onDragStart = (event: DragEvent, item: DragItem | Step | any, isExistingStep = false) => {
     const dragData = { ...item, isExistingStep }
     currentDragItem.value = dragData as DragItem
     
@@ -86,10 +86,10 @@ export function useDragDrop() {
     }, null as any)?.element || null
   }
 
-  // Create drop indicator
-  const createDropIndicator = (): HTMLDivElement => {
+  // Create drop indicator with different colors for move vs add
+  const createDropIndicator = (isMoving = false): HTMLDivElement => {
     const indicator = document.createElement('div')
-    indicator.className = 'drop-indicator'
+    indicator.className = isMoving ? 'drop-indicator drop-indicator-move' : 'drop-indicator drop-indicator-add'
     return indicator
   }
 
@@ -105,13 +105,16 @@ export function useDragDrop() {
     const container = event.currentTarget as HTMLElement
     if (!container) return
     
+    // Check if we're moving an existing step
+    const isMoving = currentDragItem.value?.isExistingStep || false
+    
     const closestElement = findClosestElement(event, stepSelector)
     removeDropIndicators()
     
     if (closestElement) {
       const rect = closestElement.getBoundingClientRect()
       const midpoint = rect.left + rect.width / 2
-      const indicator = createDropIndicator()
+      const indicator = createDropIndicator(isMoving)
       
       if (event.clientX < midpoint) {
         closestElement.before(indicator)
@@ -120,7 +123,7 @@ export function useDragDrop() {
       }
     } else if (container.querySelectorAll(stepSelector).length === 0) {
       // If no steps exist, add indicator to the container
-      const indicator = createDropIndicator()
+      const indicator = createDropIndicator(isMoving)
       container.appendChild(indicator)
     }
   }
@@ -137,6 +140,61 @@ export function useDragDrop() {
     })
   }
 
+  // Helper to extract source information from drag data
+  const extractSourceInfo = (dragData: any) => {
+    if (!dragData || !dragData.isExistingStep) return null
+    
+    return {
+      stepId: dragData.id,
+      sourceWorkflowId: dragData.sourceWorkflowId,
+      sourceLaneId: dragData.sourceLaneId,
+      sourceIndex: dragData.sourceIndex
+    }
+  }
+
+  // Helper to move step between or within lanes
+  const moveStep = (
+    workflows: any[], 
+    sourceInfo: { 
+      stepId: string, 
+      sourceWorkflowId: string, 
+      sourceLaneId: string, 
+      sourceIndex: number 
+    },
+    targetWorkflowId: string,
+    targetLaneId: string,
+    targetIndex: number
+  ) => {
+    // Find source workflow and lane
+    const sourceWorkflow = workflows.find(w => w.id === sourceInfo.sourceWorkflowId)
+    if (!sourceWorkflow) return false
+    
+    const sourceLane = sourceWorkflow.lanes.find((l: any) => l.id === sourceInfo.sourceLaneId)
+    if (!sourceLane) return false
+    
+    // Find target workflow and lane
+    const targetWorkflow = workflows.find(w => w.id === targetWorkflowId)
+    if (!targetWorkflow) return false
+    
+    const targetLane = targetWorkflow.lanes.find((l: any) => l.id === targetLaneId)
+    if (!targetLane) return false
+    
+    // Remove step from source
+    const [movedStep] = sourceLane.steps.splice(sourceInfo.sourceIndex, 1)
+    if (!movedStep) return false
+    
+    // Adjust target index if moving within same lane and target is after source
+    let adjustedTargetIndex = targetIndex
+    if (sourceInfo.sourceLaneId === targetLaneId && targetIndex > sourceInfo.sourceIndex) {
+      adjustedTargetIndex--
+    }
+    
+    // Insert step at target position
+    targetLane.steps.splice(adjustedTargetIndex, 0, movedStep)
+    
+    return true
+  }
+
   return {
     currentDragItem,
     dragOverElement,
@@ -149,6 +207,8 @@ export function useDragDrop() {
     onDragOverWithIndicator,
     removeDropIndicators,
     findClosestElement,
-    createDropIndicator
+    createDropIndicator,
+    extractSourceInfo,
+    moveStep
   }
 }

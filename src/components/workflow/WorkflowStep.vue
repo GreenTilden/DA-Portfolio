@@ -41,10 +41,13 @@
 import { ref, computed } from 'vue'
 import type { Step } from '@/types/workflow'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
+import { useDragDrop } from '@/composables/useDragDrop'
 
 interface Props {
   step: Step
   stepIndex: number
+  workflowId?: string
+  laneId?: string
 }
 
 const isConnectedLiquidHandler = computed(() => {
@@ -61,6 +64,7 @@ const emit = defineEmits<{
 }>()
 
 const isDragging = ref(false)
+const { onDragStart } = useDragDrop()
 
 const iconClass = computed(() => {
   return props.step.customIcon || INSTRUMENT_ICONS[props.step.type] || 'fas fa-cog'
@@ -68,15 +72,19 @@ const iconClass = computed(() => {
 
 const handleDragStart = (event: DragEvent) => {
   isDragging.value = true
-  emit('drag-start', event, props.step)
   
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('text/plain', JSON.stringify({
-      ...props.step,
-      isExistingStep: true
-    }))
+  const dragData = {
+    ...props.step,
+    isExistingStep: true,
+    sourceWorkflowId: props.workflowId,
+    sourceLaneId: props.laneId,
+    sourceIndex: props.stepIndex
   }
+  
+  // Use the composable's onDragStart for consistency
+  onDragStart(event, dragData, true)
+  
+  emit('drag-start', event, props.step)
 }
 
 const handleDragEnd = () => {
@@ -108,6 +116,7 @@ const handleDragEnd = () => {
 .workflow-step.dragging {
   opacity: 0.5;
   cursor: grabbing;
+  transform: scale(0.95);
 }
 
 .workflow-step.liquid-handler {

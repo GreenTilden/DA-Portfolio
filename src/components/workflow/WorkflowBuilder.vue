@@ -87,6 +87,8 @@
               :key="step.id"
               :step="step"
               :stepIndex="stepIndex"
+              :workflowId="workflow.id"
+              :laneId="lane.id"
               @remove="removeStep(workflow.id, lane.id, stepIndex)"
               @edit-duration="$emit('step-edited', step)"
               @drag-start="handleStepDragStart"
@@ -126,7 +128,9 @@ const {
   onDragLeave,
   onDrop,
   onDragOverWithIndicator,
-  removeDropIndicators
+  removeDropIndicators,
+  extractSourceInfo,
+  moveStep
 } = useDragDrop()
 
 // Name editing refs
@@ -314,14 +318,35 @@ const handleDrop = (event: DragEvent, workflow: Workflow, lane: Lane) => {
     return
   }
   
-  // If it's an existing step being moved, handle differently
+  // If it's an existing step being moved, handle reordering
   if (draggedItem.isExistingStep) {
-    // TODO: Implement moving existing steps between lanes
-    console.log('Moving existing step - not yet implemented')
+    const sourceInfo = extractSourceInfo(draggedItem)
+    if (!sourceInfo) {
+      console.error('Invalid source information for existing step')
+      return
+    }
+    
+    // If no specific insert position, append to end
+    if (insertIndex === -1) {
+      insertIndex = lane.steps.length
+    }
+    
+    // Use the moveStep helper to reorder
+    const success = moveStep(
+      props.workflows,
+      sourceInfo,
+      workflow.id,
+      lane.id,
+      insertIndex
+    )
+    
+    if (success) {
+      emit('workflows-changed')
+    }
     return
   }
   
-  // Create a new step
+  // Create a new step (for dragging from instrument palette)
   const newStep: Step = {
     id: `${lane.id}-step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     type: draggedItem.type,
@@ -572,19 +597,23 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   background-color: #dc2626;
 }
 
-/* Drop indicator */
+/* Drop indicator - base styles */
 :deep(.drop-indicator) {
   width: 4px;
   height: 50px; /* Taller for better visibility */
-  background-color: var(--primary-color);
   border-radius: 2px;
   margin: 0 8px;
   animation: pulse 1s infinite;
-  box-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
   position: relative;
 }
 
-:deep(.drop-indicator)::before {
+/* Drop indicator for adding new steps (blue) */
+:deep(.drop-indicator-add) {
+  background-color: #4a90e2;
+  box-shadow: 0 0 10px #4a90e2, 0 0 20px #4a90e2, 0 0 30px rgba(74, 144, 226, 0.5);
+}
+
+:deep(.drop-indicator-add)::before {
   content: '';
   position: absolute;
   top: -10px;
@@ -594,10 +623,10 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-bottom: 10px solid var(--primary-color);
+  border-bottom: 10px solid #4a90e2;
 }
 
-:deep(.drop-indicator)::after {
+:deep(.drop-indicator-add)::after {
   content: '';
   position: absolute;
   bottom: -10px;
@@ -607,7 +636,39 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 10px solid var(--primary-color);
+  border-top: 10px solid #4a90e2;
+}
+
+/* Drop indicator for moving existing steps (green) */
+:deep(.drop-indicator-move) {
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981, 0 0 30px rgba(16, 185, 129, 0.5);
+}
+
+:deep(.drop-indicator-move)::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 10px solid #10b981;
+}
+
+:deep(.drop-indicator-move)::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #10b981;
 }
 
 @keyframes pulse {
