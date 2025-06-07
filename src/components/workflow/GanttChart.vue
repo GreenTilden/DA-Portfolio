@@ -4,11 +4,11 @@
       <h4>Schedule Timeline</h4>
       <div class="gantt-controls">
         <div class="zoom-controls">
-          <button @click="zoomOut" :disabled="pixelsPerMinute <= 1" class="zoom-btn">
+          <button @click="zoomOut" :disabled="currentPixelsPerMinute <= 1" class="zoom-btn">
             <i class="fas fa-search-minus"></i>
           </button>
-          <span class="zoom-level">{{ pixelsPerMinute }}x</span>
-          <button @click="zoomIn" :disabled="pixelsPerMinute >= 10" class="zoom-btn">
+          <span class="zoom-level">{{ currentPixelsPerMinute }}x</span>
+          <button @click="zoomIn" :disabled="currentPixelsPerMinute >= 10" class="zoom-btn">
             <i class="fas fa-search-plus"></i>
           </button>
           <button @click="fitToView" class="zoom-btn fit-btn">
@@ -52,9 +52,9 @@
               class="gantt-row-header"
               :class="{ 'alternate-row': laneIndex % 2 === 1 }"
             >
-              <span class="lane-name">{{ lane.laneName }}</span>
+              <span class="lane-name">{{ lane.name }}</span>
               <div class="lane-stats">
-                {{ getTasksForLane(group.workflowId, lane.laneId).length }} tasks
+                {{ getTasksForLane(group.workflowId, lane.id).length }} tasks
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@
                 ]"
               >
                 <div
-                  v-for="task in getTasksForLane(group.workflowId, lane.laneId)"
+                  v-for="task in getTasksForLane(group.workflowId, lane.id)"
                   :key="task.id"
                   class="gantt-task"
                   :class="[
@@ -122,18 +122,19 @@
                   ]"
                   :style="{
                     left: `${task.startTime * currentPixelsPerMinute}px`,
-                    width: `${task.duration * currentPixelsPerMinute}px`
+                    width: `${Math.max(task.duration * currentPixelsPerMinute, 60)}px`
                   }"
                   @click="$emit('task-clicked', task)"
                   @mouseenter="showTooltip($event, task)"
                   @mouseleave="hideTooltip"
                 >
-                  <div class="task-content">
+                  <div class="gantt-task-content">
                     <i :class="getTaskIcon(task.type)" class="task-icon"></i>
-                    <span class="task-label">{{ task.task }}</span>
-                    <span class="task-duration">{{ task.duration }}min</span>
+                    <div class="task-info">
+                      <span class="task-name">{{ task.task }}</span>
+                      <span class="task-type">{{ task.type }}</span>
+                    </div>
                   </div>
-                  <div class="task-gradient"></div>
                 </div>
               </div>
             </div>
@@ -176,6 +177,10 @@
           <span class="tooltip-label">Workflow:</span>
           <span>{{ getWorkflowName(tooltip.task?.workflowId) }}</span>
         </div>
+        <div class="tooltip-row">
+          <span class="tooltip-label">Lane:</span>
+          <span>{{ getLaneName(tooltip.task?.workflowId, tooltip.task?.laneId) }}</span>
+        </div>
         <div v-if="tooltip.task?.conflict" class="tooltip-conflict">
           <i class="fas fa-exclamation-triangle"></i>
           Resource conflict detected
@@ -186,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import type { ScheduledTask, Workflow } from '@/types/workflow'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
 
@@ -207,18 +212,12 @@ const emit = defineEmits<{
 const ganttTimeline = ref<HTMLElement>()
 const currentPixelsPerMinute = ref(props.pixelsPerMinute)
 const collapsedWorkflows = ref<Set<string>>(new Set())
-const currentTime = ref(0) // Current time for "now" indicator
+const currentTime = ref(0)
 const tooltip = ref({
   visible: false,
   task: null as ScheduledTask | null,
   style: {}
 })
-
-// Color palette for workflows
-const workflowColors = [
-  '#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', 
-  '#1abc9c', '#e67e22', '#34495e', '#e91e63', '#673ab7'
-]
 
 // Calculate the actual timeline width based on max end time
 const timelineWidth = computed(() => {
@@ -228,10 +227,15 @@ const timelineWidth = computed(() => {
 
 // Generate workflow groups with statistics
 const workflowGroups = computed(() => {
+  console.log('Computing workflow groups with schedule:', props.schedule)
+  console.log('Available workflows:', props.workflows)
+  
   const groups = props.workflows.map((workflow, index) => {
     const workflowTasks = props.schedule.filter(t => t.workflowId === workflow.id)
     const totalDuration = workflowTasks.reduce((sum, task) => sum + task.duration, 0)
     const taskCount = workflowTasks.length
+    
+    console.log(`Workflow ${workflow.id} has ${taskCount} tasks:`, workflowTasks)
     
     return {
       workflowId: workflow.id,
@@ -241,7 +245,7 @@ const workflowGroups = computed(() => {
       collapsed: collapsedWorkflows.value.has(workflow.id),
       totalDuration,
       taskCount,
-      colorIndex: index % workflowColors.length
+      colorIndex: index % 5
     }
   })
   
@@ -281,11 +285,13 @@ const showNowIndicator = computed(() => {
   return currentTime.value >= 0 && currentTime.value <= maxTime
 })
 
-// Get tasks for a specific lane
+// Get tasks for a specific lane - fixed to return individual tasks
 const getTasksForLane = (workflowId: string, laneId: string) => {
-  return props.schedule.filter(
+  const tasks = props.schedule.filter(
     task => task.workflowId === workflowId && task.laneId === laneId
   )
+  console.log(`Lane ${workflowId}-${laneId} has tasks:`, tasks)
+  return tasks
 }
 
 // Get icon for task type
@@ -299,11 +305,30 @@ const getWorkflowName = (workflowId?: string) => {
   return workflow?.name || 'Unknown'
 }
 
+// Get lane name by workflow and lane ID
+const getLaneName = (workflowId?: string, laneId?: string) => {
+  const workflow = props.workflows.find(w => w.id === workflowId)
+  const lane = workflow?.lanes.find(l => l.id === laneId)
+  return lane?.name || 'Unknown'
+}
+
 // Format time for display
 const formatTime = (minutes: number) => {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
   return hours > 0 ? `${hours}h ${mins}m` : `${minutes}min`
+}
+
+// Calculate optimal zoom based on container width
+const calculateOptimalZoom = () => {
+  if (ganttTimeline.value && props.schedule.length > 0) {
+    const containerWidth = ganttTimeline.value.offsetWidth - 100 // Account for padding
+    const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
+    const optimalZoom = Math.max(1, Math.min(10, Math.floor(containerWidth / maxTime)))
+    console.log(`Calculating optimal zoom: containerWidth=${containerWidth}, maxTime=${maxTime}, optimal=${optimalZoom}`)
+    return optimalZoom
+  }
+  return 2
 }
 
 // Zoom controls
@@ -320,12 +345,8 @@ const zoomOut = () => {
 }
 
 const fitToView = () => {
-  if (ganttTimeline.value) {
-    const containerWidth = ganttTimeline.value.clientWidth - 100
-    const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
-    const optimalZoom = Math.max(1, Math.min(10, Math.floor(containerWidth / maxTime)))
-    currentPixelsPerMinute.value = optimalZoom
-  }
+  const optimalZoom = calculateOptimalZoom()
+  currentPixelsPerMinute.value = optimalZoom
 }
 
 // Toggle workflow group collapse
@@ -361,18 +382,26 @@ const handleScroll = (event: Event) => {
 // Update current time periodically
 let timeInterval: number
 
-onMounted(() => {
+onMounted(async () => {
+  // Set initial time
+  const now = new Date()
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  currentTime.value = Math.floor((now.getTime() - startOfDay.getTime()) / (1000 * 60))
+  
+  // Wait for DOM to be ready, then set optimal zoom
+  await nextTick()
+  setTimeout(() => {
+    const optimalZoom = calculateOptimalZoom()
+    currentPixelsPerMinute.value = optimalZoom
+    console.log('Set initial zoom to:', optimalZoom)
+  }, 100)
+  
   // Update current time every minute for "now" indicator
   timeInterval = setInterval(() => {
     const now = new Date()
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     currentTime.value = Math.floor((now.getTime() - startOfDay.getTime()) / (1000 * 60))
   }, 60000)
-  
-  // Set initial time
-  const now = new Date()
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  currentTime.value = Math.floor((now.getTime() - startOfDay.getTime()) / (1000 * 60))
 })
 
 onUnmounted(() => {
@@ -586,7 +615,7 @@ onUnmounted(() => {
 }
 
 .gantt-row-header {
-  height: 60px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -725,7 +754,7 @@ onUnmounted(() => {
 }
 
 .gantt-row {
-  height: 60px;
+  height: 40px;
   position: relative;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -736,74 +765,69 @@ onUnmounted(() => {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
+/* Enhanced task styling */
 .gantt-task {
   position: absolute;
-  height: 40px;
-  top: 10px;
-  border-radius: 0.375rem;
+  height: 32px;
+  top: 4px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
-  padding: 0;
+  padding: 0 8px;
+  font-size: 12px;
+  color: white;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  min-width: 60px;
 }
 
 .gantt-task:hover {
-  z-index: 30;
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  z-index: 20;
 }
 
-.task-content {
+.gantt-task-content {
   display: flex;
   align-items: center;
-  padding: 0 0.75rem;
-  gap: 0.5rem;
-  position: relative;
-  z-index: 2;
-  height: 100%;
+  gap: 6px;
   width: 100%;
-  color: white;
-}
-
-.task-gradient {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
-  z-index: 1;
 }
 
 .task-icon {
-  font-size: 1rem;
+  font-size: 14px;
   flex-shrink: 0;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  opacity: 0.9;
 }
 
-.task-label {
-  white-space: nowrap;
+.task-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.task-name {
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
 }
 
-.task-duration {
-  font-size: 0.75rem;
-  font-weight: 600;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 6px;
-  border-radius: 0.25rem;
-  backdrop-filter: blur(4px);
+.task-type {
+  font-size: 10px;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 
 /* Workflow colors with gradients */
 .workflow-workflow-a, .workflow-workflow-a .workflow-separator-line {
@@ -815,7 +839,7 @@ onUnmounted(() => {
 }
 
 .workflow-workflow-c, .workflow-workflow-c .workflow-separator-line {
-  background: linear-gradient(135deg, #27ae60 0%, #219a52 100%);
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
 }
 
 .workflow-workflow-d, .workflow-workflow-d .workflow-separator-line {
@@ -826,42 +850,11 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
 }
 
-/* Conflict styling with animated stripes */
+/* Conflict styling */
 .gantt-task.conflict {
-  animation: conflict-stripes 3s linear infinite, conflict-pulse 2s ease-in-out infinite;
-}
-
-.gantt-task.conflict::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 8px,
-    rgba(255, 255, 255, 0.3) 8px,
-    rgba(255, 255, 255, 0.3) 16px
-  );
-  z-index: 3;
-}
-
-@keyframes conflict-stripes {
-  0% { background-position: 0 0; }
-  100% { background-position: 32px 0; }
-}
-
-@keyframes conflict-pulse {
-  0%, 100% { 
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  }
-  50% { 
-    border-color: #ff6b6b;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
-  }
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 0 0 2px #e74c3c, 0 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Tooltip */
@@ -1011,25 +1004,30 @@ onUnmounted(() => {
   
   .gantt-row-header,
   .gantt-row {
-    height: 50px;
+    height: 36px;
   }
   
   .gantt-task {
-    height: 32px;
-    top: 9px;
+    height: 28px;
+    top: 6px;
+    padding: 0 6px;
+    min-width: 50px;
   }
   
-  .task-content {
-    padding: 0 0.5rem;
-    gap: 0.25rem;
+  .gantt-task-content {
+    gap: 4px;
   }
   
   .task-icon {
-    font-size: 0.875rem;
+    font-size: 12px;
   }
   
-  .task-duration {
-    font-size: 0.7rem;
+  .task-name {
+    font-size: 10px;
+  }
+  
+  .task-type {
+    font-size: 9px;
   }
   
   .zoom-controls {
