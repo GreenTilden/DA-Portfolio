@@ -114,7 +114,7 @@ export default {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
     document.addEventListener('click', this.closeThemeMenu);
-    this.setTheme('monochrome');
+    this.setTheme('pacers');
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);

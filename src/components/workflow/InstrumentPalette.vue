@@ -70,6 +70,7 @@
       <InstrumentDrawer
         v-for="(tasks, instrument) in instruments"
         :key="instrument"
+        ref="instrumentDrawers"
         :title="instrument"
         :icon="getInstrumentIcon(instrument)"
         :items="getCombinedTasksForInstrument(instrument)"
@@ -151,6 +152,7 @@ const showCustomTaskForm = ref(false)
 const showDurationEditor = ref(false)
 const editingTask = ref<InstrumentTask | null>(null)
 const editingDuration = ref<number>(15)
+const instrumentDrawers = ref<any[]>([])
 
 // Custom task form
 const customTask = reactive({
@@ -243,6 +245,12 @@ const resetCustomTaskForm = () => {
 const handleDragStart = (event: DragEvent, task: InstrumentTask) => {
   onDragStart(event, task as DragItem, false)
   emit('drag-start', event, task as DragItem)
+  
+  // Close the drawer that contains this task
+  const drawerIndex = Object.keys(instruments).findIndex(inst => inst === task.type)
+  if (drawerIndex !== -1 && instrumentDrawers.value[drawerIndex]) {
+    instrumentDrawers.value[drawerIndex].close()
+  }
 }
 
 const handleEditDuration = (task: InstrumentTask) => {
