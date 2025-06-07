@@ -95,11 +95,13 @@
     <svg class="connections-svg" ref="connectionsSvg"></svg>
 
     <!-- Gantt Chart -->
-    <GanttChart
-      :schedule="schedule"
-      :workflows="workflows"
-      @task-clicked="handleTaskClicked"
-    />
+    <div class="gantt-section">
+      <GanttChart
+        :schedule="schedule"
+        :workflows="workflows"
+        @task-clicked="handleTaskClicked"
+      />
+    </div>
 
     <!-- Metrics -->
     <OptimizationMetrics
@@ -455,6 +457,10 @@ watch(workflows, () => {
   border-radius: 0.5rem;
   position: relative;
   min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
 }
 
 .optimizer-header {
@@ -810,5 +816,16 @@ watch(workflows, () => {
   .container {
     padding: 0;
   }
+}
+
+/* Gantt section constraints */
+.gantt-section {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  flex-shrink: 0;
 }
 </style>

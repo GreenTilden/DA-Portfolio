@@ -351,6 +351,8 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .workflow-section {
@@ -358,6 +360,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 1rem;
+  flex-shrink: 0;
 }
 
 .workflow-header {

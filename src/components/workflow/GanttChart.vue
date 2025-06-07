@@ -173,6 +173,8 @@ const handleScroll = (event: Event) => {
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .gantt-chart h4 {
@@ -187,6 +189,7 @@ const handleScroll = (event: Event) => {
   border-radius: 0.25rem;
   background-color: var(--card-bg);
   max-width: 100%;
+  height: 300px;
 }
 
 .gantt-sidebar {
