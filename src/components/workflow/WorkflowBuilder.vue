@@ -242,57 +242,97 @@ const removeStep = (workflowId: string, laneId: string, stepIndex: number) => {
 
 // Drag and drop handlers
 const handleDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  const target = event.currentTarget as HTMLElement
+  if (target && !target.classList.contains('drag-over')) {
+    target.classList.add('drag-over')
+  }
   onDragOverWithIndicator(event, '.workflow-step')
 }
 
 const handleDragLeave = (event: DragEvent) => {
-  onDragLeave(event)
-  removeDropIndicators()
+  const target = event.currentTarget as HTMLElement
+  const relatedTarget = event.relatedTarget as HTMLElement
+  
+  // Only remove if truly leaving the container
+  if (target && (!relatedTarget || !target.contains(relatedTarget))) {
+    target.classList.remove('drag-over')
+    removeDropIndicators()
+  }
 }
 
 const handleDrop = (event: DragEvent, workflow: Workflow, lane: Lane) => {
   event.preventDefault()
-  event.stopPropagation() // Add this
+  event.stopPropagation()
   
+  // Clean up drag over state
   const target = event.currentTarget as HTMLElement
   if (target) {
     target.classList.remove('drag-over')
   }
   
-  removeDropIndicators()
+  // Get the drop position BEFORE removing indicators
+  const indicator = target.querySelector('.drop-indicator')
+  let insertIndex = -1
   
-  // Get drag data
-  const dragData = event.dataTransfer?.getData('text/plain')
-  if (!dragData) return
+  if (indicator) {
+    const steps = Array.from(target.querySelectorAll('.workflow-step'))
+    // Find the index where the indicator is positioned
+    for (let i = 0; i < steps.length; i++) {
+      if (indicator.compareDocumentPosition(steps[i]) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        // Indicator comes before this step
+        insertIndex = i
+        break
+      }
+    }
+    if (insertIndex === -1) {
+      // Indicator is after all steps
+      insertIndex = steps.length
+    }
+  }
+  
+  // NOW clean up all drag indicators
+  removeDropIndicators()
+  document.querySelectorAll('.drag-over').forEach(el => {
+    el.classList.remove('drag-over')
+  })
+  
+  // Get drag data - try multiple formats
+  let dragData = event.dataTransfer?.getData('application/json') || 
+                 event.dataTransfer?.getData('text/plain')
+  
+  if (!dragData) {
+    console.error('No drag data available')
+    return
+  }
   
   let draggedItem
   try {
     draggedItem = JSON.parse(dragData)
   } catch (e) {
-    console.error('Failed to parse drag data:', e)
+    console.error('Failed to parse drag data:', e, dragData)
+    return
+  }
+  
+  // If it's an existing step being moved, handle differently
+  if (draggedItem.isExistingStep) {
+    // TODO: Implement moving existing steps between lanes
+    console.log('Moving existing step - not yet implemented')
     return
   }
   
   // Create a new step
   const newStep: Step = {
-    id: `${lane.id}-step-${Date.now()}-${lane.steps.length}`,
+    id: `${lane.id}-step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     type: draggedItem.type,
-    task: draggedItem.task,
-    duration: draggedItem.duration,
+    task: draggedItem.task || draggedItem.type,
+    duration: draggedItem.duration || 15,
     customIcon: draggedItem.customIcon
   }
   
-  // Find where to insert based on drop indicator position
-  const indicator = event.currentTarget?.querySelector('.drop-indicator')
-  if (indicator) {
-    const steps = Array.from(event.currentTarget.querySelectorAll('.workflow-step'))
-    const insertIndex = steps.findIndex(el => el === indicator.nextElementSibling)
-    
-    if (insertIndex === -1) {
-      lane.steps.push(newStep)
-    } else {
-      lane.steps.splice(insertIndex, 0, newStep)
-    }
+  // Insert at the determined position
+  if (insertIndex >= 0 && insertIndex < lane.steps.length) {
+    lane.steps.splice(insertIndex, 0, newStep)
   } else {
     lane.steps.push(newStep)
   }

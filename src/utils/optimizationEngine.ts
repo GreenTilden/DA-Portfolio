@@ -165,7 +165,11 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
       if (a.workflowPriority !== b.workflowPriority) {
         return a.workflowPriority - b.workflowPriority
       }
-      // Then by step index within workflow
+      // Then by lane within the same workflow
+      if (a.laneId !== b.laneId) {
+        return a.laneId.localeCompare(b.laneId)
+      }
+      // Then by step index within the same lane
       return a.stepIndex - b.stepIndex
     })
   }
@@ -192,16 +196,24 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
   ): ScheduledTask[] {
     const schedule: ScheduledTask[] = []
     const taskCompletionTimes: Record<string, number> = {}
+    const laneCompletionTimes: Record<string, number> = {}
+    const laneScheduledTasks: Record<string, ScheduledTask[]> = {}
     
     tasks.forEach(task => {
       // Find earliest start time considering dependencies
       let earliestStart = 0
       
+      // Check dependencies within the same lane
       task.dependencies.forEach(depId => {
         if (taskCompletionTimes[depId]) {
           earliestStart = Math.max(earliestStart, taskCompletionTimes[depId])
         }
       })
+      
+      // For tasks in the same lane, ensure they run sequentially
+      if (laneCompletionTimes[task.laneId]) {
+        earliestStart = Math.max(earliestStart, laneCompletionTimes[task.laneId])
+      }
       
       // Special handling for liquid handler tasks
       if (task.type === 'Liquid Handler') {
@@ -219,7 +231,7 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
       let selectedNest = 0
       let startTime = Infinity
       
-      // Find the nest that can start earliest
+      // Find the nest that can start earliest, but not before earliestStart
       nests.forEach((nestAvailable, nestIndex) => {
         const possibleStart = Math.max(earliestStart, nestAvailable)
         if (possibleStart < startTime) {
@@ -228,19 +240,53 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
         }
       })
       
-      // Update availability
+      // Ensure task waits for instrument availability
+      if (startTime === Infinity) {
+        startTime = earliestStart
+        selectedNest = 0
+      }
+      
+      // CRITICAL: For sequential tasks in a lane, ensure they wait for instruments
+      // A task cannot start until:
+      // 1. The previous task in the lane is complete
+      // 2. The required instrument has a nest available
+      if (task.stepIndex > 0 && laneScheduledTasks[task.laneId]) {
+        const previousTasksInLane = laneScheduledTasks[task.laneId]
+        if (previousTasksInLane.length > 0) {
+          const previousTask = previousTasksInLane[previousTasksInLane.length - 1]
+          
+          // Ensure task doesn't start before previous task completes
+          startTime = Math.max(startTime, previousTask.endTime)
+          
+          // Ensure task waits for instrument availability
+          const earliestInstrumentTime = instrumentAvailability[instrument][selectedNest]
+          startTime = Math.max(startTime, earliestInstrumentTime)
+        }
+      }
+      
+      // Update availability - instrument will be busy until task completes
       instrumentAvailability[instrument][selectedNest] = startTime + task.duration
       taskCompletionTimes[task.id] = startTime + task.duration
+      laneCompletionTimes[task.laneId] = startTime + task.duration
       
-      // Add to schedule
-      schedule.push({
+      // Create scheduled task
+      const scheduledTask: ScheduledTask = {
         ...task,
         startTime,
         endTime: startTime + task.duration,
         nest: selectedNest,
         instrument: `${instrument} ${selectedNest + 1}`,
         conflict: false
-      })
+      }
+      
+      // Track scheduled tasks by lane for nest readiness checking
+      if (!laneScheduledTasks[task.laneId]) {
+        laneScheduledTasks[task.laneId] = []
+      }
+      laneScheduledTasks[task.laneId].push(scheduledTask)
+      
+      // Add to schedule
+      schedule.push(scheduledTask)
     })
     
     return schedule
@@ -255,41 +301,61 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
     taskCompletionTimes: Record<string, number>,
     earliestStart: number
   ): number {
-    // Find all liquid handler tasks in the same workflow
+    // Find all liquid handler tasks in the same workflow that need to run together
     const workflowLHTasks = allTasks.filter(
       t => t.workflowId === task.workflowId && 
-           t.type === 'Liquid Handler'
+           t.type === 'Liquid Handler' &&
+           (t.dependencies.includes(task.id) || task.dependencies.includes(t.id))
     )
     
-    if (workflowLHTasks.length <= 1) {
+    if (workflowLHTasks.length === 0) {
       return earliestStart
     }
     
-    // Find the latest start time among already scheduled LH tasks
-    const scheduledLHStarts = workflowLHTasks
-      .filter(t => t.id !== task.id && taskCompletionTimes[t.id])
-      .map(t => taskCompletionTimes[t.id] - t.duration)
+    // Find the latest dependency completion time among related LH tasks
+    let latestDependencyTime = earliestStart
     
-    if (scheduledLHStarts.length > 0) {
-      return Math.max(earliestStart, ...scheduledLHStarts)
-    }
+    workflowLHTasks.forEach(lhTask => {
+      lhTask.dependencies.forEach(depId => {
+        if (taskCompletionTimes[depId] && depId !== task.id) {
+          latestDependencyTime = Math.max(latestDependencyTime, taskCompletionTimes[depId])
+        }
+      })
+    })
     
-    return earliestStart
+    return latestDependencyTime
   }
   
   /**
    * Detect scheduling conflicts
    */
   private detectConflicts(schedule: ScheduledTask[]): void {
-    schedule.forEach((task1, i) => {
-      schedule.forEach((task2, j) => {
-        if (i !== j && task1.instrument === task2.instrument) {
-          // Check for time overlap
-          if (task1.startTime < task2.endTime && task2.startTime < task1.endTime) {
-            task1.conflict = true
-            task2.conflict = true
+    // Clear all conflict flags first
+    schedule.forEach(task => task.conflict = false)
+    
+    // Group tasks by instrument and nest
+    const instrumentNestTasks: Record<string, ScheduledTask[]> = {}
+    
+    schedule.forEach(task => {
+      const key = `${task.type}_${task.nest}`
+      if (!instrumentNestTasks[key]) {
+        instrumentNestTasks[key] = []
+      }
+      instrumentNestTasks[key].push(task)
+    })
+    
+    // Check for overlaps within each instrument/nest combination
+    Object.values(instrumentNestTasks).forEach(nestTasks => {
+      nestTasks.forEach((task1, i) => {
+        nestTasks.forEach((task2, j) => {
+          if (i !== j) {
+            // Check for time overlap
+            if (task1.startTime < task2.endTime && task2.startTime < task1.endTime) {
+              task1.conflict = true
+              task2.conflict = true
+            }
           }
-        }
+        })
       })
     })
   }

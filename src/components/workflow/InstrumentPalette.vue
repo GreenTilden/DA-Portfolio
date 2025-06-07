@@ -1,112 +1,68 @@
 <template>
   <div class="instrument-palette">
     <div class="palette-header">
-      <h4>Instrument Palette</h4>
-      <p class="palette-instructions">
-        Drag instrument tasks to workflow lanes or double-click to add to the selected lane
-      </p>
-    </div>
-    
-    <!-- Custom Task Creator -->
-    <div class="custom-task-section">
-      <InstrumentDrawer
-        title="Create Custom Task"
-        icon="fas fa-plus-circle"
-        :items="[customTask]"
-        :default-open="false"
-        @toggle="showCustomTaskForm = $event"
-      >
-        <template #default>
-          <div class="custom-task-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Instrument Type</label>
-                <select v-model="customTask.type" class="form-control">
-                  <option 
-                    v-for="(tasks, instrument) in instruments" 
-                    :key="instrument" 
-                    :value="instrument"
-                  >
-                    {{ instrument }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Task Name</label>
-                <input 
-                  type="text" 
-                  v-model="customTask.task" 
-                  class="form-control" 
-                  placeholder="Enter task name"
-                  @keyup.enter="handleAddCustomTask"
-                />
-              </div>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label>Duration (minutes)</label>
-                <el-input-number 
-                  v-model="customTask.duration" 
-                  :min="1" 
-                  :max="999"
-                  size="small"
-                />
-              </div>
-              <div class="form-group">
-                <label>Custom Icon</label>
-                <el-select 
-                  v-model="customTask.customIcon" 
-                  placeholder="Use default"
-                  size="small"
-                  clearable
+      <div class="header-content">
+        <h4>Instrument Palette</h4>
+        <p class="palette-instructions">
+          Drag instrument tasks to workflow lanes
+        </p>
+      </div>
+      
+      <!-- Inline Custom Task Creator -->
+      <div class="custom-task-inline">
+        <div class="custom-task-toggle">
+          <el-button 
+            size="small" 
+            type="primary" 
+            @click="showCustomTaskForm = !showCustomTaskForm"
+            :class="{ 'active': showCustomTaskForm }"
+          >
+            <i class="fas fa-plus"></i> Create Custom
+          </el-button>
+        </div>
+        
+        <transition name="slide-down">
+          <div v-if="showCustomTaskForm" class="custom-task-form-inline">
+            <div class="inline-form-row">
+              <select v-model="customTask.type" class="inline-select">
+                <option 
+                  v-for="(tasks, instrument) in instruments" 
+                  :key="instrument" 
+                  :value="instrument"
                 >
-                  <el-option
-                    v-for="icon in availableIcons"
-                    :key="icon.class"
-                    :label="icon.name"
-                    :value="icon.class"
-                  >
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                      <i :class="icon.class"></i>
-                      {{ icon.name }}
-                    </span>
-                  </el-option>
-                </el-select>
-              </div>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group icon-preview">
-                <label>Preview</label>
-                <TaskCard
-                  :task="customTaskPreview"
-                  :is-custom="true"
-                  :is-draggable="false"
-                  :show-edit-button="false"
-                />
-              </div>
-            </div>
-            
-            <div class="form-actions">
+                  {{ instrument }}
+                </option>
+              </select>
+              
+              <input 
+                type="text" 
+                v-model="customTask.task" 
+                class="inline-input" 
+                placeholder="Task name"
+                @keyup.enter="handleAddCustomTask"
+              />
+              
+              <el-input-number 
+                v-model="customTask.duration" 
+                :min="1" 
+                :max="999"
+                size="small"
+                placeholder="Duration"
+                class="inline-duration"
+              />
+              
               <el-button 
                 type="primary" 
                 size="small"
                 @click="handleAddCustomTask"
                 :disabled="!isCustomTaskValid"
               >
-                <i class="fas fa-plus"></i> Add to Palette
-              </el-button>
-              <el-button 
-                size="small"
-                @click="resetCustomTaskForm"
-              >
-                Reset
+                Add
               </el-button>
             </div>
           </div>
-        </template>
-      </InstrumentDrawer>
+        </transition>
+      </div>
     </div>
     
     <!-- Instrument Task Drawers -->
@@ -322,8 +278,23 @@ const handleRemoveCustomTask = (task: CustomTask) => {
   gap: 1rem;
 }
 
+.palette-header {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--section-bg);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
 .palette-header h4 {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   color: var(--text-light);
   font-size: 1.125rem;
 }
@@ -333,6 +304,82 @@ const handleRemoveCustomTask = (task: CustomTask) => {
   color: var(--text-muted);
   margin: 0;
   font-style: italic;
+}
+
+/* Inline Custom Task Creator */
+.custom-task-inline {
+  width: 100%;
+}
+
+.custom-task-toggle {
+  text-align: right;
+}
+
+.custom-task-toggle .el-button.active {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+}
+
+.custom-task-form-inline {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(var(--primary-color-rgb), 0.05);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+  border-radius: 0.375rem;
+}
+
+.inline-form-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inline-select,
+.inline-input {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  color: var(--text-light);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.inline-select {
+  min-width: 120px;
+}
+
+.inline-input {
+  flex: 1;
+  min-width: 100px;
+}
+
+.inline-duration {
+  width: 80px;
+}
+
+.inline-select:focus,
+.inline-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+/* Slide down animation */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+  transform-origin: top;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: scaleY(0);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: scaleY(0);
 }
 
 /* Custom Task Section */
@@ -475,6 +522,34 @@ const handleRemoveCustomTask = (task: CustomTask) => {
   
   .form-actions .el-button {
     width: 100%;
+  }
+
+  /* Mobile inline custom task form */
+  .inline-form-row {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .inline-select,
+  .inline-input,
+  .inline-duration {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .custom-task-toggle {
+    text-align: center;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .palette-header {
+    padding: 0.5rem;
   }
 }
 </style>

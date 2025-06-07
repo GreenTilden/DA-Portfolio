@@ -16,13 +16,14 @@
           <i class="fas fa-cog"></i> Configure Instruments
         </el-button>
         <el-button 
+          class="optimize-button"
           type="primary" 
-          size="small" 
+          size="medium" 
           @click="handleOptimizeSchedule" 
           :disabled="isOptimizing"
         >
-          <i class="fas fa-chart-line"></i> 
-          {{ isOptimizing ? 'Optimizing...' : 'Optimize' }}
+          <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-chart-line'"></i> 
+          {{ isOptimizing ? 'Optimizing...' : 'Optimize Schedule' }}
         </el-button>
         <el-button size="small" @click="handleResetWorkflows">
           <i class="fas fa-undo"></i> Reset
@@ -274,7 +275,7 @@ const {
   resetState
 } = useWorkflowState()
 
-const { currentDragItem } = useDragDrop()
+const { currentDragItem, onDragEnd } = useDragDrop()
 
 const { updateSvgSize, drawConnections } = useConnections(connectionsSvg, workflows)
 
@@ -338,7 +339,19 @@ const handleCustomTaskRemoved = (task: typeof customTasks.value[0]) => {
 }
 
 const handlePaletteDragStart = (event: DragEvent, item: DragItem) => {
-  // Additional logic if needed when starting drag from palette
+  // The drag composable handles the data, but we need to ensure cleanup
+  const dragEndHandler = () => {
+    onDragEnd()
+    event.target?.removeEventListener('dragend', dragEndHandler)
+  }
+  event.target?.addEventListener('dragend', dragEndHandler)
+  
+  // Also add global dragend listener as backup
+  document.addEventListener('dragend', () => {
+    setTimeout(() => {
+      onDragEnd()
+    }, 100)
+  }, { once: true })
 }
 
 const handleWorkflowsChanged = () => {
@@ -644,34 +657,98 @@ watch(workflows, () => {
   opacity: 0;
 }
 
+/* Optimize button styling */
+.optimize-button {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.optimize-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.optimize-button:hover::before {
+  left: 100%;
+}
+
+.optimize-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--primary-color-rgb), 0.4);
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+}
+
+.optimize-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.optimize-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Button icon animation */
+.optimize-button .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .workflow-optimizer {
-    padding: 1rem;
+    padding: 0.75rem;
   }
   
   .optimizer-header {
     flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+    gap: 0.75rem;
+    align-items: stretch;
+    margin-bottom: 1.5rem;
   }
 
   .control-buttons {
     width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .control-buttons .optimize-button {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-top: 0.25rem;
   }
 
   .control-buttons .el-button {
     border-radius: 0.5rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.875rem;
   }
 
-    .control-buttons .el-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  .control-buttons .el-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
 
   .control-buttons .el-button--primary {
@@ -685,13 +762,16 @@ watch(workflows, () => {
   
   .help-button {
     margin-left: 0;
-    margin-top: 0.5rem;
+    font-size: 0.875rem;
   }
   
   .header-left {
-    flex-direction: column;
-    align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .header-left h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
   }
   
   .instructions-panel {
@@ -701,6 +781,34 @@ watch(workflows, () => {
   
   .feature-highlights {
     grid-template-columns: 1fr;
+  }
+
+  /* Reduce gaps on mobile */
+  .workflow-section {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .workflow-lanes {
+    gap: 0.5rem;
+  }
+
+  .labware-lane {
+    padding: 0.5rem;
+  }
+
+  .lane-steps {
+    padding: 0.375rem;
+    min-height: 50px;
+  }
+
+  #app {
+    max-width: 100%;
+    padding: 0.5rem;
+  }
+
+  .container {
+    padding: 0;
   }
 }
 </style>

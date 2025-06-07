@@ -277,7 +277,9 @@ pre code {
   }
 
   #app {
+    max-width: 100%;
     padding: 0.5rem;
+    margin: 0;
   }
 
   h1 {
@@ -293,11 +295,32 @@ pre code {
   }
 
   .container {
-    padding: 0 0.25rem;
+    padding: 0;
+    max-width: 100%;
   }
 
-  button {
+  /* Reduce page gaps on mobile */
+  .card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Better mobile button layout */
+  button:not(.inline-button) {
     width: 100%;
+  }
+
+  /* Element UI mobile optimizations */
+  .el-button {
+    min-height: 44px; /* Touch-friendly */
+  }
+
+  .el-input__inner {
+    min-height: 44px;
+  }
+
+  .el-select .el-input__inner {
+    min-height: 44px;
   }
 }
 

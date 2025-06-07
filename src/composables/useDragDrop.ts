@@ -7,11 +7,13 @@ export function useDragDrop() {
 
   // Start dragging
   const onDragStart = (event: DragEvent, item: DragItem | Step, isExistingStep = false) => {
-    currentDragItem.value = { ...item, isExistingStep } as DragItem
+    const dragData = { ...item, isExistingStep }
+    currentDragItem.value = dragData as DragItem
     
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = isExistingStep ? 'move' : 'copy'
-      event.dataTransfer.setData('text/plain', JSON.stringify(item))
+      event.dataTransfer.setData('text/plain', JSON.stringify(dragData))
+      event.dataTransfer.setData('application/json', JSON.stringify(dragData))
     }
   }
 
@@ -97,8 +99,11 @@ export function useDragDrop() {
   }
 
   // Handle drag over with drop indicators
-  const onDragOverWithIndicator = (event: DragEvent, stepSelector = '.device-step') => {
+  const onDragOverWithIndicator = (event: DragEvent, stepSelector = '.workflow-step') => {
     onDragOver(event)
+    
+    const container = event.currentTarget as HTMLElement
+    if (!container) return
     
     const closestElement = findClosestElement(event, stepSelector)
     removeDropIndicators()
@@ -113,6 +118,10 @@ export function useDragDrop() {
       } else {
         closestElement.after(indicator)
       }
+    } else if (container.querySelectorAll(stepSelector).length === 0) {
+      // If no steps exist, add indicator to the container
+      const indicator = createDropIndicator()
+      container.appendChild(indicator)
     }
   }
 
