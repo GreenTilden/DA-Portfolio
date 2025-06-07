@@ -5,9 +5,12 @@
       <div class="gantt-sidebar">
         <div class="gantt-header-cell">Workflow / Lane</div>
         <div 
-          v-for="lane in ganttLanes" 
+          v-for="(lane, index) in ganttLanes" 
           :key="lane.id"
           class="gantt-row-header"
+          :class="{
+            'workflow-separator': index > 0 && ganttLanes[index - 1].workflowId !== lane.workflowId
+          }"
           :title="`${lane.workflowName} - ${lane.laneName}`"
         >
           <span class="workflow-name">{{ lane.workflowName }}</span>
@@ -102,6 +105,12 @@ const emit = defineEmits<{
 
 const ganttTimeline = ref<HTMLElement>()
 
+// Calculate the actual timeline width based on max end time
+const timelineWidth = computed(() => {
+  const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
+  return maxTime * props.pixelsPerMinute + 100 // Add padding
+})
+
 // Generate unique lanes based on workflow and lane combinations
 const ganttLanes = computed(() => {
   const lanes: Array<{
@@ -177,6 +186,7 @@ const handleScroll = (event: Event) => {
   border: 1px solid var(--border-color);
   border-radius: 0.25rem;
   background-color: var(--card-bg);
+  max-width: 100%;
 }
 
 .gantt-sidebar {
@@ -229,6 +239,7 @@ const handleScroll = (event: Event) => {
   flex-grow: 1;
   overflow-x: auto;
   position: relative;
+  min-width: 0; /* Allow shrinking */
 }
 
 .time-header {
@@ -243,6 +254,7 @@ const handleScroll = (event: Event) => {
 .time-markers {
   position: relative;
   height: 100%;
+  width: v-bind('timelineWidth + "px"');
 }
 
 .time-marker {
@@ -259,12 +271,14 @@ const handleScroll = (event: Event) => {
 
 .gantt-rows {
   position: relative;
+  width: v-bind('timelineWidth + "px"');
 }
 
 .gantt-row {
   height: 50px;
   position: relative;
   border-bottom: 1px solid var(--border-color);
+  width: 100%;
 }
 
 .gantt-row:nth-child(even) {
@@ -406,6 +420,27 @@ const handleScroll = (event: Event) => {
   background: var(--primary-color);
 }
 
+/* Add separator styling */
+.workflow-separator {
+  border-top: 3px solid var(--border-color) !important;
+  margin-top: 2px;
+}
+
+.workflow-separator::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent);
+}
+
+/* Add visual indicator for sidebar separators */
+.gantt-sidebar .gantt-row-header.workflow-separator {
+  border-top: 3px solid var(--border-color);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .gantt-sidebar {
@@ -414,12 +449,12 @@ const handleScroll = (event: Event) => {
   
   .gantt-row-header,
   .gantt-row {
-    height: 40px;
+    height: 50px;
   }
   
   .gantt-task {
-    height: 28px;
-    top: 6px;
+    height: 32px;
+    top: 9px;
     font-size: 0.7rem;
   }
   

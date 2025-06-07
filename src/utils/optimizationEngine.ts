@@ -265,9 +265,11 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
       }
       
       // Update availability - instrument will be busy until task completes
-      instrumentAvailability[instrument][selectedNest] = startTime + task.duration
+      // Add a small gap (1 minute) between tasks for visual clarity
+      const gapTime = 1
+      instrumentAvailability[instrument][selectedNest] = startTime + task.duration + gapTime
       taskCompletionTimes[task.id] = startTime + task.duration
-      laneCompletionTimes[task.laneId] = startTime + task.duration
+      laneCompletionTimes[task.laneId] = startTime + task.duration + gapTime
       
       // Create scheduled task
       const scheduledTask: ScheduledTask = {
