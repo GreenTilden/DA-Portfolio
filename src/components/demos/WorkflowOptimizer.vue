@@ -163,9 +163,6 @@
               <div class="instrument-modal" @click.stop>
                 <div class="modal-header">
                   <h3><i class="fas fa-toolbox"></i> Instruments</h3>
-                  <button class="close-btn" @click="isPaletteOpen = false">
-                    <i class="fas fa-times"></i>
-                  </button>
                 </div>
                 <div class="modal-content">
                   <div class="instruments-grid">
@@ -173,7 +170,7 @@
                       v-for="(tasks, instrument) in INSTRUMENTS"
                       :key="instrument"
                       class="instrument-item"
-                      @click="openTaskModal(instrument)"
+                      @click="openTaskModal(instrument, $event)"
                     >
                       <div class="instrument-icon">
                         <i :class="getInstrumentIcon(instrument)"></i>
@@ -189,15 +186,12 @@
           <!-- Task Modal -->
           <transition name="bubble-pop">
             <div v-if="selectedInstrument" class="modal-backdrop" @click="closeTaskModal">
-              <div class="task-modal" @click.stop>
+              <div class="task-modal" :style="{ bottom: taskModalPosition.bottom, left: taskModalPosition.left }" @click.stop>
                 <div class="modal-header">
                   <h3>
                     <i :class="getInstrumentIcon(selectedInstrument)"></i> 
                     {{ selectedInstrument }} Tasks
                   </h3>
-                  <button class="close-btn" @click="closeTaskModal">
-                    <i class="fas fa-times"></i>
-                  </button>
                 </div>
                 <div class="modal-content">
                   <div class="tasks-grid">
@@ -654,8 +648,26 @@ const toggleInstructions = () => {
 }
 
 // Modal functionality
-const openTaskModal = (instrument: string) => {
+const taskModalPosition = ref({ bottom: '200px', left: '440px' })
+
+const openTaskModal = (instrument: string, event?: MouseEvent) => {
   selectedInstrument.value = instrument
+  
+  // If event is provided, position the task modal diagonally NW from the clicked element
+  if (event && event.currentTarget) {
+    const element = event.currentTarget as HTMLElement
+    const rect = element.getBoundingClientRect()
+    
+    // Position the task modal diagonally up and to the left (NW)
+    const diagonalOffset = 30 // pixels for diagonal spacing
+    const left = rect.left - diagonalOffset
+    const bottom = window.innerHeight - rect.top + diagonalOffset
+    
+    taskModalPosition.value = {
+      bottom: `${bottom}px`,
+      left: `${left}px`
+    }
+  }
 }
 
 const closeTaskModal = () => {
@@ -1163,18 +1175,20 @@ watch(activeTab, (newTab) => {
   gap: var(--spacing-md);
   transition: all 0.2s ease;
   min-height: 48px;
-  border-radius: 50px;
+  border-radius: var(--radius-md);
   overflow: visible;
 }
 
 .tab-button:hover {
   color: var(--text-color);
-  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.1);
 }
 
 .tab-button.active {
   color: var(--primary-color);
-  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.15);
+}
+
+.tab-button:focus {
+  outline: none;
 }
 
 .tab-indicator {
@@ -1849,6 +1863,9 @@ watch(activeTab, (newTab) => {
 
 .palette-toggle-fab.active {
   background: linear-gradient(135deg, var(--success-color, #10b981), var(--success-dark, #059669));
+  box-shadow: var(--shadow-xl), 
+    -10px 10px 20px rgba(16, 185, 129, 0.1),
+    -20px 20px 30px rgba(16, 185, 129, 0.05);
 }
 
 /* Thought Bubble Modals */
@@ -1858,8 +1875,8 @@ watch(activeTab, (newTab) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -1868,36 +1885,39 @@ watch(activeTab, (newTab) => {
 
 .instrument-modal {
   position: fixed;
-  bottom: 160px; /* Position above the FAB */
-  left: var(--spacing-xl);
+  bottom: calc(80px + 64px + 30px); /* FAB bottom + FAB height + diagonal offset */
+  left: calc(var(--spacing-xl) - 30px); /* Diagonal offset to the left */
   width: 400px;
   max-height: 60vh;
   background: var(--section-bg);
   border-radius: 24px;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xl),
+    10px -10px 25px rgba(59, 130, 246, 0.08),
+    20px -20px 40px rgba(59, 130, 246, 0.04);
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
 
 .task-modal {
   position: fixed;
-  bottom: 200px;
-  left: calc(var(--spacing-xl) + 420px); /* Position to the right of instrument modal */
+  /* Dynamic positioning will be handled by JavaScript */
   width: 300px;
   max-height: 50vh;
   background: var(--section-bg);
   border-radius: 20px;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xl),
+    10px -10px 20px rgba(59, 130, 246, 0.06),
+    20px -20px 35px rgba(59, 130, 246, 0.03);
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: var(--spacing-lg);
-  background: var(--card-bg);
+  background: transparent;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -1911,25 +1931,7 @@ watch(activeTab, (newTab) => {
   gap: var(--spacing-sm);
 }
 
-.close-btn {
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  color: var(--text-faded);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: var(--error-color, #ef4444);
-  color: white;
-  border-color: var(--error-color, #ef4444);
-}
+/* Close buttons removed - clicking outside closes modals */
 
 .modal-content {
   padding: var(--spacing-lg);
@@ -1951,16 +1953,16 @@ watch(activeTab, (newTab) => {
 
 .instrument-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   padding: var(--spacing-lg);
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: center;
+  text-align: left;
 }
 
 .instrument-item:hover {
@@ -1971,15 +1973,16 @@ watch(activeTab, (newTab) => {
 }
 
 .instrument-item .instrument-icon {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   background: var(--section-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: var(--primary-color);
+  flex-shrink: 0;
 }
 
 .instrument-item .instrument-name {
@@ -1991,6 +1994,7 @@ watch(activeTab, (newTab) => {
 
 .task-item {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
@@ -2000,6 +2004,7 @@ watch(activeTab, (newTab) => {
   cursor: grab;
   transition: all 0.2s ease;
   user-select: none;
+  text-align: left;
 }
 
 .task-item:hover {
@@ -2016,9 +2021,8 @@ watch(activeTab, (newTab) => {
 
 .task-item i {
   color: var(--primary-color);
-  font-size: 0.875rem;
-  width: 16px;
-  text-align: center;
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .task-item span {
@@ -2041,9 +2045,13 @@ watch(activeTab, (newTab) => {
   opacity: 0;
 }
 
-.bubble-pop-enter-from .instrument-modal,
+.bubble-pop-enter-from .instrument-modal {
+  transform: scale(0.3) translate(30px, 30px);
+  opacity: 0;
+}
+
 .bubble-pop-enter-from .task-modal {
-  transform: scale(0.3) translateY(30px);
+  transform: scale(0.3) translate(20px, 20px);
   opacity: 0;
 }
 
@@ -2055,9 +2063,13 @@ watch(activeTab, (newTab) => {
   opacity: 0;
 }
 
-.bubble-pop-leave-to .instrument-modal,
+.bubble-pop-leave-to .instrument-modal {
+  transform: scale(0.8) translate(15px, 15px);
+  opacity: 0;
+}
+
 .bubble-pop-leave-to .task-modal {
-  transform: scale(0.8) translateY(10px);
+  transform: scale(0.8) translate(10px, 10px);
   opacity: 0;
 }
 </style>
