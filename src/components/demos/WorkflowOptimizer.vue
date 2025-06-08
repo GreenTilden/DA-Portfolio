@@ -13,7 +13,7 @@
           </div>
         </div>
         <div class="header-actions">
-          <button class="action-button secondary" @click="showInstructions = !showInstructions">
+          <button class="action-button secondary" @click="toggleInstructions">
             <i class="fas fa-question-circle"></i>
             <span class="button-text">Help</span>
           </button>
@@ -31,7 +31,9 @@
 
     <!-- Instructions Overlay -->
     <transition name="slide-fade">
-      <div class="instructions-overlay" v-if="showInstructions">
+      <!-- Instructions positioning fix -->
+      <div v-if="showInstructions" class="instructions-backdrop" @click="showInstructions = false">
+        <div class="instructions-overlay">
         <div class="instructions-card">
           <button class="close-button" @click="showInstructions = false">
             <i class="fas fa-times"></i>
@@ -82,6 +84,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
     </transition>
 
@@ -128,7 +131,8 @@
           <div v-else class="builder-content">
             <div class="builder-layout">
               <!-- Collapsible Instrument Palette -->
-              <aside class="palette-sidebar" :class="{ 'collapsed': isPaletteCollapsed }">
+              <section class="builder-section palette-section">
+                <aside class="palette-sidebar" :class="{ 'collapsed': isPaletteCollapsed }">
                 <div class="palette-toggle" @click="togglePalette">
                   <i class="fas fa-toolbox"></i>
                   <span v-show="!isPaletteCollapsed">Instrument Palette</span>
@@ -150,6 +154,7 @@
                   </div>
                 </transition>
               </aside>
+              </section>
 
               <!-- Workflows Section -->
               <section class="builder-section workflows-section" :class="{ 'palette-collapsed': isPaletteCollapsed }">
@@ -446,6 +451,11 @@ const { currentTheme, setTheme } = useTheme()
 // Palette collapse functionality
 const togglePalette = () => {
   isPaletteCollapsed.value = !isPaletteCollapsed.value
+}
+
+// Instructions toggle functionality
+const toggleInstructions = () => {
+  showInstructions.value = !showInstructions.value
 }
 
 // Initialize workflows
@@ -808,8 +818,18 @@ watch(activeTab, (newTab) => {
 }
 
 /* Instructions Overlay */
-.instructions-overlay {
+.instructions-backdrop {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.instructions-overlay {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -818,9 +838,9 @@ watch(activeTab, (newTab) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
   padding: var(--spacing-xl);
   backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 .instructions-card {
@@ -833,6 +853,7 @@ watch(activeTab, (newTab) => {
   overflow-y: auto;
   position: relative;
   padding: var(--spacing-2xl);
+  pointer-events: auto;
 }
 
 .instructions-card h2 {
@@ -1010,10 +1031,10 @@ watch(activeTab, (newTab) => {
 }
 
 .builder-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--spacing-lg);
   height: calc(100vh - 200px);
-  position: relative;
 }
 
 /* Section Styles */
@@ -1052,11 +1073,17 @@ watch(activeTab, (newTab) => {
   gap: var(--spacing-sm);
 }
 
-/* Collapsible Palette Sidebar */
+/* Palette Section */
+.palette-section {
+  order: 1;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
 .palette-sidebar {
   position: relative;
-  width: 320px;
-  min-width: 320px;
+  width: 100%;
   background: var(--section-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
@@ -1065,8 +1092,8 @@ watch(activeTab, (newTab) => {
 }
 
 .palette-sidebar.collapsed {
-  width: 60px;
-  min-width: 60px;
+  height: 60px;
+  overflow: hidden;
 }
 
 .palette-toggle {
@@ -1128,13 +1155,10 @@ watch(activeTab, (newTab) => {
 
 /* Workflows Section Adjustments */
 .workflows-section {
+  order: 2;
   flex: 1;
+  overflow-y: auto;
   min-height: 400px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.workflows-section.palette-collapsed {
-  margin-left: 0;
 }
 
 /* Palette Slide Animation */
@@ -1399,23 +1423,11 @@ watch(activeTab, (newTab) => {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .builder-layout {
-    flex-direction: column;
-  }
-  
-  .palette-sidebar {
-    width: 100%;
-    min-width: 100%;
+  .palette-section {
     order: 2;
-  }
-  
-  .palette-sidebar.collapsed {
-    width: 100%;
-    min-width: 100%;
-  }
-  
-  .palette-toggle {
-    justify-content: space-between;
+    flex: 0 0 auto;
+    max-height: 300px;
+    overflow-y: auto;
   }
   
   .workflows-section {

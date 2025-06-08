@@ -67,7 +67,7 @@
               </div>
             </div>
             <button 
-              class="remove-lane-btn" 
+              class="remove-lane-btn-top" 
               @click="removeLane(workflow, lane)" 
               v-if="workflow.lanes.length > 1"
               title="Remove lane"
@@ -89,9 +89,11 @@
               :stepIndex="stepIndex"
               :workflowId="workflow.id"
               :laneId="lane.id"
+              :draggable="true"
               @remove="removeStep(workflow.id, lane.id, stepIndex)"
               @edit-duration="$emit('step-edited', step)"
               @drag-start="handleStepDragStart"
+              @dragstart="handleStepDragStart"
             />
             <div class="empty-lane-hint" v-if="lane.steps.length === 0">
               Drag instruments here to add steps
@@ -452,6 +454,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   margin-bottom: 0.5rem;
   color: var(--secondary-color);
   font-weight: 500;
+  position: relative;
 }
 
 .lane-name-container {
@@ -529,6 +532,30 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
 }
 
 .remove-lane-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.1);
+}
+
+.remove-lane-btn-top {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.remove-lane-btn-top:hover {
   background-color: #dc2626;
   transform: scale(1.1);
 }

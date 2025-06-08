@@ -477,9 +477,10 @@ const handleRemoveCustomTask = (task: CustomTask) => {
 
 /* Instrument Drawers */
 .instrument-drawers {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.5rem;
+  width: 100%;
   max-height: 200px;
   overflow-y: auto;
 }
