@@ -170,7 +170,7 @@
                       v-for="(tasks, instrument) in INSTRUMENTS"
                       :key="instrument"
                       class="instrument-item"
-                      @click="openTaskModal(instrument, $event)"
+                      @click="openTaskModal(instrument)"
                     >
                       <div class="instrument-icon">
                         <i :class="getInstrumentIcon(instrument)"></i>
@@ -186,7 +186,7 @@
           <!-- Task Modal -->
           <transition name="bubble-pop">
             <div v-if="selectedInstrument" class="modal-backdrop" @click="closeTaskModal">
-              <div class="task-modal" :style="{ bottom: taskModalPosition.bottom, left: taskModalPosition.left }" @click.stop>
+              <div class="task-modal" @click.stop>
                 <div class="modal-header">
                   <h3>
                     <i :class="getInstrumentIcon(selectedInstrument)"></i> 
@@ -201,6 +201,9 @@
                       class="task-item"
                       draggable="true"
                       @dragstart="handleTaskDragStart($event, selectedInstrument, task)"
+                      @touchstart="handleTaskTouchStart($event, selectedInstrument, task)"
+                      @touchmove="handleTaskTouchMove"
+                      @touchend="handleTaskTouchEnd"
                     >
                       <i :class="getInstrumentIcon(selectedInstrument)"></i>
                       <span>{{ task }}</span>
@@ -648,26 +651,8 @@ const toggleInstructions = () => {
 }
 
 // Modal functionality
-const taskModalPosition = ref({ bottom: '200px', left: '440px' })
-
-const openTaskModal = (instrument: string, event?: MouseEvent) => {
+const openTaskModal = (instrument: string) => {
   selectedInstrument.value = instrument
-  
-  // If event is provided, position the task modal diagonally NW from the clicked element
-  if (event && event.currentTarget) {
-    const element = event.currentTarget as HTMLElement
-    const rect = element.getBoundingClientRect()
-    
-    // Position the task modal diagonally up and to the left (NW)
-    const diagonalOffset = 30 // pixels for diagonal spacing
-    const left = rect.left - diagonalOffset
-    const bottom = window.innerHeight - rect.top + diagonalOffset
-    
-    taskModalPosition.value = {
-      bottom: `${bottom}px`,
-      left: `${left}px`
-    }
-  }
 }
 
 const closeTaskModal = () => {
@@ -682,11 +667,101 @@ const handleTaskDragStart = (event: DragEvent, instrument: string, task: string)
     isExistingStep: false
   }
   
-  handleDragStart(event, dragItem, event.target as HTMLElement)
-  
-  // Close both modals when dragging starts
+  // Close both modals immediately when dragging starts to clear the backdrop
   isPaletteOpen.value = false
   selectedInstrument.value = null
+  
+  handleDragStart(event, dragItem, event.target as HTMLElement)
+}
+
+// Touch event handlers for mobile
+let touchItem: DragItem | null = null
+let touchClone: HTMLElement | null = null
+
+const handleTaskTouchStart = (event: TouchEvent, instrument: string, task: string) => {
+  event.preventDefault()
+  
+  touchItem = {
+    type: instrument,
+    task: task,
+    duration: 15,
+    isExistingStep: false
+  }
+  
+  // Create a visual clone of the dragged element
+  const element = event.target as HTMLElement
+  const rect = element.getBoundingClientRect()
+  
+  touchClone = element.cloneNode(true) as HTMLElement
+  touchClone.style.position = 'fixed'
+  touchClone.style.width = rect.width + 'px'
+  touchClone.style.height = rect.height + 'px'
+  touchClone.style.left = rect.left + 'px'
+  touchClone.style.top = rect.top + 'px'
+  touchClone.style.zIndex = '9999'
+  touchClone.style.opacity = '0.8'
+  touchClone.style.pointerEvents = 'none'
+  touchClone.style.transform = 'scale(1.1)'
+  touchClone.style.transition = 'transform 0.2s'
+  document.body.appendChild(touchClone)
+  
+  // Close modals to clear backdrop
+  isPaletteOpen.value = false
+  selectedInstrument.value = null
+}
+
+const handleTaskTouchMove = (event: TouchEvent) => {
+  event.preventDefault()
+  
+  if (!touchClone) return
+  
+  const touch = event.touches[0]
+  touchClone.style.left = (touch.clientX - 50) + 'px'
+  touchClone.style.top = (touch.clientY - 25) + 'px'
+}
+
+const handleTaskTouchEnd = (event: TouchEvent) => {
+  event.preventDefault()
+  
+  if (!touchItem || !touchClone) return
+  
+  // Find the element under the touch point
+  const touch = event.changedTouches[0]
+  touchClone.style.display = 'none'
+  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY)
+  touchClone.style.display = ''
+  
+  // Find if we're over a workflow lane
+  const laneElement = elementBelow?.closest('.workflow-lane')
+  if (laneElement) {
+    // Extract workflow and lane IDs from the element or its data attributes
+    // This is a simplified version - you may need to adjust based on your WorkflowBuilder component
+    const workflowElement = laneElement.closest('.workflow-container')
+    if (workflowElement) {
+      // Simulate a drop by adding the step to the workflow
+      // You'll need to implement the logic to determine which workflow/lane
+      console.log('Dropped on lane:', laneElement)
+      
+      // Add the new step to the appropriate workflow/lane
+      // This is placeholder logic - adjust based on your actual workflow structure
+      const newStep: Step = {
+        id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: touchItem.type,
+        task: touchItem.task,
+        duration: touchItem.duration || 15
+      }
+      
+      // Find the correct workflow and lane to add to
+      // This will depend on how your WorkflowBuilder identifies lanes
+    }
+  }
+  
+  // Clean up
+  if (touchClone) {
+    touchClone.remove()
+    touchClone = null
+  }
+  touchItem = null
 }
 
 // Initialize workflows
@@ -1863,9 +1938,7 @@ watch(activeTab, (newTab) => {
 
 .palette-toggle-fab.active {
   background: linear-gradient(135deg, var(--success-color, #10b981), var(--success-dark, #059669));
-  box-shadow: var(--shadow-xl), 
-    -10px 10px 20px rgba(16, 185, 129, 0.1),
-    -20px 20px 30px rgba(16, 185, 129, 0.05);
+  box-shadow: var(--shadow-xl);
 }
 
 /* Thought Bubble Modals */
@@ -1878,43 +1951,37 @@ watch(activeTab, (newTab) => {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(1px);
   z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .instrument-modal {
   position: fixed;
-  bottom: calc(80px + 64px + 30px); /* FAB bottom + FAB height + diagonal offset */
-  left: calc(var(--spacing-xl) - 30px); /* Diagonal offset to the left */
+  bottom: calc(80px + 64px + 20px); /* FAB bottom + FAB height + gap */
+  left: var(--spacing-xl); /* Aligned with FAB */
   width: 400px;
   max-height: 60vh;
   background: var(--section-bg);
   border-radius: 24px;
-  box-shadow: var(--shadow-xl),
-    10px -10px 25px rgba(59, 130, 246, 0.08),
-    20px -20px 40px rgba(59, 130, 246, 0.04);
+  box-shadow: var(--shadow-xl);
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
 
 .task-modal {
   position: fixed;
-  /* Dynamic positioning will be handled by JavaScript */
+  bottom: calc(80px + 64px + 20px + 200px + 20px); /* Above instrument modal with reasonable height */
+  left: var(--spacing-xl); /* Align with FAB horizontally */
   width: 300px;
-  max-height: 50vh;
+  max-height: 40vh;
   background: var(--section-bg);
   border-radius: 20px;
-  box-shadow: var(--shadow-xl),
-    10px -10px 20px rgba(59, 130, 246, 0.06),
-    20px -20px 35px rgba(59, 130, 246, 0.03);
+  box-shadow: var(--shadow-xl);
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
 
 .modal-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   padding: var(--spacing-lg);
   background: transparent;
@@ -1941,28 +2008,31 @@ watch(activeTab, (newTab) => {
 
 .instruments-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: var(--spacing-md);
 }
 
 .tasks-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: var(--spacing-sm);
 }
 
 .instrument-item {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.2s ease;
-  text-align: left;
+  text-align: center;
+  aspect-ratio: 1;
+  min-height: 100px;
 }
 
 .instrument-item:hover {
@@ -1973,20 +2043,19 @@ watch(activeTab, (newTab) => {
 }
 
 .instrument-item .instrument-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   background: var(--section-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.25rem;
   color: var(--primary-color);
-  flex-shrink: 0;
 }
 
 .instrument-item .instrument-name {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-color);
   line-height: 1.2;
@@ -1994,17 +2063,21 @@ watch(activeTab, (newTab) => {
 
 .task-item {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
+  min-height: 80px;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   cursor: grab;
   transition: all 0.2s ease;
   user-select: none;
-  text-align: left;
+  text-align: center;
+  touch-action: none; /* Prevent default touch behavior */
+  aspect-ratio: 1;
 }
 
 .task-item:hover {
@@ -2021,14 +2094,15 @@ watch(activeTab, (newTab) => {
 
 .task-item i {
   color: var(--primary-color);
-  font-size: 1rem;
-  flex-shrink: 0;
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-xs);
 }
 
 .task-item span {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-color);
   font-weight: 500;
+  line-height: 1.3;
 }
 
 /* Thought Bubble Animation */
@@ -2045,13 +2119,9 @@ watch(activeTab, (newTab) => {
   opacity: 0;
 }
 
-.bubble-pop-enter-from .instrument-modal {
-  transform: scale(0.3) translate(30px, 30px);
-  opacity: 0;
-}
-
+.bubble-pop-enter-from .instrument-modal,
 .bubble-pop-enter-from .task-modal {
-  transform: scale(0.3) translate(20px, 20px);
+  transform: scale(0.3) translateY(20px);
   opacity: 0;
 }
 
@@ -2063,13 +2133,9 @@ watch(activeTab, (newTab) => {
   opacity: 0;
 }
 
-.bubble-pop-leave-to .instrument-modal {
-  transform: scale(0.8) translate(15px, 15px);
-  opacity: 0;
-}
-
+.bubble-pop-leave-to .instrument-modal,
 .bubble-pop-leave-to .task-modal {
-  transform: scale(0.8) translate(10px, 10px);
+  transform: scale(0.8) translateY(10px);
   opacity: 0;
 }
 </style>

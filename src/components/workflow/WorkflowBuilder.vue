@@ -433,7 +433,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   background-color: var(--error-color);
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 20%;
   width: 20px;
   height: 20px;
   font-size: 0.7rem;
