@@ -157,19 +157,62 @@
             </section>
           </div>
 
-          <!-- Floating Instrument Palette Overlay -->
-          <transition name="slide-palette-overlay">
-            <div v-if="isPaletteOpen" class="palette-overlay">
-              <div class="palette-backdrop" @click="isPaletteOpen = false"></div>
-              <div class="floating-palette">
-                <InstrumentPalette
-                  :custom-tasks="customTasks"
-                  @task-created="handleCustomTaskCreated"
-                  @task-edited="handleCustomTaskEdited"
-                  @task-removed="handleCustomTaskRemoved"
-                  @drag-start="handlePaletteDragStart"
-                  @task-dragged="handleTaskDragged"
-                />
+          <!-- Instrument Modal -->
+          <transition name="bubble-pop">
+            <div v-if="isPaletteOpen" class="modal-backdrop" @click="isPaletteOpen = false">
+              <div class="instrument-modal" @click.stop>
+                <div class="modal-header">
+                  <h3><i class="fas fa-toolbox"></i> Instruments</h3>
+                  <button class="close-btn" @click="isPaletteOpen = false">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="modal-content">
+                  <div class="instruments-grid">
+                    <div 
+                      v-for="(tasks, instrument) in INSTRUMENTS"
+                      :key="instrument"
+                      class="instrument-item"
+                      @click="openTaskModal(instrument)"
+                    >
+                      <div class="instrument-icon">
+                        <i :class="getInstrumentIcon(instrument)"></i>
+                      </div>
+                      <span class="instrument-name">{{ instrument }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
+
+          <!-- Task Modal -->
+          <transition name="bubble-pop">
+            <div v-if="selectedInstrument" class="modal-backdrop" @click="closeTaskModal">
+              <div class="task-modal" @click.stop>
+                <div class="modal-header">
+                  <h3>
+                    <i :class="getInstrumentIcon(selectedInstrument)"></i> 
+                    {{ selectedInstrument }} Tasks
+                  </h3>
+                  <button class="close-btn" @click="closeTaskModal">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="modal-content">
+                  <div class="tasks-grid">
+                    <div 
+                      v-for="task in INSTRUMENTS[selectedInstrument]"
+                      :key="`${selectedInstrument}-${task}`"
+                      class="task-item"
+                      draggable="true"
+                      @dragstart="handleTaskDragStart($event, selectedInstrument, task)"
+                    >
+                      <i :class="getInstrumentIcon(selectedInstrument)"></i>
+                      <span>{{ task }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </transition>
@@ -315,8 +358,7 @@ import { useConnections } from '@/composables/useConnections'
 import { useTheme } from '@/composables/useTheme'
 import { useDragDrop } from '@/composables/useDragDrop'
 import { createOptimizationEngine } from '@/utils/optimizationEngine'
-import { INSTRUMENT_ICONS } from '@/constants/instruments'
-import InstrumentPalette from '@/components/workflow/InstrumentPalette.vue'
+import { INSTRUMENTS, INSTRUMENT_ICONS } from '@/constants/instruments'
 import WorkflowBuilder from '@/components/workflow/WorkflowBuilder.vue'
 import GanttChart from '@/components/workflow/GanttChart.vue'
 import OptimizationMetrics from '@/components/workflow/OptimizationMetrics.vue'
@@ -419,6 +461,7 @@ const showStepDurationEditor = ref(false)
 const editingStep = ref<Step | null>(null)
 const connectionsSvg = ref<SVGSVGElement | null>(null)
 const isPaletteOpen = ref(false)
+const selectedInstrument = ref<string | null>(null)
 
 // Centralized drag and drop state
 const dragState = reactive({
@@ -604,14 +647,34 @@ const handleDrop = (event: DragEvent, workflowId: string, laneId: string) => {
   handleDragEnd()
 }
 
-// Handle task dragged out of palette - closes palette
-const handleTaskDragged = () => {
-  isPaletteOpen.value = false
-}
 
 // Instructions toggle functionality
 const toggleInstructions = () => {
   showInstructions.value = !showInstructions.value
+}
+
+// Modal functionality
+const openTaskModal = (instrument: string) => {
+  selectedInstrument.value = instrument
+}
+
+const closeTaskModal = () => {
+  selectedInstrument.value = null
+}
+
+const handleTaskDragStart = (event: DragEvent, instrument: string, task: string) => {
+  const dragItem: DragItem = {
+    type: instrument,
+    task: task,
+    duration: 15, // default duration
+    isExistingStep: false
+  }
+  
+  handleDragStart(event, dragItem, event.target as HTMLElement)
+  
+  // Close both modals when dragging starts
+  isPaletteOpen.value = false
+  selectedInstrument.value = null
 }
 
 // Initialize workflows
@@ -686,39 +749,6 @@ const handleOptimizeSchedule = async () => {
 }
 
 // Event handlers
-const handleCustomTaskCreated = (task: Omit<typeof customTasks.value[0], 'id'>) => {
-  addCustomTask(task)
-}
-
-const handleCustomTaskEdited = (task: typeof customTasks.value[0]) => {
-  const index = customTasks.value.findIndex(t => t.id === task.id)
-  if (index !== -1) {
-    customTasks.value[index] = task
-    saveState()
-  }
-}
-
-const handleCustomTaskRemoved = (task: typeof customTasks.value[0]) => {
-  removeCustomTask(task.id)
-}
-
-const handlePaletteDragStart = (event: DragEvent, item: DragItem) => {
-  handleDragStart(event, item, event.target as HTMLElement)
-  
-  // Set up drag end handler
-  const dragEndHandler = () => {
-    handleDragEnd()
-    event.target?.removeEventListener('dragend', dragEndHandler)
-  }
-  event.target?.addEventListener('dragend', dragEndHandler)
-  
-  // Fallback cleanup
-  document.addEventListener('dragend', () => {
-    setTimeout(() => {
-      handleDragEnd()
-    }, 100)
-  }, { once: true })
-}
 
 // Provide drag functions to child components
 provide('dragHandlers', {
@@ -1794,7 +1824,7 @@ watch(activeTab, (newTab) => {
 /* Floating Palette Toggle FAB */
 .palette-toggle-fab {
   position: fixed;
-  bottom: var(--spacing-xl);
+  bottom: 80px;
   left: var(--spacing-xl);
   width: 64px;
   height: 64px;
@@ -1821,17 +1851,8 @@ watch(activeTab, (newTab) => {
   background: linear-gradient(135deg, var(--success-color, #10b981), var(--success-dark, #059669));
 }
 
-/* Anchored Palette System */
-.palette-overlay {
-  position: fixed;
-  bottom: var(--spacing-xl);
-  left: var(--spacing-xl);
-  right: var(--spacing-xl);
-  z-index: 45;
-  pointer-events: none;
-}
-
-.palette-backdrop {
+/* Thought Bubble Modals */
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -1839,52 +1860,204 @@ watch(activeTab, (newTab) => {
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(2px);
-  pointer-events: auto;
-  z-index: -1;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.floating-palette {
-  position: relative;
-  bottom: 80px; /* Position above the FAB */
-  left: 0;
-  width: 100%;
+.instrument-modal {
+  position: fixed;
+  bottom: 160px; /* Position above the FAB */
+  left: var(--spacing-xl);
+  width: 400px;
+  max-height: 60vh;
   background: var(--section-bg);
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   box-shadow: var(--shadow-xl);
-  pointer-events: auto;
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid var(--border-color);
 }
 
-/* Anchored Palette Animation */
-.slide-palette-overlay-enter-active,
-.slide-palette-overlay-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.task-modal {
+  position: fixed;
+  bottom: 200px;
+  left: calc(var(--spacing-xl) + 420px); /* Position to the right of instrument modal */
+  width: 300px;
+  max-height: 50vh;
+  background: var(--section-bg);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
-.slide-palette-overlay-enter-from {
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.close-btn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  color: var(--text-faded);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--error-color, #ef4444);
+  color: white;
+  border-color: var(--error-color, #ef4444);
+}
+
+.modal-content {
+  padding: var(--spacing-lg);
+  max-height: calc(60vh - 80px);
+  overflow-y: auto;
+}
+
+.instruments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.tasks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.instrument-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.instrument-item:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+.instrument-item .instrument-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--section-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.instrument-item .instrument-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color);
+  line-height: 1.2;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.task-item:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.task-item:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.task-item i {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  width: 16px;
+  text-align: center;
+}
+
+.task-item span {
+  font-size: 0.875rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* Thought Bubble Animation */
+.bubble-pop-enter-active,
+.bubble-pop-leave-active {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.bubble-pop-enter-from {
   opacity: 0;
 }
 
-.slide-palette-overlay-enter-from .palette-backdrop {
+.bubble-pop-enter-from .modal-backdrop {
   opacity: 0;
 }
 
-.slide-palette-overlay-enter-from .floating-palette {
-  transform: translateY(20px) scale(0.9);
+.bubble-pop-enter-from .instrument-modal,
+.bubble-pop-enter-from .task-modal {
+  transform: scale(0.3) translateY(30px);
   opacity: 0;
 }
 
-.slide-palette-overlay-leave-to {
+.bubble-pop-leave-to {
   opacity: 0;
 }
 
-.slide-palette-overlay-leave-to .palette-backdrop {
+.bubble-pop-leave-to .modal-backdrop {
   opacity: 0;
 }
 
-.slide-palette-overlay-leave-to .floating-palette {
-  transform: translateY(20px) scale(0.9);
+.bubble-pop-leave-to .instrument-modal,
+.bubble-pop-leave-to .task-modal {
+  transform: scale(0.8) translateY(10px);
   opacity: 0;
 }
 </style>
