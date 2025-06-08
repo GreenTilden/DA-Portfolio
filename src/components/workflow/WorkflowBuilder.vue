@@ -1,6 +1,6 @@
 <template>
   <div class="workflow-builder">
-    <div v-for="workflow in workflows" :key="workflow.id" class="workflow-section">
+    <div v-for="workflow in workflows" :key="workflow.id" class="workflow-section workflow-container" :data-workflow-id="workflow.id">
       <div class="workflow-header">
         <div class="workflow-name-container">
           <h4 v-if="!workflow.isEditingName" @click="startEditingWorkflowName(workflow)">
@@ -38,7 +38,7 @@
       </div>
       
       <div class="workflow-lanes">
-        <div v-for="lane in workflow.lanes" :key="lane.id" class="labware-lane">
+        <div v-for="lane in workflow.lanes" :key="lane.id" class="labware-lane workflow-lane" :data-lane-id="lane.id">
           <div class="lane-header">
             <div class="lane-name-container">
               <span v-if="!lane.isEditingName" @click="startEditingLaneName(lane)">

@@ -354,6 +354,7 @@ import { useWorkflowState } from '@/composables/useWorkflowState'
 import { useConnections } from '@/composables/useConnections'
 import { useTheme } from '@/composables/useTheme'
 import { useDragDrop } from '@/composables/useDragDrop'
+import { useTouchDragDrop } from '@/composables/useTouchDragDrop'
 import { createOptimizationEngine } from '@/utils/optimizationEngine'
 import { INSTRUMENTS, INSTRUMENT_ICONS } from '@/constants/instruments'
 import WorkflowBuilder from '@/components/workflow/WorkflowBuilder.vue'
@@ -493,6 +494,7 @@ const {
 const { updateSvgSize, drawConnections } = useConnections(connectionsSvg, workflows)
 const { currentTheme, setTheme } = useTheme()
 const { setDragData, getDragData } = useDragDrop()
+const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchDragDrop()
 
 // Drag and Drop Functions
 const handleDragStart = (event: DragEvent, item: DragItem, element: HTMLElement) => {
@@ -674,94 +676,56 @@ const handleTaskDragStart = (event: DragEvent, instrument: string, task: string)
   handleDragStart(event, dragItem, event.target as HTMLElement)
 }
 
-// Touch event handlers for mobile
-let touchItem: DragItem | null = null
-let touchClone: HTMLElement | null = null
-
+// Touch event handlers for mobile using composable
 const handleTaskTouchStart = (event: TouchEvent, instrument: string, task: string) => {
-  event.preventDefault()
-  
-  touchItem = {
+  const dragItem: DragItem = {
     type: instrument,
     task: task,
     duration: 15,
     isExistingStep: false
   }
   
-  // Create a visual clone of the dragged element
-  const element = event.target as HTMLElement
-  const rect = element.getBoundingClientRect()
-  
-  touchClone = element.cloneNode(true) as HTMLElement
-  touchClone.style.position = 'fixed'
-  touchClone.style.width = rect.width + 'px'
-  touchClone.style.height = rect.height + 'px'
-  touchClone.style.left = rect.left + 'px'
-  touchClone.style.top = rect.top + 'px'
-  touchClone.style.zIndex = '9999'
-  touchClone.style.opacity = '0.8'
-  touchClone.style.pointerEvents = 'none'
-  touchClone.style.transform = 'scale(1.1)'
-  touchClone.style.transition = 'transform 0.2s'
-  document.body.appendChild(touchClone)
-  
   // Close modals to clear backdrop
   isPaletteOpen.value = false
   selectedInstrument.value = null
+  
+  handleTouchStart(event, dragItem)
 }
 
 const handleTaskTouchMove = (event: TouchEvent) => {
-  event.preventDefault()
-  
-  if (!touchClone) return
-  
-  const touch = event.touches[0]
-  touchClone.style.left = (touch.clientX - 50) + 'px'
-  touchClone.style.top = (touch.clientY - 25) + 'px'
+  handleTouchMove(event)
 }
 
 const handleTaskTouchEnd = (event: TouchEvent) => {
-  event.preventDefault()
-  
-  if (!touchItem || !touchClone) return
-  
-  // Find the element under the touch point
-  const touch = event.changedTouches[0]
-  touchClone.style.display = 'none'
-  const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY)
-  touchClone.style.display = ''
-  
-  // Find if we're over a workflow lane
-  const laneElement = elementBelow?.closest('.workflow-lane')
-  if (laneElement) {
-    // Extract workflow and lane IDs from the element or its data attributes
-    // This is a simplified version - you may need to adjust based on your WorkflowBuilder component
-    const workflowElement = laneElement.closest('.workflow-container')
-    if (workflowElement) {
-      // Simulate a drop by adding the step to the workflow
-      // You'll need to implement the logic to determine which workflow/lane
-      console.log('Dropped on lane:', laneElement)
+  handleTouchEnd(event, (dropTarget, dragItem) => {
+    if (dropTarget.workflowId && dropTarget.laneId) {
+      // Find the target workflow and lane
+      const targetWorkflow = workflows.value.find(w => w.id === dropTarget.workflowId)
+      const targetLane = targetWorkflow?.lanes.find(l => l.id === dropTarget.laneId)
       
-      // Add the new step to the appropriate workflow/lane
-      // This is placeholder logic - adjust based on your actual workflow structure
-      const newStep: Step = {
-        id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: touchItem.type,
-        task: touchItem.task,
-        duration: touchItem.duration || 15
+      if (targetWorkflow && targetLane) {
+        // Create new step
+        const newStep: Step = {
+          id: `${dropTarget.laneId}-step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: dragItem.type,
+          task: dragItem.task || dragItem.type,
+          duration: dragItem.duration || 15,
+          customIcon: dragItem.customIcon
+        }
+        
+        // Insert at the calculated position
+        targetLane.steps.splice(dropTarget.insertIndex, 0, newStep)
+        
+        // Save state and update connections
+        saveState()
+        nextTick(() => {
+          drawConnections()
+        })
+        
+        console.log('Touch drop successful:', newStep)
       }
-      
-      // Find the correct workflow and lane to add to
-      // This will depend on how your WorkflowBuilder identifies lanes
     }
-  }
-  
-  // Clean up
-  if (touchClone) {
-    touchClone.remove()
-    touchClone = null
-  }
-  touchItem = null
+  })
 }
 
 // Initialize workflows
@@ -1729,6 +1693,19 @@ watch(activeTab, (newTab) => {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
+}
+
+/* Touch drop indicators */
+:deep(.touch-drop-indicator) {
+  width: 4px;
+  height: 50px;
+  background: #4a90e2;
+  border-radius: 2px;
+  margin: 0 8px;
+  animation: pulse 1s infinite;
+  position: relative;
+  z-index: 10000;
+  box-shadow: 0 0 10px #4a90e2, 0 0 20px #4a90e2;
 }
 
 /* Animations */

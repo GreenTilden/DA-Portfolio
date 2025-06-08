@@ -10,6 +10,9 @@
     draggable="true"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
+    @touchstart="handleTouchStart"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
   >
     <div class="step-icon">
       <i :class="iconClass"></i>
@@ -41,6 +44,7 @@
 import { ref, computed, inject } from 'vue'
 import type { Step } from '@/types/workflow'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
+import { useTouchDragDrop } from '@/composables/useTouchDragDrop'
 
 interface Props {
   step: Step
@@ -66,6 +70,9 @@ const isDragging = ref(false)
 
 // Inject drag handlers from parent
 const dragHandlers = inject<any>('dragHandlers')
+
+// Touch drag and drop composable
+const { handleTouchStart: touchStart, handleTouchMove: touchMove, handleTouchEnd: touchEnd } = useTouchDragDrop()
 
 const iconClass = computed(() => {
   return props.step.customIcon || INSTRUMENT_ICONS[props.step.type] || 'fas fa-cog'
@@ -98,6 +105,46 @@ const handleDragStart = (event: DragEvent) => {
 const handleDragEnd = () => {
   isDragging.value = false
 }
+
+// Touch event handlers
+const handleTouchStart = (event: TouchEvent) => {
+  if (!dragHandlers) return
+  
+  isDragging.value = true
+  
+  const dragData = {
+    ...props.step,
+    isExistingStep: true,
+    sourceWorkflowId: props.workflowId,
+    sourceLaneId: props.laneId,
+    sourceIndex: props.stepIndex
+  }
+  
+  touchStart(event, dragData)
+}
+
+const handleTouchMove = (event: TouchEvent) => {
+  touchMove(event)
+}
+
+const handleTouchEnd = (event: TouchEvent) => {
+  touchEnd(event, (dropTarget, dragItem) => {
+    if (dropTarget.workflowId && dropTarget.laneId && dragHandlers) {
+      // Use the existing drag handlers to handle the drop
+      const mockEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        dataTransfer: {
+          getData: () => JSON.stringify(dragItem)
+        }
+      } as any
+      
+      dragHandlers.handleDrop(mockEvent, dropTarget.workflowId, dropTarget.laneId)
+    }
+  })
+  
+  isDragging.value = false
+}
 </script>
 
 <style scoped>
@@ -110,6 +157,7 @@ const handleDragEnd = () => {
   position: relative;
   min-width: 120px;
   transition: all 0.2s ease;
+  touch-action: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
