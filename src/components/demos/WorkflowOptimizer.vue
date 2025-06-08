@@ -1,168 +1,304 @@
 <template>
   <div class="workflow-optimizer">
-    <div class="optimizer-header">
-      <div class="header-left">
-        <h3>Workflow Optimizer</h3>
-        <button 
-          class="help-button" 
-          @click="showInstructions = !showInstructions" 
-          v-if="!showInstructions"
-        >
-          <i class="fas fa-question-circle"></i> How to Use
-        </button>
-      </div>
-      <div class="control-buttons">
-        <el-button size="small" @click="showInstrumentConfig = true">
-          <i class="fas fa-cog"></i> Configure Instruments
-        </el-button>
-        <el-button 
-          class="optimize-button"
-          type="primary" 
-          size="medium" 
-          @click="handleOptimizeSchedule" 
-          :disabled="isOptimizing"
-        >
-          <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-chart-line'"></i> 
-          {{ isOptimizing ? 'Optimizing...' : 'Optimize Schedule' }}
-        </el-button>
-        <el-button size="small" @click="handleResetWorkflows">
-          <i class="fas fa-undo"></i> Reset
-        </el-button>
-      </div>
-    </div>
-
-    <!-- Instructions Panel -->
-    <transition name="fade">
-      <div class="instructions-panel" v-if="showInstructions">
-        <div class="instructions-header">
-          <h3>How to Use the Workflow Optimizer</h3>
-          <button class="close-button" @click="showInstructions = false">×</button>
+    <!-- Professional Header -->
+    <header class="optimizer-header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-icon">
+            <i class="fas fa-project-diagram"></i>
+          </div>
+          <div class="header-text">
+            <h1>Workflow Optimizer</h1>
+            <p class="header-subtitle">Optimize laboratory automation workflows for maximum efficiency</p>
+          </div>
         </div>
-        <div class="instructions-content">
-          <ol>
-            <li><strong>Create Workflows:</strong> The demo includes pre-built workflows. You can modify them by dragging instruments from the palette to the workflow lanes.</li>
-            <li><strong>Configure Instruments:</strong> Click the "Configure Instruments" button to adjust how many instances of each instrument are available.</li>
-            <li><strong>Optimize Schedule:</strong> Click the "Optimize" button to generate an optimized schedule based on instrument availability and workflow priorities.</li>
-            <li><strong>Analyze Results:</strong> Review the Gantt chart to see the scheduled tasks and check for conflicts. The metrics section shows total time, conflicts, and resource utilization.</li>
-            <li><strong>Experiment:</strong> Try different configurations to see how they affect the schedule. Higher priority workflows (1 is highest) are scheduled first.</li>
-          </ol>
-          <div class="feature-highlights">
-            <div class="highlight">
-              <span class="highlight-icon">🔄</span>
-              <div>
-                <strong>Drag & Drop</strong>
-                <p>Drag instruments from the palette to the workflow lanes to create or modify steps.</p>
+        <div class="header-actions">
+          <button 
+            class="action-button secondary" 
+            @click="showInstructions = !showInstructions"
+            v-tooltip="'Learn how to use the optimizer'"
+          >
+            <i class="fas fa-question-circle"></i>
+            <span class="button-text">Help</span>
+          </button>
+          <button 
+            class="action-button secondary" 
+            @click="showInstrumentConfig = true"
+            v-tooltip="'Configure available instruments'"
+          >
+            <i class="fas fa-cog"></i>
+            <span class="button-text">Configure</span>
+          </button>
+          <button 
+            class="action-button primary"
+            @click="handleOptimizeSchedule" 
+            :disabled="isOptimizing || workflows.length === 0"
+          >
+            <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
+            <span class="button-text">{{ isOptimizing ? 'Optimizing...' : 'Optimize' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Instructions Overlay -->
+    <transition name="slide-fade">
+      <div class="instructions-overlay" v-if="showInstructions">
+        <div class="instructions-card">
+          <button class="close-button" @click="showInstructions = false">
+            <i class="fas fa-times"></i>
+          </button>
+          <h2><i class="fas fa-graduation-cap"></i> Getting Started</h2>
+          
+          <div class="instruction-steps">
+            <div class="instruction-step">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Build Workflows</h3>
+                <p>Drag instruments from the palette to create workflow steps. Each workflow represents a laboratory process.</p>
               </div>
             </div>
-            <div class="highlight">
-              <span class="highlight-icon">⚙️</span>
-              <div>
-                <strong>Resource Management</strong>
-                <p>Configure the number of available instruments to simulate real lab constraints.</p>
+            
+            <div class="instruction-step">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Configure Resources</h3>
+                <p>Set the number of available instruments to match your lab setup. This affects scheduling constraints.</p>
               </div>
             </div>
-            <div class="highlight">
-              <span class="highlight-icon">📊</span>
-              <div>
-                <strong>Bottleneck Detection</strong>
-                <p>The optimizer identifies scheduling conflicts and bottlenecks in your workflows.</p>
+            
+            <div class="instruction-step">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Optimize Schedule</h3>
+                <p>Click optimize to generate an efficient schedule that minimizes conflicts and maximizes throughput.</p>
               </div>
+            </div>
+          </div>
+          
+          <div class="feature-grid">
+            <div class="feature-card">
+              <i class="fas fa-arrows-alt feature-icon"></i>
+              <h4>Drag & Drop</h4>
+              <p>Intuitive workflow building</p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-chart-line feature-icon"></i>
+              <h4>Smart Scheduling</h4>
+              <p>AI-powered optimization</p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-exclamation-triangle feature-icon"></i>
+              <h4>Conflict Detection</h4>
+              <p>Identify bottlenecks</p>
             </div>
           </div>
         </div>
       </div>
     </transition>
 
-    <!-- Tab Navigation -->
-    <div class="tab-navigation">
+    <!-- Modern Tab Navigation -->
+    <nav class="tab-navigation">
       <button 
         class="tab-button"
         :class="{ active: activeTab === 'builder' }"
         @click="activeTab = 'builder'"
       >
-        <i class="fas fa-tools"></i> Workflow Builder
+        <i class="fas fa-tools"></i>
+        <span>Workflow Builder</span>
+        <div class="tab-indicator"></div>
       </button>
       <button 
         class="tab-button"
         :class="{ active: activeTab === 'results' }"
         @click="activeTab = 'results'"
       >
-        <i class="fas fa-chart-gantt"></i> Schedule Results
+        <i class="fas fa-chart-gantt"></i>
+        <span>Schedule Results</span>
+        <div class="tab-indicator"></div>
       </button>
+    </nav>
+
+    <!-- Tab Content Container -->
+    <div class="tab-content-container">
+      <!-- Builder Tab -->
+      <transition name="tab-fade" mode="out-in">
+        <div v-if="activeTab === 'builder'" key="builder" class="tab-content builder-tab">
+          <!-- Empty State -->
+          <div v-if="workflows.length === 0" class="empty-state">
+            <div class="empty-state-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3>No Workflows Yet</h3>
+            <p>Start by dragging instruments from the palette to create your first workflow</p>
+            <button class="action-button primary" @click="addNewWorkflow">
+              <i class="fas fa-plus"></i> Create Workflow
+            </button>
+          </div>
+
+          <!-- Workflow Builder Content -->
+          <div v-else class="builder-content">
+            <div class="builder-layout">
+              <!-- Instrument Palette Card -->
+              <section class="builder-section palette-section">
+                <div class="section-header">
+                  <h2><i class="fas fa-toolbox"></i> Instrument Palette</h2>
+                  <span class="section-subtitle">Drag instruments to workflows</span>
+                </div>
+                <InstrumentPalette
+                  :custom-tasks="customTasks"
+                  @task-created="handleCustomTaskCreated"
+                  @task-edited="handleCustomTaskEdited"
+                  @task-removed="handleCustomTaskRemoved"
+                  @drag-start="handlePaletteDragStart"
+                />
+              </section>
+
+              <!-- Workflows Section -->
+              <section class="builder-section workflows-section">
+                <div class="section-header">
+                  <h2><i class="fas fa-project-diagram"></i> Active Workflows</h2>
+                  <div class="section-actions">
+                    <button class="icon-button" @click="addNewWorkflow" v-tooltip="'Add new workflow'">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="icon-button" @click="handleResetWorkflows" v-tooltip="'Reset to defaults'">
+                      <i class="fas fa-undo"></i>
+                    </button>
+                  </div>
+                </div>
+                <WorkflowBuilder
+                  :workflows="workflows"
+                  :drag-item="currentDragItem"
+                  @update:workflows="updateWorkflows"
+                  @step-edited="handleStepEdited"
+                  @workflows-changed="handleWorkflowsChanged"
+                />
+              </section>
+            </div>
+          </div>
+
+          <!-- Connection Lines Canvas -->
+          <svg class="connections-svg" ref="connectionsSvg"></svg>
+        </div>
+
+        <!-- Results Tab -->
+        <div v-else-if="activeTab === 'results'" key="results" class="tab-content results-tab">
+          <!-- Empty Results State -->
+          <div v-if="schedule.length === 0" class="empty-state">
+            <div class="empty-state-icon">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3>No Schedule Generated</h3>
+            <p>Click the Optimize button to generate an optimized schedule for your workflows</p>
+            <button class="action-button primary" @click="activeTab = 'builder'">
+              <i class="fas fa-arrow-left"></i> Back to Builder
+            </button>
+          </div>
+
+          <!-- Results Content -->
+          <div v-else class="results-content">
+            <!-- Metrics Dashboard -->
+            <section class="metrics-section">
+              <div class="section-header">
+                <h2><i class="fas fa-chart-pie"></i> Performance Metrics</h2>
+                <span class="section-subtitle">Key performance indicators</span>
+              </div>
+              <OptimizationMetrics
+                :metrics="metrics"
+                @metric-clicked="handleMetricClicked"
+              />
+            </section>
+
+            <!-- Gantt Chart Section -->
+            <section class="gantt-section">
+              <div class="section-header">
+                <h2><i class="fas fa-chart-gantt"></i> Schedule Timeline</h2>
+                <span class="section-subtitle">Visual schedule representation</span>
+              </div>
+              <div class="gantt-wrapper">
+                <GanttChart
+                  :schedule="schedule"
+                  :workflows="workflows"
+                  @task-clicked="handleTaskClicked"
+                />
+              </div>
+            </section>
+          </div>
+        </div>
+      </transition>
     </div>
 
-    <!-- Builder Tab Content -->
-    <div v-show="activeTab === 'builder'" class="tab-content">
-      <!-- Instrument Palette -->
-      <InstrumentPalette
-        :custom-tasks="customTasks"
-        @task-created="handleCustomTaskCreated"
-        @task-edited="handleCustomTaskEdited"
-        @task-removed="handleCustomTaskRemoved"
-        @drag-start="handlePaletteDragStart"
-      />
-
-      <!-- Workflows Section -->
-      <WorkflowBuilder
-        :workflows="workflows"
-        :drag-item="currentDragItem"
-        @update:workflows="updateWorkflows"
-        @step-edited="handleStepEdited"
-        @workflows-changed="handleWorkflowsChanged"
-      />
-
-      <!-- Connection Lines Canvas -->
-      <svg class="connections-svg" ref="connectionsSvg"></svg>
-    </div>
-
-    <!-- Results Tab Content -->
-    <div v-show="activeTab === 'results'" class="tab-content">
-      <!-- Gantt Chart -->
-      <div class="gantt-section">
-        <GanttChart
-          :schedule="schedule"
-          :workflows="workflows"
-          @task-clicked="handleTaskClicked"
-        />
-      </div>
-
-      <!-- Metrics -->
-      <OptimizationMetrics
-        :metrics="metrics"
-        @metric-clicked="handleMetricClicked"
-      />
-    </div>
-
-    <!-- Instrument Configuration Dialog -->
-    <el-dialog 
-      v-model="showInstrumentConfig" 
-      title="Configure Instrument Nests"
-      width="600px"
-      class="instrument-config-dialog"
-    >
-      <div class="config-content">
-        <div 
-          v-for="(config, instrument) in instrumentConfig" 
-          :key="instrument" 
-          class="config-row"
-        >
-          <span class="config-label">{{ instrument }}</span>
-          <el-input-number
-            v-model="config.nests"
-            :min="1"
-            :max="5"
-            size="small"
-          />
-          <span class="config-suffix">nests</span>
+    <!-- Loading Overlay -->
+    <transition name="fade">
+      <div v-if="isOptimizing" class="loading-overlay">
+        <div class="loading-content">
+          <div class="loading-spinner">
+            <i class="fas fa-cog fa-spin"></i>
+          </div>
+          <h3>Optimizing Schedule</h3>
+          <p>Analyzing workflows and resource constraints...</p>
+          <div class="loading-progress">
+            <div class="progress-bar"></div>
+          </div>
         </div>
       </div>
+    </transition>
+
+    <!-- Instrument Configuration Modal -->
+    <el-dialog 
+      v-model="showInstrumentConfig" 
+      title=""
+      width="500px"
+      class="config-dialog"
+      :show-close="false"
+    >
+      <template #header>
+        <div class="dialog-header">
+          <i class="fas fa-cog"></i>
+          <h3>Instrument Configuration</h3>
+        </div>
+      </template>
+      
+      <div class="config-content">
+        <p class="config-description">Set the number of available instances for each instrument type</p>
+        <div class="config-grid">
+          <div 
+            v-for="(config, instrument) in instrumentConfig" 
+            :key="instrument" 
+            class="config-item"
+          >
+            <div class="config-icon">
+              <i :class="getInstrumentIcon(instrument)"></i>
+            </div>
+            <div class="config-details">
+              <span class="config-label">{{ instrument }}</span>
+              <span class="config-sublabel">Available instances</span>
+            </div>
+            <el-input-number
+              v-model="config.nests"
+              :min="1"
+              :max="10"
+              size="default"
+              class="config-input"
+            />
+          </div>
+        </div>
+      </div>
+      
       <template #footer>
-        <el-button @click="showInstrumentConfig = false">Cancel</el-button>
-        <el-button type="primary" @click="saveInstrumentConfig">Save</el-button>
+        <div class="dialog-footer">
+          <button class="action-button secondary" @click="showInstrumentConfig = false">
+            Cancel
+          </button>
+          <button class="action-button primary" @click="saveInstrumentConfig">
+            <i class="fas fa-save"></i> Save Configuration
+          </button>
+        </div>
       </template>
     </el-dialog>
 
-    <!-- Duration Editor for workflow steps -->
+    <!-- Duration Editor -->
     <DurationEditor
       :visible="showStepDurationEditor"
       :task="editingStep"
@@ -181,6 +317,7 @@ import { useWorkflowState } from '@/composables/useWorkflowState'
 import { useDragDrop } from '@/composables/useDragDrop'
 import { useConnections } from '@/composables/useConnections'
 import { createOptimizationEngine } from '@/utils/optimizationEngine'
+import { INSTRUMENT_ICONS } from '@/constants/instruments'
 import InstrumentPalette from '@/components/workflow/InstrumentPalette.vue'
 import WorkflowBuilder from '@/components/workflow/WorkflowBuilder.vue'
 import GanttChart from '@/components/workflow/GanttChart.vue'
@@ -303,7 +440,6 @@ const {
 } = useWorkflowState()
 
 const { currentDragItem, onDragEnd } = useDragDrop()
-
 const { updateSvgSize, drawConnections } = useConnections(connectionsSvg, workflows)
 
 // Initialize workflows
@@ -313,41 +449,67 @@ const initializeWorkflows = () => {
   }
 }
 
-// Optimization
+// Get instrument icon
+const getInstrumentIcon = (instrument: string) => {
+  return INSTRUMENT_ICONS[instrument] || 'fas fa-cog'
+}
+
+// Add new workflow
+const addNewWorkflow = () => {
+  const newWorkflow: Workflow = {
+    id: `workflow-${Date.now()}`,
+    name: `New Workflow ${workflows.value.length + 1}`,
+    priority: workflows.value.length + 1,
+    isEditingName: false,
+    editName: '',
+    lanes: [
+      {
+        id: `lane-${Date.now()}-1`,
+        name: 'Lane 1',
+        isEditingName: false,
+        editName: '',
+        steps: []
+      }
+    ]
+  }
+  workflows.value.push(newWorkflow)
+  saveState()
+}
+
+// Optimization with loading state
 const handleOptimizeSchedule = async () => {
   isOptimizing.value = true
   
+  // Simulate progress for better UX
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
   try {
-    // Create optimization engine
     const engine = createOptimizationEngine(instrumentConfig.value)
-    
-    // Run optimization
     const { schedule: optimizedSchedule, metrics: calculatedMetrics } = 
       engine.optimizeSchedule(workflows.value)
     
-    // Update state
     updateSchedule(optimizedSchedule)
     updateMetrics(calculatedMetrics)
     
-    // Validate schedule
     const validation = engine.validateSchedule(optimizedSchedule)
     if (!validation.isValid) {
       console.warn('Schedule validation errors:', validation.errors)
     }
     
-    // Get bottleneck analysis
     const bottlenecks = engine.getBottleneckAnalysis(optimizedSchedule)
     console.log('Bottleneck analysis:', bottlenecks)
     
-    // Switch to results tab after optimization
-    activeTab.value = 'results'
+    // Switch to results tab with delay for animation
+    setTimeout(() => {
+      activeTab.value = 'results'
+    }, 500)
     
   } catch (error) {
     console.error('Optimization error:', error)
   } finally {
     setTimeout(() => {
       isOptimizing.value = false
-    }, 500)
+    }, 1000)
   }
 }
 
@@ -369,14 +531,12 @@ const handleCustomTaskRemoved = (task: typeof customTasks.value[0]) => {
 }
 
 const handlePaletteDragStart = (event: DragEvent, item: DragItem) => {
-  // The drag composable handles the data, but we need to ensure cleanup
   const dragEndHandler = () => {
     onDragEnd()
     event.target?.removeEventListener('dragend', dragEndHandler)
   }
   event.target?.addEventListener('dragend', dragEndHandler)
   
-  // Also add global dragend listener as backup
   document.addEventListener('dragend', () => {
     setTimeout(() => {
       onDragEnd()
@@ -399,7 +559,6 @@ const handleStepEdited = (step: Step) => {
 const handleSaveStepDuration = (duration: number) => {
   if (!editingStep.value) return
   
-  // Find and update the step in workflows
   let stepFound = false
   workflows.value.forEach(workflow => {
     if (stepFound) return
@@ -415,7 +574,6 @@ const handleSaveStepDuration = (duration: number) => {
   
   if (stepFound) {
     saveState()
-    // Re-optimize if we have a schedule
     if (schedule.value.length > 0) {
       handleOptimizeSchedule()
     }
@@ -437,7 +595,6 @@ const saveInstrumentConfig = () => {
   showInstrumentConfig.value = false
   saveState()
   
-  // Re-optimize if we have a schedule
   if (schedule.value.length > 0) {
     handleOptimizeSchedule()
   }
@@ -445,12 +602,10 @@ const saveInstrumentConfig = () => {
 
 const handleTaskClicked = (task: ScheduledTask) => {
   console.log('Task clicked:', task)
-  // Could show task details or allow editing
 }
 
 const handleMetricClicked = (metric: string) => {
   console.log('Metric clicked:', metric)
-  // Could show more details about the metric
 }
 
 // Lifecycle
@@ -470,7 +625,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateSvgSize)
 })
 
-// Watch for workflow changes
+// Watchers
 watch(workflows, () => {
   if (activeTab.value === 'builder') {
     nextTick(() => {
@@ -479,7 +634,6 @@ watch(workflows, () => {
   }
 }, { deep: true })
 
-// Watch for tab changes
 watch(activeTab, (newTab) => {
   if (newTab === 'builder') {
     nextTick(() => {
@@ -491,158 +645,626 @@ watch(activeTab, (newTab) => {
 </script>
 
 <style scoped>
-.workflow-optimizer {
-  padding: 2rem;
-  background-color: var(--card-bg);
-  border-radius: 0.5rem;
-  position: relative;
-  min-height: 600px;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - 100px);
-  overflow: hidden;
+/* Design System Variables */
+:root {
+  /* Professional Color Palette */
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1d4ed8;
+  --primary-blue-light: #3b82f6;
+  --secondary-blue: #64748b;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-orange: #f59e0b;
+  
+  /* Neutrals */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Base Component Styles */
+.workflow-optimizer {
+  min-height: 100vh;
+  background: var(--gray-50);
+  font-family: var(--font-sans);
+  color: var(--gray-900);
+}
+
+/* Professional Header */
 .optimizer-header {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-lg) var(--spacing-xl);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  gap: var(--spacing-xl);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
-.optimizer-header h3 {
-  margin: 0;
-  color: var(--text-light);
-}
-
-.control-buttons {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center ;
-}
-
-/* Help button */
-.help-button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-  z-index: 10;
-  margin-left: 1rem;
-  transition: all 0.2s ease;
-}
-
-.help-button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
-}
-
-/* Instructions Panel */
-.instructions-panel {
-  position: absolute;
-  top: 5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 800px;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.instructions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.instructions-header h3 {
-  margin: 0;
-  color: white;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
+.header-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  letter-spacing: -0.025em;
+}
+
+.header-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+/* Modern Button Styles */
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.action-button.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.action-button.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-button.secondary {
+  background: white;
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-button.secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+  transform: translateY(-1px);
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-300);
+  background: white;
+  color: var(--gray-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.icon-button:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+  transform: translateY(-1px);
+}
+
+/* Instructions Overlay */
+.instructions-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--spacing-xl);
+  backdrop-filter: blur(4px);
+}
+
+.instructions-card {
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: var(--spacing-2xl);
+}
+
+.instructions-card h2 {
+  margin: 0 0 var(--spacing-xl);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.close-button {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .close-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: var(--gray-200);
+  color: var(--gray-800);
 }
 
-.instructions-content {
-  padding: 1.5rem;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.instructions-content ol {
-  padding-left: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.instructions-content li {
-  margin-bottom: 0.75rem;
-  color: var(--text-light);
-}
-
-.feature-highlights {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.highlight {
+.instruction-steps {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background-color: var(--bg-color);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
 }
 
-.highlight-icon {
-  font-size: 1.5rem;
+.instruction-step {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-blue);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.highlight strong {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--primary-color);
+.step-content h3 {
+  margin: 0 0 var(--spacing-xs);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
 }
 
-.highlight p {
+.step-content p {
   margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-light);
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.feature-card {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.feature-icon {
+  font-size: 2rem;
+  color: var(--primary-blue);
+  margin-bottom: var(--spacing-sm);
+}
+
+.feature-card h4 {
+  margin: 0 0 var(--spacing-xs);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.feature-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+/* Modern Tab Navigation */
+.tab-navigation {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 var(--spacing-xl);
+  display: flex;
+  gap: var(--spacing-lg);
+  position: sticky;
+  top: 73px;
+  z-index: 30;
+}
+
+.tab-button {
+  position: relative;
+  background: none;
+  border: none;
+  padding: var(--spacing-lg) var(--spacing-sm);
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--gray-900);
+}
+
+.tab-button.active {
+  color: var(--primary-blue);
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-blue);
+  border-radius: 3px 3px 0 0;
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+.tab-button.active .tab-indicator {
+  transform: scaleX(1);
+}
+
+/* Tab Content Container */
+.tab-content-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.tab-content {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--gray-50);
+}
+
+/* Builder Layout */
+.builder-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.builder-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+/* Section Styles */
+.builder-section, .metrics-section, .gantt-section {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.section-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.section-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Results Layout */
+.results-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.gantt-wrapper {
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  overflow-x: auto;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  text-align: center;
+  min-height: 400px;
+}
+
+.empty-state-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--gray-100);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+  font-size: 2rem;
+  color: var(--gray-400);
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.empty-state p {
+  margin: 0 0 var(--spacing-xl);
+  color: var(--gray-600);
+  max-width: 400px;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto var(--spacing-lg);
+  color: var(--primary-blue);
+  font-size: 3rem;
+}
+
+.loading-spinner i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-content h3 {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.loading-content p {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--gray-600);
+}
+
+.loading-progress {
+  width: 200px;
+  height: 4px;
+  background: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--primary-blue);
+  border-radius: 2px;
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* Configuration Dialog */
+.config-dialog {
+  border-radius: var(--radius-lg) !important;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.config-description {
+  margin: 0 0 var(--spacing-lg);
+  color: var(--gray-600);
+}
+
+.config-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+
+.config-icon {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-blue);
+  font-size: 1.25rem;
+  border: 1px solid var(--gray-200);
+}
+
+.config-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-label {
+  font-weight: 500;
+  color: var(--gray-900);
+  font-size: 0.875rem;
+}
+
+.config-sublabel {
+  font-size: 0.75rem;
+  color: var(--gray-600);
+}
+
+.dialog-footer {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--gray-200);
 }
 
 /* Connections SVG */
@@ -654,45 +1276,33 @@ watch(activeTab, (newTab) => {
   z-index: 10;
 }
 
-/* Configuration Dialog */
-.config-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+/* Animations */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
 }
 
-.config-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.slide-fade-enter-from {
+  transform: translateY(-20px);
+  opacity: 0;
 }
 
-.config-label {
-  flex: 1;
-  color: var(--text-light);
+.slide-fade-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
 }
 
-.config-suffix {
-  color: var(--text-muted);
-  font-size: 0.875rem;
+.tab-fade-enter-active,
+.tab-fade-leave-active {
+  transition: all 0.2s ease;
 }
 
-/* Dialog customization */
-:deep(.instrument-config-dialog .el-dialog__header) {
-  background-color: var(--primary-color);
-  padding: 15px 20px;
+.tab-fade-enter-from,
+.tab-fade-leave-active {
+  opacity: 0;
+  transform: translateX(10px);
 }
 
-:deep(.instrument-config-dialog .el-dialog__title) {
-  color: white;
-  font-weight: 500;
-}
-
-:deep(.instrument-config-dialog .el-dialog__headerbtn .el-dialog__close) {
-  color: white;
-}
-
-/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -703,256 +1313,124 @@ watch(activeTab, (newTab) => {
   opacity: 0;
 }
 
-/* Optimize button styling */
-.optimize-button {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-  border: none;
-  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.optimize-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.optimize-button:hover::before {
-  left: 100%;
-}
-
-.optimize-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--primary-color-rgb), 0.4);
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-}
-
-.optimize-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(var(--primary-color-rgb), 0.3);
-}
-
-.optimize-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* Button icon animation */
-.optimize-button .fa-spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .workflow-optimizer {
-    padding: 0.75rem;
-  }
-  
-  .optimizer-header {
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: stretch;
-    margin-bottom: 1.5rem;
-  }
-
-  .control-buttons {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-  }
-
-  .control-buttons .optimize-button {
-    grid-column: 1 / -1;
-    width: 100%;
-    margin-top: 0.25rem;
-  }
-
-  .control-buttons .el-button {
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
-    font-size: 0.875rem;
-  }
-
-  .control-buttons .el-button:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .control-buttons .el-button--primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    border: none;
-  }
-
-  .control-buttons .el-button--primary:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-  }
-  
-  .help-button {
-    margin-left: 0;
-    font-size: 0.875rem;
-  }
-  
-  .header-left {
-    gap: 0.5rem;
-  }
-
-  .header-left h3 {
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .instructions-panel {
-    width: 95%;
-    top: 3rem;
-  }
-  
-  .feature-highlights {
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .builder-layout {
     grid-template-columns: 1fr;
   }
-
-  /* Reduce gaps on mobile */
-  .workflow-section {
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .workflow-lanes {
-    gap: 0.5rem;
-  }
-
-  .labware-lane {
-    padding: 0.5rem;
-  }
-
-  .lane-steps {
-    padding: 0.375rem;
-    min-height: 50px;
-  }
-
-  #app {
-    max-width: 100%;
-    padding: 0.5rem;
-  }
-
-  .container {
-    padding: 0;
+  
+  .palette-section {
+    position: sticky;
+    top: 140px;
+    z-index: 20;
   }
 }
 
-/* Gantt section constraints */
-.gantt-section {
-  max-height: 400px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  margin-top: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  flex-shrink: 0;
-}
-
-/* Tab Navigation */
-.tab-navigation {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab-button {
-  background-color: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tab-button:hover {
-  background-color: var(--bg-color);
-  color: var(--text-light);
-  transform: translateY(-1px);
-}
-
-.tab-button.active {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-  box-shadow: 0 2px 8px rgba(var(--primary-color-rgb), 0.3);
-}
-
-.tab-button.active:hover {
-  background-color: var(--primary-dark);
-  border-color: var(--primary-dark);
-}
-
-.tab-button i {
-  font-size: 1rem;
-}
-
-/* Tab Content */
-.tab-content {
-  position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Mobile Tab Styles */
 @media (max-width: 768px) {
-  .tab-navigation {
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
   }
-
-  .tab-button {
-    flex: 1;
-    padding: 0.6rem 0.75rem;
-    font-size: 0.875rem;
+  
+  .header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .header-actions .action-button.primary {
+    grid-column: 1 / -1;
+  }
+  
+  .button-text {
+    display: none;
+  }
+  
+  .action-button {
     justify-content: center;
   }
-
-  .tab-button i {
-    font-size: 0.9rem;
+  
+  .tab-navigation {
+    padding: 0 var(--spacing-md);
   }
+  
+  .tab-button {
+    flex: 1;
+    justify-content: center;
+    padding: var(--spacing-md) var(--spacing-xs);
+    font-size: 0.75rem;
+  }
+  
+  .tab-button span {
+    display: none;
+  }
+  
+  .builder-content,
+  .results-content {
+    padding: var(--spacing-md);
+  }
+  
+  .instruction-steps {
+    gap: var(--spacing-md);
+  }
+  
+  .instructions-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .gantt-wrapper {
+    padding: var(--spacing-sm);
+    margin: 0 -var(--spacing-md);
+    border-radius: 0;
+  }
+}
+
+/* Custom Element UI Overrides */
+:deep(.el-dialog) {
+  border-radius: var(--radius-lg) !important;
+}
+
+:deep(.el-dialog__header) {
+  padding: var(--spacing-lg) !important;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+:deep(.el-dialog__body) {
+  padding: var(--spacing-lg) !important;
+}
+
+:deep(.el-dialog__footer) {
+  padding: var(--spacing-lg) !important;
+  border-top: 1px solid var(--gray-200);
+}
+
+:deep(.el-input-number) {
+  width: 100px;
+}
+
+:deep(.el-input-number .el-input__inner) {
+  border-radius: var(--radius-md) !important;
+  border-color: var(--gray-300) !important;
+}
+
+:deep(.el-input-number .el-input__inner:focus) {
+  border-color: var(--primary-blue) !important;
+}
+
+/* Tooltips */
+[v-tooltip] {
+  position: relative;
+}
+
+/* Palette Section Specific */
+.palette-section {
+  height: fit-content;
+}
+
+/* Workflows Section Specific  */
+.workflows-section {
+  min-height: 400px;
 }
 </style>
