@@ -1794,8 +1794,8 @@ watch(activeTab, (newTab) => {
 /* Floating Palette Toggle FAB */
 .palette-toggle-fab {
   position: fixed;
-  bottom: 2rem;
-  left: 2rem;
+  bottom: var(--spacing-xl);
+  left: var(--spacing-xl);
   width: 64px;
   height: 64px;
   background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
@@ -1819,51 +1819,47 @@ watch(activeTab, (newTab) => {
 
 .palette-toggle-fab.active {
   background: linear-gradient(135deg, var(--success-color, #10b981), var(--success-dark, #059669));
-  transform: rotate(45deg);
 }
 
-/* Floating Palette Overlay */
+/* Anchored Palette System */
 .palette-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  bottom: var(--spacing-xl);
+  left: var(--spacing-xl);
+  right: var(--spacing-xl);
   z-index: 45;
   pointer-events: none;
 }
 
 .palette-backdrop {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
   pointer-events: auto;
+  z-index: -1;
 }
 
 .floating-palette {
-  position: absolute;
-  top: 50%;
-  left: 2rem;
-  transform: translateY(-50%);
-  width: 400px;
-  max-width: calc(100vw - 4rem);
-  max-height: calc(100vh - 4rem);
+  position: relative;
+  bottom: 80px; /* Position above the FAB */
+  left: 0;
+  width: 100%;
   background: var(--section-bg);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   pointer-events: auto;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--border-color);
 }
 
-/* Floating Palette Animation */
+/* Anchored Palette Animation */
 .slide-palette-overlay-enter-active,
 .slide-palette-overlay-leave-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .slide-palette-overlay-enter-from {
@@ -1875,7 +1871,7 @@ watch(activeTab, (newTab) => {
 }
 
 .slide-palette-overlay-enter-from .floating-palette {
-  transform: translateY(-50%) translateX(-100%) scale(0.8);
+  transform: translateY(20px) scale(0.9);
   opacity: 0;
 }
 
@@ -1888,7 +1884,7 @@ watch(activeTab, (newTab) => {
 }
 
 .slide-palette-overlay-leave-to .floating-palette {
-  transform: translateY(-50%) translateX(-100%) scale(0.8);
+  transform: translateY(20px) scale(0.9);
   opacity: 0;
 }
 </style>
