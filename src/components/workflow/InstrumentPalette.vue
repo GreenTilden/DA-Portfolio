@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, shallowRef } from 'vue'
 import type { InstrumentTask, CustomTask, DragItem } from '@/types/workflow'
 import { INSTRUMENTS, DEFAULT_DURATIONS, INSTRUMENT_ICONS } from '@/constants/instruments'
 import { AVAILABLE_ICONS } from '@/constants/icons'
@@ -152,7 +152,7 @@ const showCustomTaskForm = ref(false)
 const showDurationEditor = ref(false)
 const editingTask = ref<InstrumentTask | null>(null)
 const editingDuration = ref<number>(15)
-const instrumentDrawers = ref<any[]>([])
+const instrumentDrawers = shallowRef<any[]>([])
 
 // Custom task form
 const customTask = reactive({
@@ -477,14 +477,17 @@ const handleRemoveCustomTask = (task: CustomTask) => {
 
 /* Instrument Drawers */
 .instrument-drawers {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .instrument-drawer-item {
-  background-color: var(--card-bg);
-  min-width: 0; /* Prevent grid blowout */
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
 }
 
 .tasks-grid {

@@ -13,27 +13,15 @@
           </div>
         </div>
         <div class="header-actions">
-          <button 
-            class="action-button secondary" 
-            @click="showInstructions = !showInstructions"
-            v-tooltip="'Learn how to use the optimizer'"
-          >
+          <button class="action-button secondary" @click="showInstructions = !showInstructions">
             <i class="fas fa-question-circle"></i>
             <span class="button-text">Help</span>
           </button>
-          <button 
-            class="action-button secondary" 
-            @click="showInstrumentConfig = true"
-            v-tooltip="'Configure available instruments'"
-          >
+          <button class="action-button secondary" @click="showInstrumentConfig = true">
             <i class="fas fa-cog"></i>
             <span class="button-text">Configure</span>
           </button>
-          <button 
-            class="action-button primary"
-            @click="handleOptimizeSchedule" 
-            :disabled="isOptimizing || workflows.length === 0"
-          >
+          <button class="action-button primary" @click="handleOptimizeSchedule" :disabled="isOptimizing || workflows.length === 0">
             <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
             <span class="button-text">{{ isOptimizing ? 'Optimizing...' : 'Optimize' }}</span>
           </button>
@@ -139,30 +127,39 @@
           <!-- Workflow Builder Content -->
           <div v-else class="builder-content">
             <div class="builder-layout">
-              <!-- Instrument Palette Card -->
-              <section class="builder-section palette-section">
-                <div class="section-header">
-                  <h2><i class="fas fa-toolbox"></i> Instrument Palette</h2>
-                  <span class="section-subtitle">Drag instruments to workflows</span>
+              <!-- Collapsible Instrument Palette -->
+              <aside class="palette-sidebar" :class="{ 'collapsed': isPaletteCollapsed }">
+                <div class="palette-toggle" @click="togglePalette">
+                  <i class="fas fa-toolbox"></i>
+                  <span v-show="!isPaletteCollapsed">Instrument Palette</span>
+                  <i class="toggle-icon fas" :class="isPaletteCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
                 </div>
-                <InstrumentPalette
-                  :custom-tasks="customTasks"
-                  @task-created="handleCustomTaskCreated"
-                  @task-edited="handleCustomTaskEdited"
-                  @task-removed="handleCustomTaskRemoved"
-                  @drag-start="handlePaletteDragStart"
-                />
-              </section>
+                
+                <transition name="slide-palette">
+                  <div v-show="!isPaletteCollapsed" class="palette-content">
+                    <div class="palette-header-compact">
+                      <span class="section-subtitle">Drag instruments to workflows</span>
+                    </div>
+                    <InstrumentPalette
+                      :custom-tasks="customTasks"
+                      @task-created="handleCustomTaskCreated"
+                      @task-edited="handleCustomTaskEdited"
+                      @task-removed="handleCustomTaskRemoved"
+                      @drag-start="handlePaletteDragStart"
+                    />
+                  </div>
+                </transition>
+              </aside>
 
               <!-- Workflows Section -->
-              <section class="builder-section workflows-section">
+              <section class="builder-section workflows-section" :class="{ 'palette-collapsed': isPaletteCollapsed }">
                 <div class="section-header">
                   <h2><i class="fas fa-project-diagram"></i> Active Workflows</h2>
                   <div class="section-actions">
-                    <button class="icon-button" @click="addNewWorkflow" v-tooltip="'Add new workflow'">
+                    <button class="icon-button" @click="addNewWorkflow">
                       <i class="fas fa-plus"></i>
                     </button>
-                    <button class="icon-button" @click="handleResetWorkflows" v-tooltip="'Reset to defaults'">
+                    <button class="icon-button" @click="handleResetWorkflows">
                       <i class="fas fa-undo"></i>
                     </button>
                   </div>
@@ -248,7 +245,7 @@
     <!-- Instrument Configuration Modal -->
     <el-dialog 
       v-model="showInstrumentConfig" 
-      title=""
+      :title="''"
       width="500px"
       class="config-dialog"
       :show-close="false"
@@ -279,6 +276,7 @@
               v-model="config.nests"
               :min="1"
               :max="10"
+              :controls="true"
               size="default"
               class="config-input"
             />
@@ -316,6 +314,7 @@ import type { Workflow, Step, DragItem, ScheduledTask } from '@/types/workflow'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { useDragDrop } from '@/composables/useDragDrop'
 import { useConnections } from '@/composables/useConnections'
+import { useTheme } from '@/composables/useTheme'
 import { createOptimizationEngine } from '@/utils/optimizationEngine'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
 import InstrumentPalette from '@/components/workflow/InstrumentPalette.vue'
@@ -420,6 +419,7 @@ const showInstrumentConfig = ref(false)
 const showStepDurationEditor = ref(false)
 const editingStep = ref<Step | null>(null)
 const connectionsSvg = ref<SVGSVGElement | null>(null)
+const isPaletteCollapsed = ref(false)
 
 // Use composables
 const {
@@ -441,6 +441,12 @@ const {
 
 const { currentDragItem, onDragEnd } = useDragDrop()
 const { updateSvgSize, drawConnections } = useConnections(connectionsSvg, workflows)
+const { currentTheme, setTheme } = useTheme()
+
+// Palette collapse functionality
+const togglePalette = () => {
+  isPaletteCollapsed.value = !isPaletteCollapsed.value
+}
 
 // Initialize workflows
 const initializeWorkflows = () => {
@@ -613,6 +619,9 @@ onMounted(() => {
   loadState()
   initializeWorkflows()
   
+  // Ensure theme is applied
+  setTheme(currentTheme.value)
+  
   nextTick(() => {
     updateSvgSize()
     drawConnections()
@@ -647,33 +656,6 @@ watch(activeTab, (newTab) => {
 <style scoped>
 /* Design System Variables */
 :root {
-  /* Professional Color Palette */
-  --primary-blue: #2563eb;
-  --primary-blue-dark: #1d4ed8;
-  --primary-blue-light: #3b82f6;
-  --secondary-blue: #64748b;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
-  --accent-orange: #f59e0b;
-  
-  /* Neutrals */
-  --gray-50: #f8fafc;
-  --gray-100: #f1f5f9;
-  --gray-200: #e2e8f0;
-  --gray-300: #cbd5e1;
-  --gray-400: #94a3b8;
-  --gray-500: #64748b;
-  --gray-600: #475569;
-  --gray-700: #334155;
-  --gray-800: #1e293b;
-  --gray-900: #0f172a;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -695,15 +677,15 @@ watch(activeTab, (newTab) => {
 /* Base Component Styles */
 .workflow-optimizer {
   min-height: 100vh;
-  background: var(--gray-50);
+  background: var(--bg-color);
   font-family: var(--font-sans);
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 /* Professional Header */
 .optimizer-header {
-  background: white;
-  border-bottom: 1px solid var(--gray-200);
+  background: var(--section-bg);
+  border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
@@ -729,12 +711,12 @@ watch(activeTab, (newTab) => {
 .header-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--button-text-dark);
   font-size: 1.5rem;
   box-shadow: var(--shadow-md);
 }
@@ -743,14 +725,14 @@ watch(activeTab, (newTab) => {
   margin: 0;
   font-size: 1.875rem;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text-color);
   letter-spacing: -0.025em;
 }
 
 .header-subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: var(--gray-600);
+  color: var(--text-faded);
 }
 
 .header-actions {
@@ -775,8 +757,8 @@ watch(activeTab, (newTab) => {
 }
 
 .action-button.primary {
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-  color: white;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: var(--button-text-dark);
   box-shadow: var(--shadow-md);
 }
 
@@ -792,15 +774,15 @@ watch(activeTab, (newTab) => {
 }
 
 .action-button.secondary {
-  background: white;
-  color: var(--gray-700);
-  border: 1px solid var(--gray-300);
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
 .action-button.secondary:hover {
-  background: var(--gray-50);
-  border-color: var(--gray-400);
+  background: var(--hover-bg);
+  border-color: var(--border-color);
   transform: translateY(-1px);
 }
 
@@ -808,9 +790,9 @@ watch(activeTab, (newTab) => {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--gray-300);
-  background: white;
-  color: var(--gray-700);
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -820,8 +802,8 @@ watch(activeTab, (newTab) => {
 }
 
 .icon-button:hover {
-  background: var(--gray-50);
-  border-color: var(--gray-400);
+  background: var(--hover-bg);
+  border-color: var(--border-color);
   transform: translateY(-1px);
 }
 
@@ -842,7 +824,7 @@ watch(activeTab, (newTab) => {
 }
 
 .instructions-card {
-  background: white;
+  background: var(--section-bg);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
   max-width: 800px;
@@ -857,7 +839,7 @@ watch(activeTab, (newTab) => {
   margin: 0 0 var(--spacing-xl);
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text-color);
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
@@ -871,8 +853,8 @@ watch(activeTab, (newTab) => {
   height: 36px;
   border-radius: var(--radius-md);
   border: none;
-  background: var(--gray-100);
-  color: var(--gray-600);
+  background: var(--card-bg);
+  color: var(--text-faded);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -881,8 +863,8 @@ watch(activeTab, (newTab) => {
 }
 
 .close-button:hover {
-  background: var(--gray-200);
-  color: var(--gray-800);
+  background: var(--hover-bg);
+  color: var(--text-color);
 }
 
 .instruction-steps {
@@ -900,8 +882,8 @@ watch(activeTab, (newTab) => {
 .step-number {
   width: 40px;
   height: 40px;
-  background: var(--primary-blue);
-  color: white;
+  background: var(--primary-color);
+  color: var(--button-text-dark);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -914,12 +896,12 @@ watch(activeTab, (newTab) => {
   margin: 0 0 var(--spacing-xs);
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 .step-content p {
   margin: 0;
-  color: var(--gray-600);
+  color: var(--text-faded);
   line-height: 1.6;
 }
 
@@ -930,8 +912,8 @@ watch(activeTab, (newTab) => {
 }
 
 .feature-card {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   text-align: center;
@@ -939,7 +921,7 @@ watch(activeTab, (newTab) => {
 
 .feature-icon {
   font-size: 2rem;
-  color: var(--primary-blue);
+  color: var(--primary-color);
   margin-bottom: var(--spacing-sm);
 }
 
@@ -947,19 +929,19 @@ watch(activeTab, (newTab) => {
   margin: 0 0 var(--spacing-xs);
   font-size: 1rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 .feature-card p {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--gray-600);
+  color: var(--text-faded);
 }
 
 /* Modern Tab Navigation */
 .tab-navigation {
-  background: white;
-  border-bottom: 1px solid var(--gray-200);
+  background: var(--section-bg);
+  border-bottom: 1px solid var(--border-color);
   padding: 0 var(--spacing-xl);
   display: flex;
   gap: var(--spacing-lg);
@@ -973,7 +955,7 @@ watch(activeTab, (newTab) => {
   background: none;
   border: none;
   padding: var(--spacing-lg) var(--spacing-sm);
-  color: var(--gray-600);
+  color: var(--text-faded);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -984,11 +966,11 @@ watch(activeTab, (newTab) => {
 }
 
 .tab-button:hover {
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 .tab-button.active {
-  color: var(--primary-blue);
+  color: var(--primary-color);
 }
 
 .tab-indicator {
@@ -997,7 +979,7 @@ watch(activeTab, (newTab) => {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--primary-blue);
+  background: var(--primary-color);
   border-radius: 3px 3px 0 0;
   transform: scaleX(0);
   transition: transform 0.2s ease;
@@ -1017,7 +999,7 @@ watch(activeTab, (newTab) => {
 .tab-content {
   height: 100%;
   overflow-y: auto;
-  background: var(--gray-50);
+  background: var(--bg-color);
 }
 
 /* Builder Layout */
@@ -1028,15 +1010,15 @@ watch(activeTab, (newTab) => {
 }
 
 .builder-layout {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: var(--spacing-xl);
-  align-items: start;
+  display: flex;
+  gap: var(--spacing-lg);
+  height: calc(100vh - 200px);
+  position: relative;
 }
 
 /* Section Styles */
 .builder-section, .metrics-section, .gantt-section {
-  background: white;
+  background: var(--section-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
@@ -1044,7 +1026,7 @@ watch(activeTab, (newTab) => {
 
 .section-header {
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1054,7 +1036,7 @@ watch(activeTab, (newTab) => {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-color);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -1062,12 +1044,114 @@ watch(activeTab, (newTab) => {
 
 .section-subtitle {
   font-size: 0.875rem;
-  color: var(--gray-600);
+  color: var(--text-faded);
 }
 
 .section-actions {
   display: flex;
   gap: var(--spacing-sm);
+}
+
+/* Collapsible Palette Sidebar */
+.palette-sidebar {
+  position: relative;
+  width: 320px;
+  min-width: 320px;
+  background: var(--section-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 20;
+}
+
+.palette-sidebar.collapsed {
+  width: 60px;
+  min-width: 60px;
+}
+
+.palette-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  background: var(--primary-color);
+  color: var(--button-text-dark);
+  cursor: pointer;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.palette-toggle:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.palette-toggle i:first-child {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.palette-toggle span {
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.toggle-icon {
+  margin-left: auto;
+  font-size: 0.875rem;
+  transition: transform 0.2s ease;
+}
+
+.palette-content {
+  padding: var(--spacing-md);
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+}
+
+.palette-header-compact {
+  padding: 0 0 var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.palette-header-compact .section-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-faded);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Workflows Section Adjustments */
+.workflows-section {
+  flex: 1;
+  min-height: 400px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workflows-section.palette-collapsed {
+  margin-left: 0;
+}
+
+/* Palette Slide Animation */
+.slide-palette-enter-active,
+.slide-palette-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left center;
+}
+
+.slide-palette-enter-from {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.slide-palette-leave-to {
+  opacity: 0;
+  transform: translateX(-100%);
 }
 
 /* Results Layout */
@@ -1081,7 +1165,7 @@ watch(activeTab, (newTab) => {
 }
 
 .gantt-wrapper {
-  background: var(--gray-50);
+  background: var(--card-bg);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   overflow-x: auto;
@@ -1101,26 +1185,26 @@ watch(activeTab, (newTab) => {
 .empty-state-icon {
   width: 80px;
   height: 80px;
-  background: var(--gray-100);
+  background: var(--card-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--spacing-lg);
   font-size: 2rem;
-  color: var(--gray-400);
+  color: var(--text-faded);
 }
 
 .empty-state h3 {
   margin: 0 0 var(--spacing-sm);
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 .empty-state p {
   margin: 0 0 var(--spacing-xl);
-  color: var(--gray-600);
+  color: var(--text-faded);
   max-width: 400px;
 }
 
@@ -1147,7 +1231,7 @@ watch(activeTab, (newTab) => {
   width: 60px;
   height: 60px;
   margin: 0 auto var(--spacing-lg);
-  color: var(--primary-blue);
+  color: var(--primary-color);
   font-size: 3rem;
 }
 
@@ -1164,18 +1248,18 @@ watch(activeTab, (newTab) => {
   margin: 0 0 var(--spacing-sm);
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 .loading-content p {
   margin: 0 0 var(--spacing-lg);
-  color: var(--gray-600);
+  color: var(--text-faded);
 }
 
 .loading-progress {
   width: 200px;
   height: 4px;
-  background: var(--gray-200);
+  background: var(--border-color);
   border-radius: 2px;
   overflow: hidden;
   margin: 0 auto;
@@ -1183,7 +1267,7 @@ watch(activeTab, (newTab) => {
 
 .progress-bar {
   height: 100%;
-  background: var(--primary-blue);
+  background: var(--primary-color);
   border-radius: 2px;
   animation: progress 2s ease-in-out infinite;
 }
@@ -1205,12 +1289,12 @@ watch(activeTab, (newTab) => {
   gap: var(--spacing-md);
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-color);
 }
 
 .config-description {
   margin: 0 0 var(--spacing-lg);
-  color: var(--gray-600);
+  color: var(--text-faded);
 }
 
 .config-grid {
@@ -1224,22 +1308,22 @@ watch(activeTab, (newTab) => {
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  background: var(--gray-50);
+  background: var(--card-bg);
   border-radius: var(--radius-md);
-  border: 1px solid var(--gray-200);
+  border: 1px solid var(--border-color);
 }
 
 .config-icon {
   width: 40px;
   height: 40px;
-  background: white;
+  background: var(--section-bg);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-blue);
+  color: var(--primary-color);
   font-size: 1.25rem;
-  border: 1px solid var(--gray-200);
+  border: 1px solid var(--border-color);
 }
 
 .config-details {
@@ -1250,13 +1334,13 @@ watch(activeTab, (newTab) => {
 
 .config-label {
   font-weight: 500;
-  color: var(--gray-900);
+  color: var(--text-color);
   font-size: 0.875rem;
 }
 
 .config-sublabel {
   font-size: 0.75rem;
-  color: var(--gray-600);
+  color: var(--text-faded);
 }
 
 .dialog-footer {
@@ -1264,7 +1348,7 @@ watch(activeTab, (newTab) => {
   gap: var(--spacing-sm);
   justify-content: flex-end;
   padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--gray-200);
+  border-top: 1px solid var(--border-color);
 }
 
 /* Connections SVG */
@@ -1316,13 +1400,26 @@ watch(activeTab, (newTab) => {
 /* Responsive Design */
 @media (max-width: 1024px) {
   .builder-layout {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
   
-  .palette-section {
-    position: sticky;
-    top: 140px;
-    z-index: 20;
+  .palette-sidebar {
+    width: 100%;
+    min-width: 100%;
+    order: 2;
+  }
+  
+  .palette-sidebar.collapsed {
+    width: 100%;
+    min-width: 100%;
+  }
+  
+  .palette-toggle {
+    justify-content: space-between;
+  }
+  
+  .workflows-section {
+    order: 1;
   }
 }
 
@@ -1385,6 +1482,28 @@ watch(activeTab, (newTab) => {
     margin: 0 -var(--spacing-md);
     border-radius: 0;
   }
+  
+  .palette-content {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .palette-sidebar {
+    border-radius: var(--radius-md);
+  }
+  
+  .tab-button span {
+    display: none;
+  }
+  
+  .header-actions {
+    flex-wrap: wrap;
+  }
+  
+  .action-button {
+    flex: 1;
+    min-width: 120px;
+  }
 }
 
 /* Custom Element UI Overrides */
@@ -1394,7 +1513,7 @@ watch(activeTab, (newTab) => {
 
 :deep(.el-dialog__header) {
   padding: var(--spacing-lg) !important;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
 }
 
 :deep(.el-dialog__body) {
@@ -1403,7 +1522,7 @@ watch(activeTab, (newTab) => {
 
 :deep(.el-dialog__footer) {
   padding: var(--spacing-lg) !important;
-  border-top: 1px solid var(--gray-200);
+  border-top: 1px solid var(--border-color);
 }
 
 :deep(.el-input-number) {
@@ -1412,17 +1531,14 @@ watch(activeTab, (newTab) => {
 
 :deep(.el-input-number .el-input__inner) {
   border-radius: var(--radius-md) !important;
-  border-color: var(--gray-300) !important;
+  border-color: var(--border-color) !important;
 }
 
 :deep(.el-input-number .el-input__inner:focus) {
-  border-color: var(--primary-blue) !important;
+  border-color: var(--primary-color) !important;
 }
 
-/* Tooltips */
-[v-tooltip] {
-  position: relative;
-}
+/* Tooltips - disabled */
 
 /* Palette Section Specific */
 .palette-section {

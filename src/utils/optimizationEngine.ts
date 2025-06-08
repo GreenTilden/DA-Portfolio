@@ -32,6 +32,11 @@ export class OptimizationEngine {
     schedule: ScheduledTask[]
     metrics: Metrics
   } {
+    // Add at beginning of function:
+    if (!this.validateWorkflows(workflows)) {
+      throw new Error('Invalid workflow configuration')
+    }
+    
     // Collect all tasks with metadata
     const allTasks = this.collectTasks(workflows)
     
@@ -292,6 +297,23 @@ private addLiquidHandlerDependencies(tasks: TaskToSchedule[]): void {
     })
     
     return schedule
+  }
+  
+  // Validate workflow before scheduling
+  private validateWorkflows(workflows: Workflow[]): boolean {
+    for (const workflow of workflows) {
+      if (workflow.lanes.length === 0) {
+        console.warn(`Workflow ${workflow.name} has no lanes`)
+        return false
+      }
+      for (const lane of workflow.lanes) {
+        if (lane.steps.some(step => step.duration <= 0)) {
+          console.warn(`Invalid step duration in ${workflow.name}`)
+          return false
+        }
+      }
+    }
+    return true
   }
   
   /**

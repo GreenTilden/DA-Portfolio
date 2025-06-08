@@ -10,7 +10,12 @@ export function useDragDrop() {
     const dragData = { ...item, isExistingStep }
     currentDragItem.value = dragData as DragItem
     
-    if (event.dataTransfer) {
+    if (event.dataTransfer && event.target) {
+      const preview = createDragPreview(event.target as HTMLElement)
+      document.body.appendChild(preview)
+      event.dataTransfer.setDragImage(preview, 0, 0)
+      setTimeout(() => document.body.removeChild(preview), 0)
+      
       event.dataTransfer.effectAllowed = isExistingStep ? 'move' : 'copy'
       event.dataTransfer.setData('text/plain', JSON.stringify(dragData))
       event.dataTransfer.setData('application/json', JSON.stringify(dragData))
@@ -84,6 +89,15 @@ export function useDragDrop() {
       }
       return closest
     }, null as any)?.element || null
+  }
+
+  // Add drag preview styling
+  const createDragPreview = (element: HTMLElement): HTMLElement => {
+    const preview = element.cloneNode(true) as HTMLElement
+    preview.style.opacity = '0.8'
+    preview.style.transform = 'rotate(2deg)'
+    preview.style.pointerEvents = 'none'
+    return preview
   }
 
   // Create drop indicator with different colors for move vs add

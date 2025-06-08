@@ -123,19 +123,14 @@ defineExpose({
 }
 
 .drawer-content {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: relative;
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-top: none;
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
-  max-height: 400px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 200px;
   overflow-y: auto;
-  z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
 
 .drawer-items {

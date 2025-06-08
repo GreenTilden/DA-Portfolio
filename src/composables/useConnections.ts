@@ -49,7 +49,7 @@ export function useConnections(
     
     // Find all liquid handler steps
     const liquidHandlerSteps: any[] = []
-    const stepElements = document.querySelectorAll('.device-step.liquid-handler')
+    const stepElements = document.querySelectorAll('.workflow-step.liquid-handler')
     
     stepElements.forEach(el => {
       const rect = el.getBoundingClientRect()
@@ -70,7 +70,7 @@ export function useConnections(
       workflowGroups[workflow.id] = []
       workflow.lanes.forEach(lane => {
         lane.steps.forEach(step => {
-          if (step.type === 'Liquid Handler') {
+          if (step.type === 'Liquid Handler' && step.task.toLowerCase().includes('transfer')) {
             const stepEl = liquidHandlerSteps.find(s => s.stepId === step.id)
             if (stepEl) {
               workflowGroups[workflow.id].push({
