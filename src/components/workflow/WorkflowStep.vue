@@ -44,7 +44,6 @@
 import { ref, computed, inject } from 'vue'
 import type { Step } from '@/types/workflow'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
-import { useTouchDragDrop } from '@/composables/useTouchDragDrop'
 
 interface Props {
   step: Step
@@ -68,11 +67,9 @@ const emit = defineEmits<{
 
 const isDragging = ref(false)
 
-// Inject drag handlers from parent
+// Inject drag and touch handlers from parent
 const dragHandlers = inject<any>('dragHandlers')
-
-// Touch drag and drop composable
-const { handleTouchStart: touchStart, handleTouchMove: touchMove, handleTouchEnd: touchEnd } = useTouchDragDrop()
+const touchHandlers = inject<any>('touchHandlers')
 
 const iconClass = computed(() => {
   return props.step.customIcon || INSTRUMENT_ICONS[props.step.type] || 'fas fa-cog'
@@ -106,9 +103,16 @@ const handleDragEnd = () => {
   isDragging.value = false
 }
 
-// Touch event handlers
+// Touch event handlers using unified system
 const handleTouchStart = (event: TouchEvent) => {
-  if (!dragHandlers) return
+  if (!touchHandlers) {
+    console.warn('Touch handlers not available for workflow step')
+    return
+  }
+  if (!dragHandlers) {
+    console.warn('Drag handlers not available for workflow step')
+    return
+  }
   
   isDragging.value = true
   
@@ -120,29 +124,17 @@ const handleTouchStart = (event: TouchEvent) => {
     sourceIndex: props.stepIndex
   }
   
-  touchStart(event, dragData)
+  touchHandlers.handleTouchStart(event, dragData, event.currentTarget as HTMLElement)
 }
 
 const handleTouchMove = (event: TouchEvent) => {
-  touchMove(event)
+  if (!touchHandlers) return
+  touchHandlers.handleTouchMove(event)
 }
 
 const handleTouchEnd = (event: TouchEvent) => {
-  touchEnd(event, (dropTarget, dragItem) => {
-    if (dropTarget.workflowId && dropTarget.laneId && dragHandlers) {
-      // Use the existing drag handlers to handle the drop
-      const mockEvent = {
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        dataTransfer: {
-          getData: () => JSON.stringify(dragItem)
-        }
-      } as any
-      
-      dragHandlers.handleDrop(mockEvent, dropTarget.workflowId, dropTarget.laneId)
-    }
-  })
-  
+  if (!touchHandlers) return
+  touchHandlers.handleTouchEnd(event)
   isDragging.value = false
 }
 </script>
@@ -173,6 +165,37 @@ const handleTouchEnd = (event: TouchEvent) => {
   opacity: 0.5;
   cursor: grabbing;
   transform: scale(0.95);
+}
+
+/* Mobile touch feedback */
+@media (max-width: 768px) {
+  .workflow-step {
+    /* Add subtle touch feedback */
+    transition: all 0.2s ease, background-color 0.1s ease;
+  }
+  
+  .workflow-step:active {
+    background-color: var(--primary-dark);
+    transform: scale(0.98);
+  }
+  
+  /* Visual cue for potential drag */
+  .workflow-step::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .workflow-step:active::after {
+    opacity: 1;
+  }
 }
 
 .workflow-step.liquid-handler {

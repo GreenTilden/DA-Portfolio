@@ -356,15 +356,145 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
 
 .lane-steps {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   min-height: 60px;
   padding: 0.5rem;
+  padding-right: 1rem; /* Extra padding for better scroll UX */
   background-color: var(--bg-color);
   border: 2px dashed var(--border-color);
   border-radius: 0.25rem;
   transition: all 0.2s ease;
   position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--bg-light);
+  /* Ensure workflow steps don't shrink */
+  align-items: stretch;
+  /* Enable touch scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+/* Webkit scrollbar styling for better appearance */
+.lane-steps::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lane-steps::-webkit-scrollbar-track {
+  background: var(--bg-light);
+  border-radius: 3px;
+}
+
+.lane-steps::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 3px;
+  opacity: 0.7;
+}
+
+.lane-steps::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+  opacity: 1;
+}
+
+/* Scroll indicators for overflow content */
+.labware-lane {
+  position: relative;
+}
+
+.labware-lane::before,
+.labware-lane::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.labware-lane::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--card-bg) 0%, transparent 100%);
+  border-radius: 0 20px 20px 0;
+}
+
+.labware-lane::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--card-bg) 0%, transparent 100%);
+  border-radius: 20px 0 0 20px;
+}
+
+/* Show scroll indicators when content overflows */
+.labware-lane:hover::before,
+.labware-lane:hover::after {
+  opacity: 0.7;
+}
+
+/* Smooth workflow step sizing for horizontal layout */
+.lane-steps .workflow-step {
+  flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .lane-steps {
+    padding: 0.4rem;
+    gap: 0.4rem;
+    /* Enhanced mobile scrolling */
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+  }
+  
+  .lane-steps .workflow-step {
+    min-width: 100px;
+    max-width: 160px;
+    font-size: 0.85rem;
+    /* Add scroll snap for better mobile UX */
+    scroll-snap-align: start;
+  }
+  
+  .lane-steps::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  /* More prominent scroll indicators on mobile */
+  .labware-lane::before,
+  .labware-lane::after {
+    width: 15px;
+    height: 30px;
+  }
+  
+  /* Make workflow lanes more touch-friendly */
+  .labware-lane {
+    margin: 0.5rem 0;
+  }
+  
+  /* Ensure mobile scrolling momentum */
+  .lane-steps {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Enhanced empty lane styling */
+.empty-lane-hint {
+  color: var(--text-faded);
+  font-style: italic;
+  font-size: 0.875rem;
+  padding: 1rem;
+  text-align: center;
+  min-width: 200px;
+  flex-shrink: 0;
 }
 
 .lane-steps.drag-over {

@@ -196,7 +196,7 @@
                 <div class="modal-content">
                   <div class="tasks-grid">
                     <div 
-                      v-for="task in INSTRUMENTS[selectedInstrument]"
+                      v-for="task in INSTRUMENTS[selectedInstrument as keyof typeof INSTRUMENTS]"
                       :key="`${selectedInstrument}-${task}`"
                       class="task-item"
                       draggable="true"
@@ -494,7 +494,6 @@ const {
 const { updateSvgSize, drawConnections } = useConnections(connectionsSvg, workflows)
 const { currentTheme, setTheme } = useTheme()
 const { setDragData, getDragData } = useDragDrop()
-const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchDragDrop()
 
 // Drag and Drop Functions
 const handleDragStart = (event: DragEvent, item: DragItem, element: HTMLElement) => {
@@ -646,6 +645,13 @@ const handleDrop = (event: DragEvent, workflowId: string, laneId: string) => {
   handleDragEnd()
 }
 
+// Touch drag and drop with integrated handlers - defined after drag functions
+const touchDragHandlers = {
+  handleDragOver,
+  handleDrop,
+  handleDragEnd
+}
+const { handleTouchStart, handleTouchMove, handleTouchEnd, cleanup: cleanupTouch } = useTouchDragDrop(touchDragHandlers)
 
 // Instructions toggle functionality
 const toggleInstructions = () => {
@@ -663,6 +669,7 @@ const closeTaskModal = () => {
 
 const handleTaskDragStart = (event: DragEvent, instrument: string, task: string) => {
   const dragItem: DragItem = {
+    id: `temp-${Date.now()}`,
     type: instrument,
     task: task,
     duration: 15, // default duration
@@ -676,9 +683,10 @@ const handleTaskDragStart = (event: DragEvent, instrument: string, task: string)
   handleDragStart(event, dragItem, event.target as HTMLElement)
 }
 
-// Touch event handlers for mobile using composable
+// Touch event handlers for mobile using unified system
 const handleTaskTouchStart = (event: TouchEvent, instrument: string, task: string) => {
   const dragItem: DragItem = {
+    id: `temp-touch-${Date.now()}`,
     type: instrument,
     task: task,
     duration: 15,
@@ -697,35 +705,7 @@ const handleTaskTouchMove = (event: TouchEvent) => {
 }
 
 const handleTaskTouchEnd = (event: TouchEvent) => {
-  handleTouchEnd(event, (dropTarget, dragItem) => {
-    if (dropTarget.workflowId && dropTarget.laneId) {
-      // Find the target workflow and lane
-      const targetWorkflow = workflows.value.find(w => w.id === dropTarget.workflowId)
-      const targetLane = targetWorkflow?.lanes.find(l => l.id === dropTarget.laneId)
-      
-      if (targetWorkflow && targetLane) {
-        // Create new step
-        const newStep: Step = {
-          id: `${dropTarget.laneId}-step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          type: dragItem.type,
-          task: dragItem.task || dragItem.type,
-          duration: dragItem.duration || 15,
-          customIcon: dragItem.customIcon
-        }
-        
-        // Insert at the calculated position
-        targetLane.steps.splice(dropTarget.insertIndex, 0, newStep)
-        
-        // Save state and update connections
-        saveState()
-        nextTick(() => {
-          drawConnections()
-        })
-        
-        console.log('Touch drop successful:', newStep)
-      }
-    }
-  })
+  handleTouchEnd(event)
 }
 
 // Initialize workflows
@@ -809,6 +789,13 @@ provide('dragHandlers', {
   handleDrop
 })
 
+// Provide touch handlers to child components
+provide('touchHandlers', {
+  handleTouchStart,
+  handleTouchMove,
+  handleTouchEnd
+})
+
 const handleWorkflowsChanged = () => {
   saveState()
   nextTick(() => {
@@ -873,6 +860,14 @@ const handleMetricClicked = (metric: string) => {
   console.log('Metric clicked:', metric)
 }
 
+// Global cleanup function for touch artifacts
+const globalCleanup = () => {
+  cleanupTouch()
+  // Additional cleanup for any stray elements
+  document.querySelectorAll('.touch-drag-clone, .touch-drop-indicator, .drop-indicator').forEach(el => el.remove())
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'))
+}
+
 // Lifecycle
 onMounted(() => {
   loadState()
@@ -887,10 +882,23 @@ onMounted(() => {
   })
   
   window.addEventListener('resize', updateSvgSize)
+  
+  // Clean up on visibility change (e.g., tab switching)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      globalCleanup()
+    }
+  })
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', globalCleanup)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateSvgSize)
+  document.removeEventListener('visibilitychange', globalCleanup)
+  window.removeEventListener('beforeunload', globalCleanup)
+  globalCleanup() // Clean up all touch state on unmount
 })
 
 // Watchers
@@ -1695,7 +1703,17 @@ watch(activeTab, (newTab) => {
   100% { opacity: 0.6; }
 }
 
-/* Touch drop indicators */
+/* Touch drag and drop artifacts */
+:global(.touch-drag-clone) {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  opacity: 0.8 !important;
+  transform: scale(1.1) rotate(2deg) !important;
+  transition: transform 0.2s !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
 :deep(.touch-drop-indicator) {
   width: 4px;
   height: 50px;
@@ -1706,6 +1724,46 @@ watch(activeTab, (newTab) => {
   position: relative;
   z-index: 10000;
   box-shadow: 0 0 10px #4a90e2, 0 0 20px #4a90e2;
+}
+
+/* Ensure proper cleanup styles */
+:global(.drag-over) {
+  background-color: rgba(74, 144, 226, 0.1) !important;
+  border: 2px dashed #4a90e2 !important;
+}
+
+/* Enhanced drop indicator animations */
+:global(.enhanced-drop-indicator) {
+  position: relative !important;
+  z-index: 10001 !important;
+}
+
+@keyframes pulseGlow {
+  0% { 
+    opacity: 0.6;
+    transform: scaleY(0.95);
+    box-shadow: 0 0 15px rgba(74, 144, 226, 0.6), 0 0 30px rgba(74, 144, 226, 0.4);
+  }
+  50% { 
+    opacity: 1;
+    transform: scaleY(1.05);
+    box-shadow: 0 0 25px rgba(74, 144, 226, 0.8), 0 0 50px rgba(74, 144, 226, 0.6);
+  }
+  100% { 
+    opacity: 0.6;
+    transform: scaleY(0.95);
+    box-shadow: 0 0 15px rgba(74, 144, 226, 0.6), 0 0 30px rgba(74, 144, 226, 0.4);
+  }
+}
+
+/* Smooth workflow step animations */
+:deep(.workflow-step) {
+  transition: all 0.2s ease !important;
+}
+
+:deep(.workflow-step:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Animations */
