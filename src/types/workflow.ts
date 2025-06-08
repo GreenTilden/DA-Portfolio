@@ -70,6 +70,9 @@ export interface Metrics {
 // Drag and drop types
 export interface DragItem extends Step {
   isExistingStep?: boolean
+  sourceWorkflowId?: string
+  sourceLaneId?: string
+  sourceIndex?: number
 }
 
 // Icon type

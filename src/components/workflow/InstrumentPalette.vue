@@ -1,116 +1,124 @@
 <template>
-  <div class="instrument-palette">
-    <div class="palette-header">
-      <div class="header-content">
-        <h4>Instrument Palette</h4>
-        <p class="palette-instructions">
-          Drag instrument tasks to workflow lanes
-        </p>
+  <div class="floating-instrument-palette">
+    <!-- Floating Palette Header -->
+    <div class="floating-palette-header">
+      <div class="header-main">
+        <div class="header-title">
+          <i class="fas fa-toolbox"></i>
+          <span>Instrument Palette</span>
+        </div>
+        <button 
+          class="custom-task-toggle-btn"
+          @click="showCustomTaskForm = !showCustomTaskForm"
+          :class="{ 'active': showCustomTaskForm }"
+        >
+          <i class="fas fa-plus-circle"></i>
+          <span>Custom</span>
+        </button>
       </div>
       
-      <!-- Inline Custom Task Creator -->
-      <div class="custom-task-inline">
-        <div class="custom-task-toggle">
-          <el-button 
-            size="small" 
-            type="primary" 
-            @click="showCustomTaskForm = !showCustomTaskForm"
-            :class="{ 'active': showCustomTaskForm }"
-          >
-            <i class="fas fa-plus"></i> Create Custom
-          </el-button>
-        </div>
-        
-        <transition name="slide-down">
-          <div v-if="showCustomTaskForm" class="custom-task-form-inline">
-            <div class="inline-form-row">
-              <select v-model="customTask.type" class="inline-select">
-                <option 
-                  v-for="(tasks, instrument) in instruments" 
-                  :key="instrument" 
-                  :value="instrument"
-                >
-                  {{ instrument }}
-                </option>
-              </select>
-              
-              <input 
-                type="text" 
-                v-model="customTask.task" 
-                class="inline-input" 
-                placeholder="Task name"
-                @keyup.enter="handleAddCustomTask"
-              />
-              
-              <el-input-number 
-                v-model="customTask.duration" 
-                :min="1" 
-                :max="999"
-                size="small"
-                placeholder="Duration"
-                class="inline-duration"
-              />
-              
-              <el-button 
-                type="primary" 
-                size="small"
-                @click="handleAddCustomTask"
-                :disabled="!isCustomTaskValid"
+      <!-- Custom Task Form -->
+      <transition name="slide-down">
+        <div v-if="showCustomTaskForm" class="custom-task-form">
+          <div class="form-row">
+            <select v-model="customTask.type" class="form-select">
+              <option 
+                v-for="(tasks, instrument) in instruments" 
+                :key="instrument" 
+                :value="instrument"
               >
-                Add
-              </el-button>
-            </div>
+                {{ instrument }}
+              </option>
+            </select>
+            
+            <input 
+              type="text" 
+              v-model="customTask.task" 
+              class="form-input" 
+              placeholder="Task name"
+              @keyup.enter="handleAddCustomTask"
+            />
+            
+            <el-input-number 
+              v-model="customTask.duration" 
+              :min="1" 
+              :max="999"
+              size="small"
+              class="form-duration"
+            />
+            
+            <button 
+              class="add-btn"
+              @click="handleAddCustomTask"
+              :disabled="!isCustomTaskValid"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
           </div>
-        </transition>
+        </div>
+      </transition>
+    </div>
+    
+    <!-- Horizontal Instrument Row -->
+    <div class="instruments-row">
+      <div 
+        v-for="(tasks, instrument) in instruments"
+        :key="instrument"
+        class="instrument-icon-container"
+        @click="toggleInstrumentDrawer(instrument)"
+        :class="{ 'active': activeInstrument === instrument }"
+      >
+        <div class="instrument-icon">
+          <i :class="getInstrumentIcon(instrument)"></i>
+        </div>
+        <span class="instrument-label">{{ instrument }}</span>
+        <div v-if="getCombinedTasksForInstrument(instrument).length > 0" class="task-count">
+          {{ getCombinedTasksForInstrument(instrument).length }}
+        </div>
       </div>
     </div>
     
-    <!-- Instrument Task Drawers -->
-    <div class="instrument-drawers">
-      <InstrumentDrawer
-        v-for="(tasks, instrument) in instruments"
-        :key="instrument"
-        ref="instrumentDrawers"
-        :title="instrument"
-        :icon="getInstrumentIcon(instrument)"
-        :items="getCombinedTasksForInstrument(instrument)"
-        :default-open="instrument === ''"
-        class="instrument-drawer-item"
-      >
-        <template #default="{ items }">
-          <div class="tasks-grid">
-            <!-- Standard Tasks -->
-            <TaskCard
-              v-for="(task, index) in getStandardTasks(instrument)"
-              :key="`${instrument}-${task}-${index}`"
-              :task="{
-                type: instrument,
-                task: task,
-                duration: defaultDurations[instrument]
-              }"
-              :is-custom="false"
-              :is-draggable="true"
-              :show-edit-button="false"
-              @drag-start="handleDragStart"
-              @edit-duration="handleEditDuration"
-            />
-            
-            <!-- Custom Tasks -->
-            <TaskCard
-              v-for="customTask in customTasksForInstrument[instrument]"
-              :key="customTask.id"
-              :task="customTask"
-              :is-custom="true"
-              :is-draggable="true"
-              :show-edit-button="true"
-              @drag-start="handleDragStart"
-              @edit-duration="handleEditDuration"
-              @remove="handleRemoveCustomTask"
-            />
-          </div>
-        </template>
-      </InstrumentDrawer>
-    </div>
+    <!-- Vertical Task Drawer -->
+    <transition name="slide-up">
+      <div v-if="activeInstrument" class="vertical-task-drawer">
+        <div class="drawer-header">
+          <h3>{{ activeInstrument }} Tasks</h3>
+          <button class="close-drawer-btn" @click="activeInstrument = null">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="tasks-list">
+          <!-- Standard Tasks -->
+          <TaskCard
+            v-for="(task, index) in getStandardTasks(activeInstrument)"
+            :key="`${activeInstrument}-${task}-${index}`"
+            :task="{
+              type: activeInstrument,
+              task: task,
+              duration: defaultDurations[activeInstrument]
+            }"
+            :is-custom="false"
+            :is-draggable="true"
+            :show-edit-button="false"
+            @drag-start="handleDragStart"
+            @edit-duration="handleEditDuration"
+          />
+          
+          <!-- Custom Tasks -->
+          <TaskCard
+            v-for="customTask in customTasksForInstrument[activeInstrument] || []"
+            :key="customTask.id"
+            :task="customTask"
+            :is-custom="true"
+            :is-draggable="true"
+            :show-edit-button="true"
+            @drag-start="handleDragStart"
+            @edit-duration="handleEditDuration"
+            @remove="handleRemoveCustomTask"
+          />
+        </div>
+      </div>
+    </transition>
     
     <!-- Duration Editor Dialog -->
     <DurationEditor
@@ -132,7 +140,6 @@ import { AVAILABLE_ICONS } from '@/constants/icons'
 import InstrumentDrawer from '@/components/InstrumentDrawer.vue'
 import TaskCard from '@/components/TaskCard.vue'
 import DurationEditor from '@/components/DurationEditor.vue'
-import { useDragDrop } from '@/composables/useDragDrop'
 
 interface Props {
   customTasks: CustomTask[]
@@ -145,6 +152,7 @@ const emit = defineEmits<{
   'task-edited': [task: CustomTask]
   'task-removed': [task: CustomTask]
   'drag-start': [event: DragEvent, item: DragItem]
+  'task-dragged': []
 }>()
 
 // State
@@ -152,7 +160,7 @@ const showCustomTaskForm = ref(false)
 const showDurationEditor = ref(false)
 const editingTask = ref<InstrumentTask | null>(null)
 const editingDuration = ref<number>(15)
-const instrumentDrawers = shallowRef<any[]>([])
+const activeInstrument = ref<string | null>(null)
 
 // Custom task form
 const customTask = reactive({
@@ -162,8 +170,7 @@ const customTask = reactive({
   customIcon: ''
 })
 
-// Use drag and drop composable
-const { onDragStart } = useDragDrop()
+// Remove this line - no longer using composable
 
 // Data
 const instruments = INSTRUMENTS
@@ -242,15 +249,23 @@ const resetCustomTaskForm = () => {
   customTask.customIcon = ''
 }
 
+const toggleInstrumentDrawer = (instrument: string) => {
+  if (activeInstrument.value === instrument) {
+    activeInstrument.value = null
+  } else {
+    activeInstrument.value = instrument
+  }
+}
+
 const handleDragStart = (event: DragEvent, task: InstrumentTask) => {
-  onDragStart(event, task as DragItem, false)
+  // Just emit the event - parent will handle the drag state
   emit('drag-start', event, task as DragItem)
   
-  // Close the drawer that contains this task
-  const drawerIndex = Object.keys(instruments).findIndex(inst => inst === task.type)
-  if (drawerIndex !== -1 && instrumentDrawers.value[drawerIndex]) {
-    instrumentDrawers.value[drawerIndex].close()
-  }
+  // Close the vertical drawer when dragging starts
+  activeInstrument.value = null
+  
+  // Also emit the task-dragged event to close the entire palette
+  emit('task-dragged')
 }
 
 const handleEditDuration = (task: InstrumentTask) => {
@@ -276,292 +291,354 @@ const handleRemoveCustomTask = (task: CustomTask) => {
 </script>
 
 <style scoped>
-.instrument-palette {
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 1rem;
+/* Floating Palette Container */
+.floating-instrument-palette {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  height: 100%;
+  background: var(--section-bg);
+  overflow: hidden;
 }
 
-.palette-header {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background-color: var(--section-bg);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
+/* Floating Palette Header */
+.floating-palette-header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-lg);
 }
 
-.header-content {
+.header-main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--spacing-sm);
 }
 
-.palette-header h4 {
-  margin: 0;
-  color: var(--text-light);
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-color);
+  font-weight: 600;
   font-size: 1.125rem;
 }
 
-.palette-instructions {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin: 0;
-  font-style: italic;
+.header-title i {
+  color: var(--primary-color);
+  font-size: 1.25rem;
 }
 
-/* Inline Custom Task Creator */
-.custom-task-inline {
-  width: 100%;
-}
-
-.custom-task-toggle {
-  text-align: right;
-}
-
-.custom-task-toggle .el-button.active {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-}
-
-.custom-task-form-inline {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background-color: rgba(var(--primary-color-rgb), 0.05);
-  border: 1px solid rgba(var(--primary-color-rgb), 0.2);
-  border-radius: 0.375rem;
-}
-
-.inline-form-row {
+.custom-task-toggle-btn {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  flex-wrap: wrap;
-}
-
-.inline-select,
-.inline-input {
-  background-color: var(--card-bg);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 0.25rem;
-  padding: 0.375rem 0.5rem;
-  color: var(--text-light);
+  border-radius: var(--radius-md);
+  color: var(--text-faded);
   font-size: 0.875rem;
-  transition: border-color 0.2s ease;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.inline-select {
-  min-width: 120px;
-}
-
-.inline-input {
-  flex: 1;
-  min-width: 100px;
-}
-
-.inline-duration {
-  width: 80px;
-}
-
-.inline-select:focus,
-.inline-input:focus {
+.custom-task-toggle-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-color);
   border-color: var(--primary-color);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
 }
 
-/* Slide down animation */
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s ease;
-  transform-origin: top;
+.custom-task-toggle-btn.active {
+  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.1);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
-.slide-down-enter-from {
-  opacity: 0;
-  transform: scaleY(0);
-}
-
-.slide-down-leave-to {
-  opacity: 0;
-  transform: scaleY(0);
-}
-
-/* Custom Task Section */
-.custom-task-section {
-  margin-bottom: 0.5rem;
-}
-
+/* Custom Task Form */
 .custom-task-form {
-  padding: 1rem;
-  background-color: var(--card-bg);
-  border-radius: 0.25rem;
+  padding: var(--spacing-md);
+  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.05);
+  border: 1px solid rgba(var(--primary-color-rgb, 59, 130, 246), 0.2);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-sm);
 }
 
 .form-row {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: var(--spacing-sm);
+  align-items: center;
 }
 
-.form-group {
+.form-select,
+.form-input {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  color: var(--text-color);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-select {
+  min-width: 120px;
+}
+
+.form-input {
+  flex: 1;
+  min-width: 100px;
+}
+
+.form-duration {
+  width: 80px;
+}
+
+.form-select:focus,
+.form-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb, 59, 130, 246), 0.2);
+}
+
+.add-btn {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: var(--button-text-dark);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.add-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+.add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Horizontal Instruments Row */
+.instruments-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.instrument-icon-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  min-width: 80px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.instrument-icon-container:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.instrument-icon-container.active {
+  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.1);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.instrument-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--section-bg);
+  border-radius: var(--radius-md);
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.instrument-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.task-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--primary-color);
+  color: var(--button-text-dark);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Vertical Task Drawer */
+.vertical-task-drawer {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-size: 0.875rem;
-  color: var(--text-light);
-  font-weight: 500;
-}
-
-.form-control {
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.25rem;
-  padding: 0.5rem;
-  color: var(--text-light);
-  font-size: 0.875rem;
-  width: 100%;
-}
-
-.form-control:focus {
-  border-color: var(--primary-color);
-  outline: none;
-}
-
-.icon-preview {
-  flex: 2;
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-  margin-top: 1rem;
+  background: var(--bg-color);
+  overflow: hidden;
 }
 
 .drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem; /* Reduced padding */
-  background-color: var(--section-bg);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  user-select: none;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
 }
 
-.drawer-title {
+.drawer-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.close-drawer-btn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-faded);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Reduced gap */
-  color: var(--text-light);
-  font-weight: 500;
-  font-size: 0.875rem; /* Smaller font */
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-drawer-btn:hover {
+  background: var(--error-color, #ef4444);
+  color: white;
+  border-color: var(--error-color, #ef4444);
+}
+
+.tasks-list {
   flex: 1;
-  min-width: 0;
-}
-
-.drawer-title i {
-  font-size: 0.875rem; /* Smaller icon */
-  color: var(--primary-color);
-}
-
-
-
-/* Instrument Drawers */
-.instrument-drawers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.5rem;
-  width: 100%;
-  max-height: 200px;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
   overflow-y: auto;
 }
 
-.instrument-drawer-item {
-  flex: 1;
-  min-width: 200px;
-  max-width: 300px;
+/* Animations */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
 }
 
-.tasks-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem;
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: scaleY(0);
 }
 
-/* Element Plus component styling */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: bottom;
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+/* Element Plus Overrides */
 :deep(.el-input-number) {
-  width: 100%;
+  width: 80px;
 }
 
-:deep(.el-select) {
-  width: 100%;
+:deep(.el-input-number .el-input__inner) {
+  border-radius: var(--radius-sm) !important;
+  border-color: var(--border-color) !important;
 }
 
-:deep(.el-select-dropdown__item) {
-  font-size: 0.875rem;
+:deep(.el-input-number .el-input__inner:focus) {
+  border-color: var(--primary-color) !important;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .instrument-drawers {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
+  .floating-palette-header {
+    padding: var(--spacing-md);
+  }
+
+  .header-main {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
   .form-row {
     flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .instrument-drawers {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .form-actions .el-button {
-    width: 100%;
+    gap: var(--spacing-xs);
   }
 
-  /* Mobile inline custom task form */
-  .inline-form-row {
-    flex-direction: column;
-    gap: 0.375rem;
-  }
-
-  .inline-select,
-  .inline-input,
-  .inline-duration {
+  .form-select,
+  .form-input,
+  .form-duration {
     width: 100%;
     min-width: auto;
   }
 
-  .custom-task-toggle {
-    text-align: center;
+  .instruments-row {
+    padding: var(--spacing-md);
+    gap: var(--spacing-xs);
   }
 
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+  .instrument-icon-container {
+    min-width: 60px;
+    padding: var(--spacing-sm);
   }
 
-  .palette-header {
-    padding: 0.5rem;
+  .instrument-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .instrument-label {
+    font-size: 0.625rem;
+  }
+
+  .custom-task-toggle-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

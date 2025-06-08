@@ -38,10 +38,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import type { Step } from '@/types/workflow'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
-import { useDragDrop } from '@/composables/useDragDrop'
 
 interface Props {
   step: Step
@@ -64,13 +63,17 @@ const emit = defineEmits<{
 }>()
 
 const isDragging = ref(false)
-const { onDragStart } = useDragDrop()
+
+// Inject drag handlers from parent
+const dragHandlers = inject<any>('dragHandlers')
 
 const iconClass = computed(() => {
   return props.step.customIcon || INSTRUMENT_ICONS[props.step.type] || 'fas fa-cog'
 })
 
 const handleDragStart = (event: DragEvent) => {
+  if (!event.dataTransfer || !dragHandlers) return
+  
   isDragging.value = true
   
   const dragData = {
@@ -81,8 +84,13 @@ const handleDragStart = (event: DragEvent) => {
     sourceIndex: props.stepIndex
   }
   
-  // Use the composable's onDragStart for consistency
-  onDragStart(event, dragData, true)
+  // Set drag data with multiple formats for better compatibility
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('application/json', JSON.stringify(dragData))
+  event.dataTransfer.setData('text/plain', JSON.stringify(dragData))
+  
+  // Use injected drag handler
+  dragHandlers.handleDragStart(dragData, event.target as HTMLElement)
   
   emit('drag-start', event, props.step)
 }

@@ -78,7 +78,7 @@
           
           <div 
             class="lane-steps"
-            @dragover="handleDragOver"
+            @dragover="handleDragOver($event, workflow, lane)"
             @drop="handleDrop($event, workflow, lane)"
             @dragleave="handleDragLeave"
           >
@@ -89,11 +89,9 @@
               :stepIndex="stepIndex"
               :workflowId="workflow.id"
               :laneId="lane.id"
-              :draggable="true"
               @remove="removeStep(workflow.id, lane.id, stepIndex)"
               @edit-duration="$emit('step-edited', step)"
               @drag-start="handleStepDragStart"
-              @dragstart="handleStepDragStart"
             />
             <div class="empty-lane-hint" v-if="lane.steps.length === 0">
               Drag instruments here to add steps
@@ -106,14 +104,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, inject } from 'vue'
 import type { Workflow, Lane, Step, DragItem } from '@/types/workflow'
-import { useDragDrop } from '@/composables/useDragDrop'
 import WorkflowStep from './WorkflowStep.vue'
 
 interface Props {
   workflows: Workflow[]
-  dragItem?: DragItem | null
 }
 
 const props = defineProps<Props>()
@@ -124,16 +120,9 @@ const emit = defineEmits<{
   'workflows-changed': []
 }>()
 
-const { 
-  onDragOver,
-  onDragEnter,
-  onDragLeave,
-  onDrop,
-  onDragOverWithIndicator,
-  removeDropIndicators,
-  extractSourceInfo,
-  moveStep
-} = useDragDrop()
+// Inject drag handlers from parent
+const dragState = inject<any>('dragState')
+const dragHandlers = inject<any>('dragHandlers')
 
 // Name editing refs
 const workflowNameInput = ref<HTMLInputElement[]>([])
@@ -247,13 +236,9 @@ const removeStep = (workflowId: string, laneId: string, stepIndex: number) => {
 }
 
 // Drag and drop handlers
-const handleDragOver = (event: DragEvent) => {
-  event.preventDefault()
-  const target = event.currentTarget as HTMLElement
-  if (target && !target.classList.contains('drag-over')) {
-    target.classList.add('drag-over')
-  }
-  onDragOverWithIndicator(event, '.workflow-step')
+const handleDragOver = (event: DragEvent, workflow: Workflow, lane: Lane) => {
+  if (!dragHandlers) return
+  dragHandlers.handleDragOver(event, workflow.id, lane.id)
 }
 
 const handleDragLeave = (event: DragEvent) => {
@@ -263,108 +248,13 @@ const handleDragLeave = (event: DragEvent) => {
   // Only remove if truly leaving the container
   if (target && (!relatedTarget || !target.contains(relatedTarget))) {
     target.classList.remove('drag-over')
-    removeDropIndicators()
+    document.querySelectorAll('.drop-indicator').forEach(el => el.remove())
   }
 }
 
 const handleDrop = (event: DragEvent, workflow: Workflow, lane: Lane) => {
-  event.preventDefault()
-  event.stopPropagation()
-  
-  // Clean up drag over state
-  const target = event.currentTarget as HTMLElement
-  if (target) {
-    target.classList.remove('drag-over')
-  }
-  
-  // Get the drop position BEFORE removing indicators
-  const indicator = target.querySelector('.drop-indicator')
-  let insertIndex = -1
-  
-  if (indicator) {
-    const steps = Array.from(target.querySelectorAll('.workflow-step'))
-    // Find the index where the indicator is positioned
-    for (let i = 0; i < steps.length; i++) {
-      if (indicator.compareDocumentPosition(steps[i]) & Node.DOCUMENT_POSITION_FOLLOWING) {
-        // Indicator comes before this step
-        insertIndex = i
-        break
-      }
-    }
-    if (insertIndex === -1) {
-      // Indicator is after all steps
-      insertIndex = steps.length
-    }
-  }
-  
-  // NOW clean up all drag indicators
-  removeDropIndicators()
-  document.querySelectorAll('.drag-over').forEach(el => {
-    el.classList.remove('drag-over')
-  })
-  
-  // Get drag data - try multiple formats
-  let dragData = event.dataTransfer?.getData('application/json') || 
-                 event.dataTransfer?.getData('text/plain')
-  
-  if (!dragData) {
-    console.error('No drag data available')
-    return
-  }
-  
-  let draggedItem
-  try {
-    draggedItem = JSON.parse(dragData)
-  } catch (e) {
-    console.error('Failed to parse drag data:', e, dragData)
-    return
-  }
-  
-  // If it's an existing step being moved, handle reordering
-  if (draggedItem.isExistingStep) {
-    const sourceInfo = extractSourceInfo(draggedItem)
-    if (!sourceInfo) {
-      console.error('Invalid source information for existing step')
-      return
-    }
-    
-    // If no specific insert position, append to end
-    if (insertIndex === -1) {
-      insertIndex = lane.steps.length
-    }
-    
-    // Use the moveStep helper to reorder
-    const success = moveStep(
-      props.workflows,
-      sourceInfo,
-      workflow.id,
-      lane.id,
-      insertIndex
-    )
-    
-    if (success) {
-      emit('workflows-changed')
-    }
-    return
-  }
-  
-  // Create a new step (for dragging from instrument palette)
-  const newStep: Step = {
-    id: `${lane.id}-step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    type: draggedItem.type,
-    task: draggedItem.task || draggedItem.type,
-    duration: draggedItem.duration || 15,
-    customIcon: draggedItem.customIcon
-  }
-  
-  // Insert at the determined position
-  if (insertIndex >= 0 && insertIndex < lane.steps.length) {
-    lane.steps.splice(insertIndex, 0, newStep)
-  } else {
-    lane.steps.push(newStep)
-  }
-  
-  emit('workflows-changed')
+  if (!dragHandlers) return
+  dragHandlers.handleDrop(event, workflow.id, lane.id)
 }
 
 const handleStepDragStart = (event: DragEvent, step: Step) => {
@@ -627,85 +517,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   background-color: #dc2626;
 }
 
-/* Drop indicator - base styles */
-:deep(.drop-indicator) {
-  width: 4px;
-  height: 50px; /* Taller for better visibility */
-  border-radius: 2px;
-  margin: 0 8px;
-  animation: pulse 1s infinite;
-  position: relative;
-}
-
-/* Drop indicator for adding new steps (blue) */
-:deep(.drop-indicator-add) {
-  background-color: #4a90e2;
-  box-shadow: 0 0 10px #4a90e2, 0 0 20px #4a90e2, 0 0 30px rgba(74, 144, 226, 0.5);
-}
-
-:deep(.drop-indicator-add)::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 10px solid #4a90e2;
-}
-
-:deep(.drop-indicator-add)::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 10px solid #4a90e2;
-}
-
-/* Drop indicator for moving existing steps (green) */
-:deep(.drop-indicator-move) {
-  background-color: #10b981;
-  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981, 0 0 30px rgba(16, 185, 129, 0.5);
-}
-
-:deep(.drop-indicator-move)::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 10px solid #10b981;
-}
-
-:deep(.drop-indicator-move)::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 10px solid #10b981;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
+/* Drop indicator styles moved to parent component */
 
 /* Responsive */
 @media (max-width: 768px) {

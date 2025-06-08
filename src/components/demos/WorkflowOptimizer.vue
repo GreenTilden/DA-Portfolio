@@ -35,9 +35,6 @@
       <div v-if="showInstructions" class="instructions-backdrop" @click="showInstructions = false">
         <div class="instructions-overlay">
         <div class="instructions-card">
-          <button class="close-button" @click="showInstructions = false">
-            <i class="fas fa-times"></i>
-          </button>
           <h2><i class="fas fa-graduation-cap"></i> Getting Started</h2>
           
           <div class="instruction-steps">
@@ -129,56 +126,53 @@
 
           <!-- Workflow Builder Content -->
           <div v-else class="builder-content">
-            <div class="builder-layout">
-              <!-- Collapsible Instrument Palette -->
-              <section class="builder-section palette-section">
-                <aside class="palette-sidebar" :class="{ 'collapsed': isPaletteCollapsed }">
-                <div class="palette-toggle" @click="togglePalette">
-                  <i class="fas fa-toolbox"></i>
-                  <span v-show="!isPaletteCollapsed">Instrument Palette</span>
-                  <i class="toggle-icon fas" :class="isPaletteCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
-                </div>
-                
-                <transition name="slide-palette">
-                  <div v-show="!isPaletteCollapsed" class="palette-content">
-                    <div class="palette-header-compact">
-                      <span class="section-subtitle">Drag instruments to workflows</span>
-                    </div>
-                    <InstrumentPalette
-                      :custom-tasks="customTasks"
-                      @task-created="handleCustomTaskCreated"
-                      @task-edited="handleCustomTaskEdited"
-                      @task-removed="handleCustomTaskRemoved"
-                      @drag-start="handlePaletteDragStart"
-                    />
-                  </div>
-                </transition>
-              </aside>
-              </section>
+            <!-- Floating Instrument Palette Toggle -->
+            <button 
+              class="palette-toggle-fab"
+              @click="isPaletteOpen = !isPaletteOpen"
+              :class="{ 'active': isPaletteOpen }"
+            >
+              <i class="fas fa-toolbox"></i>
+            </button>
 
-              <!-- Workflows Section -->
-              <section class="builder-section workflows-section" :class="{ 'palette-collapsed': isPaletteCollapsed }">
-                <div class="section-header">
-                  <h2><i class="fas fa-project-diagram"></i> Active Workflows</h2>
-                  <div class="section-actions">
-                    <button class="icon-button" @click="addNewWorkflow">
-                      <i class="fas fa-plus"></i>
-                    </button>
-                    <button class="icon-button" @click="handleResetWorkflows">
-                      <i class="fas fa-undo"></i>
-                    </button>
-                  </div>
+            <!-- Main Workflows Section -->
+            <section class="builder-section workflows-section-full">
+              <div class="section-header">
+                <h2><i class="fas fa-project-diagram"></i> Active Workflows</h2>
+                <div class="section-actions">
+                  <button class="icon-button" @click="addNewWorkflow">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  <button class="icon-button" @click="handleResetWorkflows">
+                    <i class="fas fa-undo"></i>
+                  </button>
                 </div>
-                <WorkflowBuilder
-                  :workflows="workflows"
-                  :drag-item="currentDragItem"
-                  @update:workflows="updateWorkflows"
-                  @step-edited="handleStepEdited"
-                  @workflows-changed="handleWorkflowsChanged"
-                />
-              </section>
-            </div>
+              </div>
+              <WorkflowBuilder
+                :workflows="workflows"
+                @update:workflows="updateWorkflows"
+                @step-edited="handleStepEdited"
+                @workflows-changed="handleWorkflowsChanged"
+              />
+            </section>
           </div>
+
+          <!-- Floating Instrument Palette Overlay -->
+          <transition name="slide-palette-overlay">
+            <div v-if="isPaletteOpen" class="palette-overlay">
+              <div class="palette-backdrop" @click="isPaletteOpen = false"></div>
+              <div class="floating-palette">
+                <InstrumentPalette
+                  :custom-tasks="customTasks"
+                  @task-created="handleCustomTaskCreated"
+                  @task-edited="handleCustomTaskEdited"
+                  @task-removed="handleCustomTaskRemoved"
+                  @drag-start="handlePaletteDragStart"
+                  @task-dragged="handleTaskDragged"
+                />
+              </div>
+            </div>
+          </transition>
 
           <!-- Connection Lines Canvas -->
           <svg class="connections-svg" ref="connectionsSvg"></svg>
@@ -314,12 +308,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick, reactive, provide } from 'vue'
 import type { Workflow, Step, DragItem, ScheduledTask } from '@/types/workflow'
 import { useWorkflowState } from '@/composables/useWorkflowState'
-import { useDragDrop } from '@/composables/useDragDrop'
 import { useConnections } from '@/composables/useConnections'
 import { useTheme } from '@/composables/useTheme'
+import { useDragDrop } from '@/composables/useDragDrop'
 import { createOptimizationEngine } from '@/utils/optimizationEngine'
 import { INSTRUMENT_ICONS } from '@/constants/instruments'
 import InstrumentPalette from '@/components/workflow/InstrumentPalette.vue'
@@ -424,7 +418,19 @@ const showInstrumentConfig = ref(false)
 const showStepDurationEditor = ref(false)
 const editingStep = ref<Step | null>(null)
 const connectionsSvg = ref<SVGSVGElement | null>(null)
-const isPaletteCollapsed = ref(false)
+const isPaletteOpen = ref(false)
+
+// Centralized drag and drop state
+const dragState = reactive({
+  isDragging: false,
+  draggedItem: null as DragItem | null,
+  draggedElement: null as HTMLElement | null,
+  dropTarget: null as { workflowId: string, laneId: string, index: number } | null,
+  dragOverElement: null as HTMLElement | null
+})
+
+// Provide drag state to child components
+provide('dragState', dragState)
 
 // Use composables
 const {
@@ -444,13 +450,163 @@ const {
   resetState
 } = useWorkflowState()
 
-const { currentDragItem, onDragEnd } = useDragDrop()
 const { updateSvgSize, drawConnections } = useConnections(connectionsSvg, workflows)
 const { currentTheme, setTheme } = useTheme()
+const { setDragData, getDragData } = useDragDrop()
 
-// Palette collapse functionality
-const togglePalette = () => {
-  isPaletteCollapsed.value = !isPaletteCollapsed.value
+// Drag and Drop Functions
+const handleDragStart = (event: DragEvent, item: DragItem, element: HTMLElement) => {
+  console.log('Drag started:', item)
+  dragState.isDragging = true
+  dragState.draggedItem = item
+  dragState.draggedElement = element
+  
+  // Set drag data on the event
+  setDragData(event, item)
+  
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = item.isExistingStep ? 'move' : 'copy'
+  }
+}
+
+const handleDragEnd = () => {
+  // Clean up all drag state
+  dragState.isDragging = false
+  dragState.draggedItem = null
+  dragState.draggedElement = null
+  dragState.dropTarget = null
+  dragState.dragOverElement = null
+  
+  // Remove all visual indicators
+  document.querySelectorAll('.drag-over').forEach(el => {
+    el.classList.remove('drag-over')
+  })
+  document.querySelectorAll('.drop-indicator').forEach(el => {
+    el.remove()
+  })
+}
+
+const handleDragOver = (event: DragEvent, workflowId: string, laneId: string) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  const container = event.currentTarget as HTMLElement
+  if (!container) return
+  
+  // Add visual feedback
+  if (!container.classList.contains('drag-over')) {
+    container.classList.add('drag-over')
+  }
+  
+  // Update drag over element
+  dragState.dragOverElement = container
+  
+  // Find drop position
+  const steps = Array.from(container.querySelectorAll('.workflow-step'))
+  const mouseX = event.clientX
+  
+  let insertIndex = steps.length // Default to end
+  
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i] as HTMLElement
+    const rect = step.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    
+    if (mouseX < centerX) {
+      insertIndex = i
+      break
+    }
+  }
+  
+  // Update drop target
+  dragState.dropTarget = { workflowId, laneId, index: insertIndex }
+  
+  // Show drop indicator
+  updateDropIndicator(container, insertIndex)
+}
+
+const updateDropIndicator = (container: HTMLElement, index: number) => {
+  // Remove existing indicators
+  container.querySelectorAll('.drop-indicator').forEach(el => el.remove())
+  
+  // Create new indicator
+  const indicator = document.createElement('div')
+  indicator.className = dragState.draggedItem?.isExistingStep 
+    ? 'drop-indicator drop-indicator-move' 
+    : 'drop-indicator drop-indicator-add'
+  
+  const steps = container.querySelectorAll('.workflow-step')
+  
+  if (index < steps.length) {
+    steps[index].before(indicator)
+  } else if (steps.length > 0) {
+    steps[steps.length - 1].after(indicator)
+  } else {
+    container.appendChild(indicator)
+  }
+}
+
+const handleDrop = (event: DragEvent, workflowId: string, laneId: string) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  const container = event.currentTarget as HTMLElement
+  container.classList.remove('drag-over')
+  
+  // Get drag data from event
+  const draggedItem = getDragData(event)
+  if (!draggedItem || !dragState.dropTarget) return
+  
+  const targetWorkflow = workflows.value.find(w => w.id === workflowId)
+  const targetLane = targetWorkflow?.lanes.find(l => l.id === laneId)
+  
+  if (!targetWorkflow || !targetLane) return
+  
+  if (draggedItem.isExistingStep) {
+    // Moving existing step
+    const sourceWorkflow = workflows.value.find(w => w.id === draggedItem.sourceWorkflowId)
+    const sourceLane = sourceWorkflow?.lanes.find(l => l.id === draggedItem.sourceLaneId)
+    
+    if (!sourceWorkflow || !sourceLane) return
+    
+    // Remove from source
+    const sourceIndex = draggedItem.sourceIndex ?? 0
+    const [movedStep] = sourceLane.steps.splice(sourceIndex, 1)
+    
+    if (!movedStep) return
+    
+    // Adjust target index if moving within same lane
+    let targetIndex = dragState.dropTarget.index
+    if (sourceLane.id === targetLane.id && targetIndex > sourceIndex) {
+      targetIndex--
+    }
+    
+    // Insert at target
+    targetLane.steps.splice(targetIndex, 0, movedStep)
+  } else {
+    // Adding new step from palette
+    const newStep: Step = {
+      id: `${laneId}-step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: draggedItem.type,
+      task: draggedItem.task || draggedItem.type,
+      duration: draggedItem.duration || 15,
+      customIcon: draggedItem.customIcon
+    }
+    
+    targetLane.steps.splice(dragState.dropTarget.index, 0, newStep)
+  }
+  
+  saveState()
+  nextTick(() => {
+    drawConnections()
+  })
+  
+  handleDragEnd()
+}
+
+// Handle task dragged out of palette - closes palette
+const handleTaskDragged = () => {
+  isPaletteOpen.value = false
 }
 
 // Instructions toggle functionality
@@ -547,18 +703,30 @@ const handleCustomTaskRemoved = (task: typeof customTasks.value[0]) => {
 }
 
 const handlePaletteDragStart = (event: DragEvent, item: DragItem) => {
+  handleDragStart(event, item, event.target as HTMLElement)
+  
+  // Set up drag end handler
   const dragEndHandler = () => {
-    onDragEnd()
+    handleDragEnd()
     event.target?.removeEventListener('dragend', dragEndHandler)
   }
   event.target?.addEventListener('dragend', dragEndHandler)
   
+  // Fallback cleanup
   document.addEventListener('dragend', () => {
     setTimeout(() => {
-      onDragEnd()
+      handleDragEnd()
     }, 100)
   }, { once: true })
 }
+
+// Provide drag functions to child components
+provide('dragHandlers', {
+  handleDragStart,
+  handleDragEnd,
+  handleDragOver,
+  handleDrop
+})
 
 const handleWorkflowsChanged = () => {
   saveState()
@@ -866,28 +1034,6 @@ watch(activeTab, (newTab) => {
   gap: var(--spacing-md);
 }
 
-.close-button {
-  position: absolute;
-  top: var(--spacing-lg);
-  right: var(--spacing-lg);
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  border: none;
-  background: var(--card-bg);
-  color: var(--text-faded);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background: var(--hover-bg);
-  color: var(--text-color);
-}
-
 .instruction-steps {
   display: flex;
   flex-direction: column;
@@ -963,35 +1109,42 @@ watch(activeTab, (newTab) => {
 .tab-navigation {
   background: var(--section-bg);
   border-bottom: 1px solid var(--border-color);
-  padding: 0 var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-2xl);
   display: flex;
-  gap: var(--spacing-lg);
+  justify-content: center;
+  gap: 8rem;
   position: sticky;
   top: 73px;
   z-index: 30;
+  overflow: visible;
 }
 
 .tab-button {
   position: relative;
   background: none;
   border: none;
-  padding: var(--spacing-lg) var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-xl);
   color: var(--text-faded);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   transition: all 0.2s ease;
+  min-height: 48px;
+  border-radius: 50px;
+  overflow: visible;
 }
 
 .tab-button:hover {
   color: var(--text-color);
+  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.1);
 }
 
 .tab-button.active {
   color: var(--primary-color);
+  background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.15);
 }
 
 .tab-indicator {
@@ -999,9 +1152,9 @@ watch(activeTab, (newTab) => {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: var(--primary-color);
-  border-radius: 3px 3px 0 0;
+  border-radius: 4px 4px 0 0;
   transform: scaleX(0);
   transition: transform 0.2s ease;
 }
@@ -1015,6 +1168,7 @@ watch(activeTab, (newTab) => {
   flex: 1;
   min-height: 0;
   position: relative;
+  overflow: visible;
 }
 
 .tab-content {
@@ -1028,13 +1182,7 @@ watch(activeTab, (newTab) => {
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--spacing-xl);
-}
-
-.builder-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-lg);
-  height: calc(100vh - 200px);
+  position: relative;
 }
 
 /* Section Styles */
@@ -1384,6 +1532,86 @@ watch(activeTab, (newTab) => {
   z-index: 10;
 }
 
+/* Drop indicators - global styles */
+:deep(.drop-indicator) {
+  width: 4px;
+  height: 50px;
+  border-radius: 2px;
+  margin: 0 8px;
+  animation: pulse 1s infinite;
+  position: relative;
+}
+
+/* Drop indicator for adding new steps (blue) */
+:deep(.drop-indicator-add) {
+  background-color: #4a90e2;
+  box-shadow: 0 0 10px #4a90e2, 0 0 20px #4a90e2, 0 0 30px rgba(74, 144, 226, 0.5);
+}
+
+:deep(.drop-indicator-add)::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 10px solid #4a90e2;
+}
+
+:deep(.drop-indicator-add)::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #4a90e2;
+}
+
+/* Drop indicator for moving existing steps (green) */
+:deep(.drop-indicator-move) {
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981, 0 0 30px rgba(16, 185, 129, 0.5);
+}
+
+:deep(.drop-indicator-move)::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 10px solid #10b981;
+}
+
+:deep(.drop-indicator-move)::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #10b981;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
 /* Animations */
 .slide-fade-enter-active,
 .slide-fade-leave-active {
@@ -1462,14 +1690,15 @@ watch(activeTab, (newTab) => {
   }
   
   .tab-navigation {
-    padding: 0 var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-lg);
   }
   
   .tab-button {
     flex: 1;
     justify-content: center;
-    padding: var(--spacing-md) var(--spacing-xs);
-    font-size: 0.75rem;
+    padding: var(--spacing-lg) var(--spacing-sm);
+    font-size: 0.875rem;
+    min-height: 44px;
   }
   
   .tab-button span {
@@ -1560,5 +1789,106 @@ watch(activeTab, (newTab) => {
 /* Workflows Section Specific  */
 .workflows-section {
   min-height: 400px;
+}
+
+/* Floating Palette Toggle FAB */
+.palette-toggle-fab {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: var(--button-text-dark);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.palette-toggle-fab:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-xl);
+}
+
+.palette-toggle-fab.active {
+  background: linear-gradient(135deg, var(--success-color, #10b981), var(--success-dark, #059669));
+  transform: rotate(45deg);
+}
+
+/* Floating Palette Overlay */
+.palette-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+
+.palette-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.floating-palette {
+  position: absolute;
+  top: 50%;
+  left: 2rem;
+  transform: translateY(-50%);
+  width: 400px;
+  max-width: calc(100vw - 4rem);
+  max-height: calc(100vh - 4rem);
+  background: var(--section-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  pointer-events: auto;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+/* Floating Palette Animation */
+.slide-palette-overlay-enter-active,
+.slide-palette-overlay-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-palette-overlay-enter-from {
+  opacity: 0;
+}
+
+.slide-palette-overlay-enter-from .palette-backdrop {
+  opacity: 0;
+}
+
+.slide-palette-overlay-enter-from .floating-palette {
+  transform: translateY(-50%) translateX(-100%) scale(0.8);
+  opacity: 0;
+}
+
+.slide-palette-overlay-leave-to {
+  opacity: 0;
+}
+
+.slide-palette-overlay-leave-to .palette-backdrop {
+  opacity: 0;
+}
+
+.slide-palette-overlay-leave-to .floating-palette {
+  transform: translateY(-50%) translateX(-100%) scale(0.8);
+  opacity: 0;
 }
 </style>
