@@ -94,9 +94,14 @@ export function useModalWorkflowEditor() {
   }
 
   const goToLaneSelection = (workflowId: string) => {
+    console.log('useModalWorkflowEditor - goToLaneSelection called with:', workflowId)
     state.selectedWorkflowId = workflowId
     state.selectedLaneId = null
     state.currentStep = 'lane-selection'
+    console.log('useModalWorkflowEditor - state after transition:', {
+      selectedWorkflowId: state.selectedWorkflowId,
+      currentStep: state.currentStep
+    })
   }
 
   const goToLaneEditor = (laneId: string) => {

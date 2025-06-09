@@ -37,38 +37,51 @@ const state = reactive<WorkflowState>({
 export function useWorkflowState() {
   // Save state to localStorage
   const saveState = () => {
-    if (process.env.NODE_ENV === 'development') {
+    try {
       const stateToSave = {
         workflows: state.workflows,
         customTasks: state.customTasks,
         instrumentConfig: state.instrumentConfig
       }
       localStorage.setItem('workflow-optimizer-state', JSON.stringify(stateToSave))
+      console.log('useWorkflowState - state saved to localStorage')
+    } catch (error) {
+      console.log('useWorkflowState - unable to save to localStorage:', error)
     }
   }
 
   // Load state from localStorage
   const loadState = () => {
-    if (process.env.NODE_ENV === 'development') {
+    console.log('useWorkflowState - loadState called')
+    console.log('useWorkflowState - environment:', process.env.NODE_ENV)
+    
+    // Try to load from localStorage (works in development and some production environments)
+    try {
       const saved = localStorage.getItem('workflow-optimizer-state')
+      console.log('useWorkflowState - saved data:', saved)
+      
       if (saved) {
-        try {
-          const data = JSON.parse(saved)
-          if (data.workflows) state.workflows = data.workflows
-          if (data.customTasks) state.customTasks = data.customTasks
-          if (data.instrumentConfig) {
-            Object.assign(state.instrumentConfig, data.instrumentConfig)
-          }
-        } catch (error) {
-          console.error('Failed to load state from localStorage:', error)
+        const data = JSON.parse(saved)
+        if (data.workflows) state.workflows = data.workflows
+        if (data.customTasks) state.customTasks = data.customTasks
+        if (data.instrumentConfig) {
+          Object.assign(state.instrumentConfig, data.instrumentConfig)
         }
+        console.log('useWorkflowState - loaded workflows from localStorage:', state.workflows.length)
       }
+    } catch (error) {
+      console.log('useWorkflowState - localStorage not available or error loading:', error)
     }
     
     // Initialize default workflows if none exist
     if (state.workflows.length === 0) {
+      console.log('useWorkflowState - creating default workflows')
       state.workflows = createDefaultWorkflows()
+      console.log('useWorkflowState - default workflows created:', state.workflows.length)
+      console.log('useWorkflowState - first workflow:', state.workflows[0])
       saveState()
+    } else {
+      console.log('useWorkflowState - workflows already exist:', state.workflows.length)
     }
   }
 

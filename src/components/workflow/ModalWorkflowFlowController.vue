@@ -62,26 +62,25 @@
             <!-- Condensed Workflow Overview using Element Plus -->
             <div class="workflow-overview">
               <el-scrollbar v-if="selectedWorkflow?.lanes.length" class="lanes-scrollbar">
-                <div class="lanes-container">
-                  <el-card 
-                    v-for="(lane, index) in selectedWorkflow.lanes" 
-                    :key="lane.id"
-                    class="lane-card" 
-                    shadow="hover"
-                  >
+                <draggable
+                  :list="selectedWorkflow.lanes"
+                  class="lanes-container"
+                  :animation="200"
+                  handle=".lane-drag-handle"
+                  @change="handleLaneReorder"
+                  item-key="id"
+                >
+                  <template #item="{ element: lane }">
+                    <el-card 
+                      class="lane-card" 
+                      shadow="hover"
+                    >
                     <!-- Card Header -->
                     <template #header>
                       <div class="lane-card-header">
-                        <el-icon class="drag-icon"><More /></el-icon>
+                        <el-icon class="lane-drag-handle"><More /></el-icon>
                         <span class="lane-name">{{ lane.name }}</span>
                         <div class="lane-actions">
-                          <el-button 
-                            type="primary" 
-                            :icon="Edit" 
-                            size="small" 
-                            circle 
-                            @click="handleLaneSelect(lane.id)"
-                          />
                           <el-button 
                             type="danger" 
                             :icon="Delete" 
@@ -106,32 +105,40 @@
                     </div>
                     
                     <!-- Steps List -->
-                    <div class="steps-container">
+                    <div class="steps-container" @click="handleLaneSelect(lane.id)">
                       <el-scrollbar v-if="lane.steps.length" max-height="300px">
-                        <div class="steps-list">
-                          <div 
-                            v-for="(step, stepIndex) in lane.steps" 
-                            :key="step.id"
-                            class="step-item"
-                          >
-                            <el-avatar 
-                              :size="32" 
-                              :style="{ backgroundColor: getStepColor(step.type) }"
+                        <draggable 
+                          :list="lane.steps"
+                          class="steps-list"
+                          :animation="200"
+                          handle=".drag-handle"
+                          @change="() => handleStepReorder(lane.id)"
+                          item-key="id"
+                        >
+                          <template #item="{ element: step, index: stepIndex }">
+                            <div 
+                              class="step-item"
                             >
-                              <el-icon><component :is="getStepIconComponent(step.type)" /></el-icon>
-                            </el-avatar>
-                            <div class="step-content">
-                              <div class="step-header">
-                                <span class="step-type">{{ step.type }}</span>
-                                <el-tag size="small" round>{{ stepIndex + 1 }}</el-tag>
-                              </div>
-                              <div class="step-details">
-                                <span class="step-task">{{ step.task }}</span>
-                                <span class="step-duration">{{ step.duration }}min</span>
+                              <el-icon class="drag-handle"><Rank /></el-icon>
+                              <el-avatar 
+                                :size="32" 
+                                :style="{ backgroundColor: getStepColor(step.type) }"
+                              >
+                                <el-icon><component :is="getStepIconComponent(step.type)" /></el-icon>
+                              </el-avatar>
+                              <div class="step-content">
+                                <div class="step-header">
+                                  <span class="step-type">{{ step.type }}</span>
+                                  <el-tag size="small" round>{{ stepIndex + 1 }}</el-tag>
+                                </div>
+                                <div class="step-details">
+                                  <span class="step-task">{{ step.task }}</span>
+                                  <span class="step-duration">{{ step.duration }}min</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
+                          </template>
+                        </draggable>
                       </el-scrollbar>
                       
                       <!-- Empty State -->
@@ -149,8 +156,9 @@
                         </el-button>
                       </el-empty>
                     </div>
-                  </el-card>
-                </div>
+                    </el-card>
+                  </template>
+                </draggable>
               </el-scrollbar>
               
               <!-- Empty Workflow State -->
@@ -234,9 +242,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import draggable from 'vuedraggable'
 import { 
-  ArrowLeft, 
-  Edit, 
   Delete, 
   More, 
   List, 
@@ -247,7 +254,8 @@ import {
   MagicStick,
   RefreshRight,
   Brush,
-  Eleme
+  Eleme,
+  Rank
 } from '@element-plus/icons-vue'
 import { useModalWorkflowEditor } from '@/composables/useModalWorkflowEditor'
 import { useWorkflowState } from '@/composables/useWorkflowState'
@@ -262,11 +270,8 @@ const {
   selectedLaneId,
   pendingTask,
   openedFromFAB,
-  modalTitle,
-  canGoBack,
   goToLaneSelection,
   goToLaneEditor,
-  goBack,
   closeModal,
   completeWorkflow
 } = useModalWorkflowEditor()
@@ -296,8 +301,20 @@ const isWorkflowBuilder = computed(() => {
 
 // Get the selected workflow object
 const selectedWorkflow = computed(() => {
-  if (!selectedWorkflowId.value) return undefined
-  return workflows.value.find(w => w.id === selectedWorkflowId.value)
+  console.log('ModalWorkflowFlowController - selectedWorkflowId:', selectedWorkflowId.value)
+  console.log('ModalWorkflowFlowController - workflows:', workflows.value)
+  console.log('ModalWorkflowFlowController - workflows length:', workflows.value?.length)
+  
+  if (!selectedWorkflowId.value) {
+    console.log('ModalWorkflowFlowController - No selectedWorkflowId')
+    return undefined
+  }
+  
+  const workflow = workflows.value.find(w => w.id === selectedWorkflowId.value)
+  console.log('ModalWorkflowFlowController - selectedWorkflow:', workflow)
+  console.log('ModalWorkflowFlowController - selectedWorkflow lanes:', workflow?.lanes?.length)
+  
+  return workflow
 })
 
 // Get the selected lane object
@@ -444,6 +461,32 @@ const handleDeleteLane = (laneId: string): void => {
       w.id === selectedWorkflowId.value 
         ? { ...w, lanes: w.lanes.filter(l => l.id !== laneId) }
         : w
+    )
+    updateWorkflows(updatedWorkflows)
+  }
+}
+
+// Handle step reorder
+const handleStepReorder = (laneId: string): void => {
+  // The draggable component with :list binding automatically updates the array
+  // We just need to trigger a save to persist the changes
+  if (selectedWorkflow.value && selectedWorkflowId.value) {
+    // Force update by creating a new workflows array
+    const updatedWorkflows = workflows.value.map(w => 
+      w.id === selectedWorkflowId.value ? { ...w } : w
+    )
+    updateWorkflows(updatedWorkflows)
+  }
+}
+
+// Handle lane reorder
+const handleLaneReorder = (): void => {
+  // The draggable component with :list binding automatically updates the array
+  // We just need to trigger a save to persist the changes
+  if (selectedWorkflow.value && selectedWorkflowId.value) {
+    // Force update by creating a new workflows array
+    const updatedWorkflows = workflows.value.map(w => 
+      w.id === selectedWorkflowId.value ? { ...w } : w
     )
     updateWorkflows(updatedWorkflows)
   }
@@ -765,6 +808,16 @@ const handleDeleteLane = (laneId: string): void => {
   padding: 12px;
 }
 
+.lane-card.sortable-ghost {
+  opacity: 0.5;
+  background: var(--el-color-primary-light-9);
+}
+
+.lane-card.sortable-drag {
+  background: var(--el-color-primary-light-8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
 /* Lane Card Header */
 .lane-card-header {
   display: flex;
@@ -772,13 +825,19 @@ const handleDeleteLane = (laneId: string): void => {
   gap: 8px;
 }
 
-.drag-icon {
+.lane-drag-handle {
   cursor: grab;
   color: var(--el-text-color-placeholder);
+  font-size: 16px;
+  transition: color 0.2s ease;
 }
 
-.drag-icon:hover {
+.lane-drag-handle:hover {
   color: var(--el-color-primary);
+}
+
+.lane-drag-handle:active {
+  cursor: grabbing;
 }
 
 .lane-name {
@@ -812,6 +871,13 @@ const handleDeleteLane = (laneId: string): void => {
 .steps-container {
   flex: 1;
   min-height: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.steps-container:hover {
+  background-color: var(--el-fill-color-lighter);
+  border-radius: 4px;
 }
 
 .steps-list {
@@ -828,12 +894,37 @@ const handleDeleteLane = (laneId: string): void => {
   background: var(--el-fill-color-lighter);
   border-radius: 6px;
   transition: all 0.2s ease;
-  cursor: pointer;
+  cursor: move;
 }
 
 .step-item:hover {
   background: var(--el-fill-color-light);
   transform: translateY(-1px);
+}
+
+.step-item.sortable-ghost {
+  opacity: 0.5;
+  background: var(--el-color-primary-light-9);
+}
+
+.step-item.sortable-drag {
+  background: var(--el-color-primary-light-8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--el-text-color-placeholder);
+  font-size: 16px;
+  transition: color 0.2s ease;
+}
+
+.drag-handle:hover {
+  color: var(--el-color-primary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .step-content {
@@ -932,6 +1023,14 @@ const handleDeleteLane = (laneId: string): void => {
   
   .step-details {
     width: 100%;
+  }
+  
+  .drag-handle {
+    display: none;
+  }
+  
+  .lane-drag-handle {
+    display: none;
   }
 }
 </style>
