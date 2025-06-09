@@ -22,6 +22,10 @@
           {{ totalDuration }}m
         </span>
       </div>
+      <button class="edit-workflow-btn" @click.stop="handleWorkflowClick">
+        <i class="fas fa-edit"></i>
+        <span>Edit Workflow</span>
+      </button>
     </div>
 
     <!-- Lanes Preview -->
@@ -427,6 +431,26 @@ onMounted(() => {
 .metric i {
   color: var(--primary-color);
   font-size: 0.625rem;
+}
+
+.edit-workflow-btn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-workflow-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
 }
 
 .lanes-preview {

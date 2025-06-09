@@ -4,7 +4,7 @@
     :title="''"
     :width="dynamicModalWidth"
     class="workflow-flow-modal"
-    :close-on-click-modal="false"
+    :close-on-click-modal="true"
     :show-close="false"
     destroy-on-close
   >
@@ -164,7 +164,7 @@
               
               <!-- Empty Workflow State -->
               <el-empty 
-                v-else
+                v-else-if="selectedWorkflow && !selectedWorkflow.lanes?.length"
                 :image-size="120"
                 description="No lanes in this workflow yet"
               >
@@ -198,10 +198,6 @@
                     <i class="fas fa-layer-group"></i>
                     {{ getTotalInstruments() }} {{ getTotalInstruments() === 1 ? 'instrument' : 'instruments' }}
                   </span>
-                  <el-button @click="goBackToWorkflow">
-                    <el-icon><ArrowLeft /></el-icon>
-                    Back to Overview
-                  </el-button>
                 </div>
               </div>
             </div>
@@ -242,7 +238,7 @@
                 </span>
               </div>
             </div>
-            <el-button @click="goBackToWorkflow">
+            <el-button @click="goBackToMultiLane">
               <el-icon><ArrowLeft /></el-icon>
               Back to Workflow
             </el-button>
@@ -315,6 +311,7 @@ const {
   openedFromFAB,
   goToLaneSelection,
   goToLaneEditor,
+  openMultiLaneEditor,
   closeModal,
   completeWorkflow
 } = useModalWorkflowEditor()
@@ -570,10 +567,10 @@ const handleAddLane = (): void => {
   updateWorkflows(updatedWorkflows)
 }
 
-const goBackToWorkflow = (): void => {
-  // Go back to workflow builder instead of lane selection
+const goBackToMultiLane = (): void => {
+  // Go back to multi-lane editor from lane editor
   if (selectedWorkflowId.value) {
-    goToLaneSelection(selectedWorkflowId.value)
+    openMultiLaneEditor(selectedWorkflowId.value)
   }
 }
 
@@ -585,7 +582,7 @@ const handleBack = (): void => {
 }
 
 const handleClose = (): void => {
-  closeModal()
+  completeWorkflow()
 }
 
 const handleComplete = (): void => {

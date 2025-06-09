@@ -401,7 +401,8 @@ const {
 const {
   openFromFAB,
   openFromPreview,
-  openMultiLaneEditor
+  openMultiLaneEditor,
+  selectedWorkflowId
 } = useModalWorkflowEditor()
 
 // Theme integration
@@ -539,10 +540,42 @@ const handleLaneClick = (workflowId: string, laneId: string) => {
   openFromPreview(workflowId, laneId)
 }
 
-const handleAddLane = () => {
-  // This will be handled by the modal's add lane functionality
-  // The MultiLaneEditor component will emit this event
-  console.log('Add lane requested from multi-lane editor')
+const handleAddLane = (workflowId?: string) => {
+  // Get the current workflow ID from the modal state or parameter
+  const targetWorkflowId = workflowId || selectedWorkflowId?.value
+  
+  if (!targetWorkflowId) {
+    console.warn('No workflow ID available for adding lane')
+    return
+  }
+  
+  const targetWorkflow = workflows.value.find(w => w.id === targetWorkflowId)
+  if (!targetWorkflow) {
+    console.warn('Workflow not found:', targetWorkflowId)
+    return
+  }
+  
+  const newLane = {
+    id: `lane-${Date.now()}`,
+    name: `Lane ${targetWorkflow.lanes.length + 1}`,
+    isEditingName: false,
+    editName: '',
+    steps: []
+  }
+  
+  const updatedWorkflows = workflows.value.map(w => 
+    w.id === targetWorkflowId 
+      ? { ...w, lanes: [...w.lanes, newLane] }
+      : w
+  )
+  
+  // Update the workflows state directly since useWorkflowState doesn't expose updateWorkflows
+  workflows.value.splice(0, workflows.value.length, ...updatedWorkflows)
+  
+  // Save to localStorage
+  saveState()
+  
+  console.log('Lane added successfully to workflow:', targetWorkflowId)
 }
 </script>
 

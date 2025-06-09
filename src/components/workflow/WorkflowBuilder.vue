@@ -93,9 +93,6 @@
               @edit-duration="$emit('step-edited', step)"
               @drag-start="handleStepDragStart"
             />
-            <div class="empty-lane-hint" v-if="lane.steps.length === 0">
-              Drag instruments here to add steps
-            </div>
           </div>
         </div>
       </div>
