@@ -1,29 +1,29 @@
 <template>
   <div class="workflow-optimizer">
-    <!-- Streamlined Header -->
+    <!-- Professional Header -->
     <header class="optimizer-header">
       <div class="header-content">
-        <div class="header-main">
-          <h1 class="page-title">Workflow Optimizer</h1>
-          <p class="page-description">Build and optimize laboratory automation workflows</p>
-        </div>
-        <div class="header-controls">
-          <div class="header-actions">
-            <button class="control-btn help-btn" @click="toggleInstructions" title="Help & Instructions">
-              <i class="fas fa-question-circle"></i>
-            </button>
-            <button class="control-btn config-btn" @click="showInstrumentConfig = true" title="Instrument Configuration">
-              <i class="fas fa-cog"></i>
-            </button>
+        <div class="header-left">
+          <div class="header-icon">
+            <i class="fas fa-project-diagram"></i>
           </div>
-          <button class="optimize-button" @click="handleOptimizeSchedule" :disabled="isOptimizing || workflows.length === 0">
-            <div class="optimize-icon">
-              <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
-            </div>
-            <div class="optimize-text">
-              <span class="optimize-label">{{ isOptimizing ? 'Optimizing...' : 'Optimize Schedule' }}</span>
-              <span class="optimize-count" v-if="workflows.length > 0">{{ workflows.length }} workflow{{ workflows.length === 1 ? '' : 's' }}</span>
-            </div>
+          <div class="header-text">
+            <h1>Workflow Optimizer</h1>
+            <p class="header-subtitle">Optimize laboratory automation workflows for maximum efficiency</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="action-button secondary" @click="toggleInstructions">
+            <i class="fas fa-question-circle"></i>
+            <span class="button-text">Help</span>
+          </button>
+          <button class="action-button secondary" @click="showInstrumentConfig = true">
+            <i class="fas fa-cog"></i>
+            <span class="button-text">Configure</span>
+          </button>
+          <button class="action-button primary" @click="handleOptimizeSchedule" :disabled="isOptimizing || workflows.length === 0">
+            <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
+            <span class="button-text">{{ isOptimizing ? 'Optimizing...' : 'Optimize' }}</span>
           </button>
         </div>
       </div>
@@ -59,24 +59,6 @@
                   <h3>Optimize Schedule</h3>
                   <p>Generate an efficient schedule that minimizes conflicts and maximizes throughput.</p>
                 </div>
-              </div>
-            </div>
-            
-            <div class="feature-grid">
-              <div class="feature-card">
-                <i class="fas fa-mouse-pointer feature-icon"></i>
-                <h4>Modal Interface</h4>
-                <p>Guided workflow creation</p>
-              </div>
-              <div class="feature-card">
-                <i class="fas fa-chart-line feature-icon"></i>
-                <h4>Smart Scheduling</h4>
-                <p>AI-powered optimization</p>
-              </div>
-              <div class="feature-card">
-                <i class="fas fa-mobile-alt feature-icon"></i>
-                <h4>Mobile Optimized</h4>
-                <p>Touch-friendly interface</p>
               </div>
             </div>
           </div>
@@ -293,42 +275,24 @@
     <!-- Instrument Configuration Modal -->
     <el-dialog 
       v-model="showInstrumentConfig" 
+      title="Instrument Configuration"
       width="500px"
       class="config-dialog"
-      :close-on-click-modal="true"
-      :show-close="false"
     >
-      <template #header>
-        <div class="config-header">
-          <div class="config-header-icon">
-            <i class="fas fa-cog"></i>
-          </div>
-          <div class="config-header-text">
-            <h3>Instrument Configuration</h3>
-            <p>Set the number of available nests for each instrument type</p>
-          </div>
-        </div>
-      </template>
-      
       <div class="config-content">
+        <p class="config-description">Set the number of available instances for each instrument type</p>
         <div class="config-grid">
           <div 
             v-for="(config, instrument) in instrumentConfig" 
             :key="instrument" 
             class="config-item"
           >
-            <div 
-              class="config-icon"
-              :style="{ 
-                backgroundColor: getThemeInstrumentColor(instrument), 
-                color: getThemeInstrumentTextColor(instrument) 
-              }"
-            >
+            <div class="config-icon">
               <i :class="getInstrumentIcon(instrument)"></i>
             </div>
             <div class="config-details">
               <span class="config-label">{{ instrument }}</span>
-              <span class="config-sublabel">Available nests</span>
+              <span class="config-sublabel">Available instances</span>
             </div>
             <el-input-number
               v-model="config.nests"
@@ -357,12 +321,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { useModalWorkflowEditor } from '@/composables/useModalWorkflowEditor'
 import { optimizeSchedule } from '@/utils/optimizationEngine'
-import { INSTRUMENTS, INSTRUMENT_ICONS, DEFAULT_DURATIONS, getInstrumentColor, getInstrumentTextColor } from '@/constants/instruments'
-import { useTheme } from '@/composables/useTheme'
+import { INSTRUMENTS, INSTRUMENT_ICONS, DEFAULT_DURATIONS } from '@/constants/instruments'
 import type { Step } from '@/types/workflow'
 
 // Import components
@@ -377,10 +340,12 @@ import GanttChart from '@/components/workflow/GanttChart.vue'
 // State management
 const {
   workflows,
+  customTasks,
   instrumentConfig,
   schedule,
   metrics,
   isOptimizing,
+  updateWorkflows,
   updateSchedule,
   updateMetrics,
   loadState,
@@ -391,18 +356,6 @@ const {
   openFromFAB,
   openFromPreview
 } = useModalWorkflowEditor()
-
-// Theme integration
-const { currentTheme } = useTheme()
-
-// Map application themes to instrument color schemes  
-const themeColorMapping = {
-  'forest': 'naturals',
-  'ocean': 'blues', 
-  'monochrome': 'monochrome',
-  'purdue': 'default',
-  'pacers': 'default'
-} as const
 
 // Local reactive state
 const activeTab = ref('builder')
@@ -460,16 +413,6 @@ const getInstrumentIcon = (instrument: string) => {
   return INSTRUMENT_ICONS[instrument] || 'fas fa-cog'
 }
 
-const getThemeInstrumentColor = (instrument: string) => {
-  const colorScheme = themeColorMapping[currentTheme.value as keyof typeof themeColorMapping] || 'default'
-  return getInstrumentColor(instrument, colorScheme)
-}
-
-const getThemeInstrumentTextColor = (instrument: string) => {
-  const colorScheme = themeColorMapping[currentTheme.value as keyof typeof themeColorMapping] || 'default'
-  return getInstrumentTextColor(instrument, colorScheme)
-}
-
 const getInstrumentTasks = (instrument: string) => {
   return INSTRUMENTS[instrument as keyof typeof INSTRUMENTS] || []
 }
@@ -521,125 +464,87 @@ const handleTaskClicked = (task: any) => {
 
 /* Header styles */
 .optimizer-header {
-  background: linear-gradient(135deg, var(--section-bg) 0%, var(--background-alt) 100%);
+  background: var(--section-bg);
   border-bottom: 1px solid var(--border-color);
-  padding: 2rem;
-  position: relative;
+  padding: 1.5rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   max-width: 1400px;
   margin: 0 auto;
-  gap: 2rem;
 }
 
-.header-main {
-  flex: 1;
-}
-
-.page-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--text-light);
-  line-height: 1.2;
-}
-
-.page-description {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 1rem;
-  line-height: 1.5;
-  max-width: 500px;
-}
-
-.header-controls {
+.header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-shrink: 0;
+}
+
+.header-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--primary-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.header-text h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.header-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-.control-btn {
-  width: 40px;
-  height: 40px;
+.action-button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--card-bg);
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: var(--text-muted);
+  background: var(--card-bg);
+  color: var(--text-light);
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 1rem;
 }
 
-.control-btn:hover {
+.action-button:hover {
   background: var(--hover-bg);
-  color: var(--text-light);
   border-color: var(--primary-color);
 }
 
-.optimize-button {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
+.action-button.primary {
   background: var(--primary-color);
   color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 180px;
+  border-color: var(--primary-color);
 }
 
-.optimize-button:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
-}
-
-.optimize-button:disabled {
-  opacity: 0.6;
+.action-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
-}
-
-.optimize-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.125rem;
-}
-
-.optimize-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
-}
-
-.optimize-label {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.optimize-count {
-  font-size: 0.75rem;
-  opacity: 0.8;
-  font-weight: 400;
 }
 
 /* Instructions overlay */
@@ -683,7 +588,6 @@ const handleTaskClicked = (task: any) => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .instruction-step {
@@ -714,37 +618,6 @@ const handleTaskClicked = (task: any) => {
   margin: 0;
   color: var(--text-muted);
   line-height: 1.5;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.feature-card {
-  text-align: center;
-  padding: 1rem;
-  background: var(--background-alt);
-  border-radius: 8px;
-}
-
-.feature-icon {
-  font-size: 2rem;
-  color: var(--primary-color);
-  margin-bottom: 0.5rem;
-}
-
-.feature-card h4 {
-  margin: 0 0 0.25rem 0;
-  color: var(--text-light);
-  font-size: 0.875rem;
-}
-
-.feature-card p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.75rem;
 }
 
 /* Tab navigation */
@@ -853,31 +726,6 @@ const handleTaskClicked = (task: any) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
-}
-
-/* Results content */
-.results-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.section-header {
-  margin-bottom: 1rem;
-}
-
-.section-header h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.25rem 0;
-  color: var(--text-light);
-  font-size: 1.25rem;
-}
-
-.section-subtitle {
-  color: var(--text-muted);
-  font-size: 0.875rem;
 }
 
 /* FAB */
@@ -1028,42 +876,13 @@ const handleTaskClicked = (task: any) => {
 }
 
 /* Configuration dialog */
-.config-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0;
-}
-
-.config-header-icon {
-  width: 48px;
-  height: 48px;
-  background: var(--primary-color);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.config-header-text h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-light);
-}
-
-.config-header-text p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
 .config-content {
   padding: 1rem 0;
+}
+
+.config-description {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
 }
 
 .config-grid {
@@ -1087,9 +906,9 @@ const handleTaskClicked = (task: any) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--primary-color);
+  color: white;
   border-radius: 6px;
-  font-size: 1rem;
-  transition: all 0.2s ease;
 }
 
 .config-details {
@@ -1158,37 +977,21 @@ const handleTaskClicked = (task: any) => {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .optimizer-header {
-    padding: 1.5rem 1rem;
+    padding: 1rem;
   }
   
   .header-content {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: stretch;
   }
   
-  .header-main {
-    text-align: center;
-  }
-  
-  .page-title {
-    font-size: 1.75rem;
-  }
-  
-  .header-controls {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-  
-  .optimize-button {
-    min-width: 200px;
+  .header-actions {
     justify-content: center;
   }
   
   .tab-navigation {
     padding: 0 1rem;
-    justify-content: center;
   }
   
   .tab-content-container {
@@ -1201,10 +1004,6 @@ const handleTaskClicked = (task: any) => {
   
   .instruments-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  }
-  
-  .feature-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>

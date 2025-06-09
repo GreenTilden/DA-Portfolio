@@ -137,3 +137,15 @@ Known Issues & Limitations
 Storage: No localStorage in Claude.ai artifacts environment
 Performance: Complex calculations may need optimization for very large workflows
 Browser Support: Modern browsers only (ES6+ features)
+
+## **Batch 3: Supporting Components** 
+*Files: `WorkflowThumbnail.vue`, `LanePreview.vue`, `TaskListEditor.vue`*
+
+Create reusable display components:
+
+1. **WorkflowThumbnail.vue**: Compact workflow preview with LH transfer connections
+2. **LanePreview.vue**: Simplified lane display for selection
+3. **TaskListEditor.vue**: Enhanced version of current lane editor with:
+   - Drag/drop for desktop
+   - Arrow controls for mobile
+   - Horizontal scrolling support

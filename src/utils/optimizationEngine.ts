@@ -514,3 +514,14 @@ export function createOptimizationEngine(
 ): OptimizationEngine {
   return new OptimizationEngine(instrumentConfig)
 }
+
+/**
+ * Convenience function to optimize schedule
+ */
+export function optimizeSchedule(
+  workflows: Workflow[], 
+  instrumentConfig: Record<string, InstrumentConfig>
+): { schedule: ScheduledTask[], metrics: Metrics } {
+  const engine = new OptimizationEngine(instrumentConfig)
+  return engine.optimizeSchedule(workflows)
+}

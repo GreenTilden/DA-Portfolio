@@ -1,0 +1,438 @@
+/* Mobile Workflow Optimization Styles */
+
+/* Touch-specific base styles */
+.touch-device * {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+.touch-device .workflow-step,
+.touch-device .task-item,
+.touch-device .lane-card {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Enhanced touch states */
+.touch-active {
+  transform: scale(0.98) !important;
+  opacity: 0.9 !important;
+  transition: all 0.1s ease !important;
+}
+
+/* Long press indicator animation */
+@keyframes longPressRing {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+    border-width: 8px;
+  }
+  50% {
+    opacity: 1;
+    border-width: 3px;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Success pulse animation */
+@keyframes successPulse {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Enhanced drop indicators for mobile */
+.mobile-drop-active {
+  background: rgba(var(--primary-color-rgb), 0.05) !important;
+  border-color: var(--primary-color) !important;
+  border-style: solid !important;
+  transition: all 0.2s ease !important;
+}
+
+.enhanced-drop-indicator.mobile-optimized {
+  animation: pulseGlow 1s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(1px);
+  }
+}
+
+/* Mobile drag clone enhancements */
+.touch-drag-clone.mobile-optimized {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background: rgba(var(--card-bg-rgb, 255, 255, 255), 0.95) !important;
+  border: 2px solid var(--primary-color);
+}
+
+/* Mobile modal optimizations */
+.el-dialog__wrapper.mobile-modal {
+  background: var(--bg-color);
+}
+
+.mobile-modal .el-dialog {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.mobile-modal .el-dialog__body {
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+
+/* Mobile step cards */
+.workflow-step.mobile {
+  min-height: 80px;
+  padding: 0.75rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.workflow-step.mobile:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Position control buttons */
+.position-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.position-btn {
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-alt);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.position-btn:active:not(:disabled) {
+  transform: scale(0.9);
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.position-btn:disabled {
+  opacity: 0.3;
+}
+
+/* Mobile FAB enhancements */
+.palette-toggle-fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.palette-toggle-fab:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.palette-toggle-fab.active {
+  background: var(--primary-dark);
+  transform: rotate(45deg);
+}
+
+/* Mobile instrument palette */
+.instrument-modal {
+  max-height: 70vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.instruments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.instrument-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.instrument-item:active {
+  transform: scale(0.95);
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Mobile task selection */
+.task-item {
+  padding: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-item:active {
+  transform: scale(0.98);
+  background: rgba(var(--primary-color-rgb), 0.1);
+  border-color: var(--primary-color);
+}
+
+/* Swipe gesture hints */
+.swipe-hint {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  pointer-events: none;
+  opacity: 0;
+  animation: swipeHintFade 3s ease-out;
+}
+
+@keyframes swipeHintFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
+
+/* Mobile scroll optimization */
+.lane-steps.horizontal {
+  scroll-snap-type: x mandatory;
+  scroll-padding: 1rem;
+}
+
+.lane-steps.horizontal .workflow-step {
+  scroll-snap-align: start;
+}
+
+.lane-steps.vertical {
+  scroll-snap-type: y proximity;
+  scroll-padding: 0.5rem;
+}
+
+.lane-steps.vertical .workflow-step {
+  scroll-snap-align: start;
+}
+
+/* Elastic scroll indicator */
+.scroll-indicator {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 40px;
+  background: var(--primary-color);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.lane-steps::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Mobile empty states */
+.empty-state-mobile {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.empty-state-mobile .empty-icon {
+  font-size: 4rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.empty-state-mobile h3 {
+  font-size: 1.25rem;
+  color: var(--text-light);
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-state-mobile p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Mobile action buttons */
+.mobile-action-button {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.mobile-action-button.primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.mobile-action-button.secondary {
+  background: var(--card-bg);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+}
+
+.mobile-action-button:active {
+  transform: scale(0.98);
+}
+
+/* Touch feedback animations */
+@keyframes touchRipple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.touch-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--primary-color);
+  pointer-events: none;
+  animation: touchRipple 0.6s ease-out;
+}
+
+/* Performance optimizations */
+@media (max-width: 768px) {
+  /* Reduce shadows on mobile for better performance */
+  * {
+    box-shadow: none !important;
+  }
+  
+  /* Optimize animations */
+  * {
+    animation-duration: 0.2s !important;
+  }
+  
+  /* Disable hover states on touch devices */
+  .touch-device *:hover {
+    transform: none !important;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-modal .el-dialog__body {
+    max-height: calc(100vh - 120px);
+  }
+  
+  .mobile-footer-actions {
+    padding: 0.5rem 1rem;
+  }
+  
+  .workflow-step.mobile {
+    min-height: 60px;
+    padding: 0.5rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .enhanced-drop-indicator {
+    border: 3px solid var(--primary-color);
+    background: transparent;
+  }
+  
+  .touch-drag-clone {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .touch-active {
+    transform: none !important;
+  }
+}
