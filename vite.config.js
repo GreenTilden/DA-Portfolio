@@ -33,9 +33,16 @@ export default defineConfig({
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router'],
           'element-plus': ['element-plus'],
-          'particles': ['vue3-particles', 'tsparticles']
+          'particles': ['vue3-particles', 'tsparticles'],
+          'draggable': ['vue-draggable-next'],
+          'workflow-utils': [
+            './src/utils/optimizationEngine.ts',
+            './src/composables/useWorkflowState.ts',
+            './src/composables/useModalWorkflowEditor.ts'
+          ]
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 600
   }
 })

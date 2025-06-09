@@ -142,7 +142,7 @@
                 v-for="workflow in workflows"
                 :key="workflow.id"
                 :workflow="workflow"
-                @click="openWorkflowEditor(workflow.id)"
+                @workflow-click="openMultiLaneEditor"
                 @lane-click="handleLaneClick"
               />
             </div>
@@ -222,12 +222,21 @@
         />
       </template>
       
-      <template #lane-editor="{ workflowId, laneId, pendingTask, openedFromFAB, onComplete }">
+      <template #multi-lane-editor="{ workflowId, onLaneClick, onComplete }">
+        <MultiLaneEditor
+          :workflow-id="workflowId"
+          @lane-click="onLaneClick"
+          @add-lane="handleAddLane"
+          @complete="onComplete"
+        />
+      </template>
+      
+      <template #lane-editor="{ workflowId, laneId, pendingTask, openedFromFAB: openedFromFab, onComplete }">
         <LaneEditorModal
           :workflow-id="workflowId"
           :lane-id="laneId"
           :pending-task="pendingTask"
-          :opened-from-fab="openedFromFAB"
+          :opened-from-f-a-b="openedFromFab"
           :on-complete="onComplete"
         />
       </template>
@@ -371,6 +380,7 @@ import ModalWorkflowFlowController from '@/components/workflow/ModalWorkflowFlow
 import WorkflowSelectModal from '@/components/workflow/WorkflowSelectModal.vue'
 import LaneSelectModal from '@/components/workflow/LaneSelectModal.vue'
 import LaneEditorModal from '@/components/workflow/LaneEditorModal.vue'
+import MultiLaneEditor from '@/components/workflow/MultiLaneEditor.vue'
 import WorkflowThumbnail from '@/components/workflow/WorkflowThumbnail.vue'
 import OptimizationMetrics from '@/components/workflow/OptimizationMetrics.vue'
 import GanttChart from '@/components/workflow/GanttChart.vue'
@@ -390,7 +400,8 @@ const {
 
 const {
   openFromFAB,
-  openFromPreview
+  openFromPreview,
+  openMultiLaneEditor
 } = useModalWorkflowEditor()
 
 // Theme integration
@@ -526,6 +537,12 @@ const handleTaskClicked = (task: any) => {
 
 const handleLaneClick = (workflowId: string, laneId: string) => {
   openFromPreview(workflowId, laneId)
+}
+
+const handleAddLane = () => {
+  // This will be handled by the modal's add lane functionality
+  // The MultiLaneEditor component will emit this event
+  console.log('Add lane requested from multi-lane editor')
 }
 </script>
 

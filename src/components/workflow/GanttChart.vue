@@ -205,7 +205,7 @@ const props = withDefaults(defineProps<Props>(), {
   pixelsPerMinute: 2
 })
 
-const emit = defineEmits<{
+defineEmits<{
   'task-clicked': [task: ScheduledTask]
 }>()
 
@@ -375,12 +375,12 @@ const hideTooltip = () => {
 }
 
 // Handle timeline scroll for better performance
-const handleScroll = (event: Event) => {
+const handleScroll = () => {
   // Could implement virtual scrolling here for very large schedules
 }
 
 // Update current time periodically
-let timeInterval: number
+let timeInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   // Set initial time

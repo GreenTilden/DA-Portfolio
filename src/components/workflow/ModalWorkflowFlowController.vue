@@ -40,7 +40,7 @@
                 <i class="fas fa-code-branch"></i>
               </div>
               <div class="workflow-details">
-                <h3>{{ selectedWorkflow?.name || `New workflow ${getWorkflowNumber()}` }}</h3>
+                <h3>{{ selectedWorkflow?.name || 'Workflow' }}</h3>
                 <div class="workflow-summary">
                   <span class="lane-count">
                     <i class="fas fa-road"></i>
@@ -50,10 +50,10 @@
                     <i class="fas fa-layer-group"></i>
                     {{ getTotalInstruments() }} {{ getTotalInstruments() === 1 ? 'instrument' : 'instruments' }}
                   </span>
-                  <button class="add-lane-btn" @click="handleAddLane">
-                    <i class="fas fa-plus"></i>
+                  <el-button type="primary" size="small" @click="handleAddLane">
+                    <el-icon><Plus /></el-icon>
                     Add Lane
-                  </button>
+                  </el-button>
                 </div>
               </div>
             </div>
@@ -61,15 +61,15 @@
           <div class="step-body">
             <!-- Condensed Workflow Overview using Element Plus -->
             <div class="workflow-overview">
-              <el-scrollbar v-if="selectedWorkflow?.lanes.length" class="lanes-scrollbar">
-                <VueDraggableNext
-                  :list="selectedWorkflow?.lanes || []"
-                  class="lanes-container"
-                  :animation="200"
-                  handle=".lane-drag-handle"
-                  @change="handleLaneReorder"
-                  item-key="id"
-                >
+              <el-scrollbar v-if="selectedWorkflow?.lanes?.length" class="lanes-scrollbar">
+                <div class="lanes-container">
+                  <draggable
+                    v-model="selectedWorkflow.lanes"
+                    :animation="200"
+                    handle=".lane-drag-handle"
+                    @change="handleLaneReorder"
+                    item-key="id"
+                  >
                   <template #item="{ element: lane }">
                     <el-card 
                       class="lane-card" 
@@ -107,8 +107,8 @@
                     <!-- Steps List -->
                     <div class="steps-container" @click="handleLaneSelect(lane.id)">
                       <el-scrollbar v-if="lane.steps.length" max-height="300px">
-                        <VueDraggableNext 
-                          :list="lane.steps || []"
+                        <draggable 
+                          v-model="lane.steps"
                           class="steps-list"
                           :animation="200"
                           handle=".drag-handle"
@@ -138,7 +138,7 @@
                               </div>
                             </div>
                           </template>
-                        </VueDraggableNext>
+                        </draggable>
                       </el-scrollbar>
                       
                       <!-- Empty State -->
@@ -158,7 +158,8 @@
                     </div>
                     </el-card>
                   </template>
-                </VueDraggableNext>
+                  </draggable>
+                </div>
               </el-scrollbar>
               
               <!-- Empty Workflow State -->
@@ -179,7 +180,49 @@
           </div>
         </div>
 
-        <!-- Step 3: Lane Editor -->
+        <!-- Step 3: Multi-Lane Editor -->
+        <div v-else-if="currentStep === 'multi-lane-editor'" key="multi-lane-editor" class="step-content">
+          <div class="multi-lane-header">
+            <div class="workflow-info">
+              <div class="workflow-icon">
+                <i class="fas fa-code-branch"></i>
+              </div>
+              <div class="workflow-details">
+                <h3>{{ selectedWorkflow?.name || 'Workflow' }} - All Lanes</h3>
+                <div class="workflow-summary">
+                  <span class="lane-count">
+                    <i class="fas fa-road"></i>
+                    {{ selectedWorkflow?.lanes.length || 0 }} {{ (selectedWorkflow?.lanes.length || 0) === 1 ? 'lane' : 'lanes' }}
+                  </span>
+                  <span class="instrument-count">
+                    <i class="fas fa-layer-group"></i>
+                    {{ getTotalInstruments() }} {{ getTotalInstruments() === 1 ? 'instrument' : 'instruments' }}
+                  </span>
+                  <el-button @click="goBackToWorkflow">
+                    <el-icon><ArrowLeft /></el-icon>
+                    Back to Overview
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="step-body">
+            <slot 
+              name="multi-lane-editor" 
+              :workflow-id="selectedWorkflowId"
+              :on-lane-click="handleLaneSelect"
+              :on-complete="handleComplete"
+            >
+              <div class="placeholder-content">
+                <i class="fas fa-layer-group"></i>
+                <p>Multi-lane editor content goes here</p>
+                <p class="subtitle">Workflow: {{ selectedWorkflowId }}</p>
+              </div>
+            </slot>
+          </div>
+        </div>
+
+        <!-- Step 4: Lane Editor -->
         <div v-else-if="currentStep === 'lane-editor'" key="lane-editor" class="step-content">
           <div class="lane-editor-header">
             <div class="lane-info">
@@ -199,10 +242,10 @@
                 </span>
               </div>
             </div>
-            <button class="back-to-workflow-btn" @click="goBackToWorkflow">
-              <i class="fas fa-arrow-left"></i>
+            <el-button @click="goBackToWorkflow">
+              <el-icon><ArrowLeft /></el-icon>
               Back to Workflow
-            </button>
+            </el-button>
           </div>
           <div class="step-body">
             <slot 
@@ -210,7 +253,7 @@
               :workflow-id="selectedWorkflowId"
               :lane-id="selectedLaneId"
               :pending-task="pendingTask"
-              :opened-from-fab="openedFromFAB"
+              :opened-from-f-a-b="openedFromFAB"
               :on-complete="handleComplete"
             >
               <div class="placeholder-content">
@@ -254,9 +297,9 @@ import {
   RefreshRight,
   Brush,
   Eleme,
-  Rank
+  Rank,
+  ArrowLeft
 } from '@element-plus/icons-vue'
-import { VueDraggableNext } from 'vue-draggable-next'
 import { useModalWorkflowEditor } from '@/composables/useModalWorkflowEditor'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { DEFAULT_DURATIONS } from '@/constants/instruments'
@@ -288,7 +331,7 @@ const dialogVisible = computed({
   }
 })
 
-const steps = ['workflow-selection', 'lane-selection', 'lane-editor'] as const
+const steps = ['workflow-selection', 'lane-selection', 'multi-lane-editor', 'lane-editor'] as const
 
 const currentStepIndex = computed(() => {
   return steps.indexOf(currentStep.value)
@@ -330,32 +373,36 @@ const dynamicModalWidth = computed(() => {
     const calculatedWidth = Math.min(contentWidth, maxModalWidth)
     const finalWidth = Math.max(calculatedWidth, baseWidth)
     
-    console.log('ModalWorkflowFlowController - dynamicModalWidth calculation:', {
-      currentStep: currentStep.value,
-      selectedWorkflowId: selectedWorkflowId.value,
-      laneCount,
-      laneCardWidth,
-      gapWidth,
-      containerPadding,
-      modalPadding,
-      borderSpacing,
-      safetyBuffer,
-      contentWidth,
-      viewportWidth,
-      maxModalWidth,
-      calculatedWidth,
-      finalWidth,
-      workflowName: selectedWorkflow.value?.name
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ModalWorkflowFlowController - dynamicModalWidth calculation:', {
+        currentStep: currentStep.value,
+        selectedWorkflowId: selectedWorkflowId.value,
+        laneCount,
+        laneCardWidth,
+        gapWidth,
+        containerPadding,
+        modalPadding,
+        borderSpacing,
+        safetyBuffer,
+        contentWidth,
+        viewportWidth,
+        maxModalWidth,
+        calculatedWidth,
+        finalWidth,
+        workflowName: selectedWorkflow.value?.name
+      })
+    }
     
     return `${finalWidth}px`
   }
   
-  console.log('ModalWorkflowFlowController - using base width:', {
-    currentStep: currentStep.value,
-    selectedWorkflowId: selectedWorkflowId.value,
-    hasLanes: !!selectedWorkflow.value?.lanes?.length
-  })
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ModalWorkflowFlowController - using base width:', {
+      currentStep: currentStep.value,
+      selectedWorkflowId: selectedWorkflowId.value,
+      hasLanes: !!selectedWorkflow.value?.lanes?.length
+    })
+  }
   
   // Default width for other steps
   return `${baseWidth}px`
@@ -363,7 +410,7 @@ const dynamicModalWidth = computed(() => {
 
 // Watch for modal state changes to debug width calculation
 watch([isModalOpen, currentStep, selectedWorkflowId], ([isOpen, step, workflowId]) => {
-  if (isOpen) {
+  if (isOpen && process.env.NODE_ENV === 'development') {
     console.log('ModalWorkflowFlowController - modal opened:', {
       isOpen,
       step,
@@ -375,27 +422,33 @@ watch([isModalOpen, currentStep, selectedWorkflowId], ([isOpen, step, workflowId
 
 // Get the selected workflow object
 const selectedWorkflow = computed(() => {
-  console.log('ModalWorkflowFlowController - selectedWorkflowId:', selectedWorkflowId.value)
-  console.log('ModalWorkflowFlowController - workflows:', workflows.value)
-  console.log('ModalWorkflowFlowController - workflows length:', workflows.value?.length)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ModalWorkflowFlowController - selectedWorkflowId:', selectedWorkflowId.value)
+    console.log('ModalWorkflowFlowController - workflows:', workflows.value)
+    console.log('ModalWorkflowFlowController - workflows length:', workflows.value?.length)
+  }
   
   if (!selectedWorkflowId.value) {
-    console.log('ModalWorkflowFlowController - No selectedWorkflowId')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ModalWorkflowFlowController - No selectedWorkflowId')
+    }
     return undefined
   }
   
   const workflow = workflows.value.find(w => w.id === selectedWorkflowId.value)
-  console.log('ModalWorkflowFlowController - selectedWorkflow:', workflow)
-  console.log('ModalWorkflowFlowController - selectedWorkflow lanes:', workflow?.lanes?.length)
-  
-  // Additional debugging for lanes data
-  if (workflow?.lanes) {
-    console.log('ModalWorkflowFlowController - lanes details:', workflow.lanes.map(lane => ({
-      id: lane.id,
-      name: lane.name,
-      stepsCount: lane.steps?.length || 0,
-      steps: lane.steps?.map(step => ({ type: step.type, task: step.task })) || []
-    })))
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ModalWorkflowFlowController - selectedWorkflow:', workflow)
+    console.log('ModalWorkflowFlowController - selectedWorkflow lanes:', workflow?.lanes?.length)
+    
+    // Additional debugging for lanes data
+    if (workflow?.lanes) {
+      console.log('ModalWorkflowFlowController - lanes details:', workflow.lanes.map(lane => ({
+        id: lane.id,
+        name: lane.name,
+        stepsCount: lane.steps?.length || 0,
+        steps: lane.steps?.map(step => ({ type: step.type, task: step.task })) || []
+      })))
+    }
   }
   
   return workflow
@@ -571,8 +624,10 @@ const handleLaneReorder = (): void => {
   // The draggable component with :list binding automatically updates the array
   // We just need to trigger a save to persist the changes
   if (selectedWorkflow.value && selectedWorkflowId.value) {
-    console.log('ModalWorkflowFlowController - handleLaneReorder called')
-    console.log('ModalWorkflowFlowController - current lanes:', selectedWorkflow.value.lanes)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ModalWorkflowFlowController - handleLaneReorder called')
+      console.log('ModalWorkflowFlowController - current lanes:', selectedWorkflow.value.lanes)
+    }
     
     // Force update by creating a new workflows array
     const updatedWorkflows = workflows.value.map(w => 

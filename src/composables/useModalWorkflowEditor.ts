@@ -1,7 +1,7 @@
 import { reactive, ref, computed } from 'vue'
 import type { Workflow, Lane, Step } from '@/types/workflow'
 
-export type ModalStep = 'workflow-selection' | 'lane-selection' | 'lane-editor'
+export type ModalStep = 'workflow-selection' | 'lane-selection' | 'multi-lane-editor' | 'lane-editor'
 
 interface ModalWorkflowEditorState {
   // Current modal state
@@ -77,6 +77,17 @@ export function useModalWorkflowEditor() {
     state.isModalOpen = true
   }
 
+  // Open multi-lane editor for entire workflow
+  const openMultiLaneEditor = (workflowId: string) => {
+    state.pendingTask = null
+    state.openedFromFAB = false
+    state.openedFromPreview = true
+    state.selectedWorkflowId = workflowId
+    state.selectedLaneId = null
+    state.currentStep = 'multi-lane-editor'
+    state.isModalOpen = true
+  }
+
   // Close modal and reset state
   const closeModal = () => {
     state.isModalOpen = false
@@ -120,6 +131,9 @@ export function useModalWorkflowEditor() {
         state.currentStep = 'lane-selection'
         state.selectedLaneId = null
         break
+      case 'multi-lane-editor':
+        state.currentStep = 'lane-selection'
+        break
       case 'lane-selection':
         state.currentStep = 'workflow-selection'
         state.selectedWorkflowId = null
@@ -152,6 +166,8 @@ export function useModalWorkflowEditor() {
         return 'Select Workflow'
       case 'lane-selection':
         return 'Select Lane'
+      case 'multi-lane-editor':
+        return 'Edit All Lanes'
       case 'lane-editor':
         return 'Edit Lane'
       default:
@@ -181,6 +197,7 @@ export function useModalWorkflowEditor() {
     // Methods
     openFromFAB,
     openFromPreview,
+    openMultiLaneEditor,
     closeModal,
     goToWorkflowSelection,
     goToLaneSelection,

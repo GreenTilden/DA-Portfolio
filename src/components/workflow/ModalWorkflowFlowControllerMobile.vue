@@ -102,7 +102,7 @@
             :workflow-id="selectedWorkflowId"
             :lane-id="selectedLaneId"
             :pending-task="pendingTask"
-            :opened-from-fab="openedFromFAB"
+            :opened-from-f-a-b="openedFromFAB"
             :on-complete="handleComplete"
           >
             <LaneEditorModal

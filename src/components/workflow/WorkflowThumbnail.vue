@@ -6,7 +6,7 @@
     </div>
 
     <!-- Workflow Header -->
-    <div class="thumbnail-header">
+    <div class="thumbnail-header" @click="handleWorkflowClick">
       <h4 class="workflow-name">{{ workflow.name }}</h4>
       <div class="workflow-metrics">
         <span class="metric">
@@ -122,6 +122,7 @@ interface Props {
 
 const emit = defineEmits<{
   laneClick: [workflowId: string, laneId: string]
+  workflowClick: [workflowId: string]
 }>()
 
 const props = withDefaults(defineProps<Props>(), {
@@ -204,6 +205,10 @@ const getStepTextColor = (step: Step) => {
 
 const handleLaneClick = (laneId: string) => {
   emit('laneClick', props.workflow.id, laneId)
+}
+
+const handleWorkflowClick = () => {
+  emit('workflowClick', props.workflow.id)
 }
 
 // Draw connections between liquid handler transfer steps
@@ -385,6 +390,15 @@ onMounted(() => {
 
 .thumbnail-header {
   margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin: -0.5rem -0.5rem 0.25rem -0.5rem;
+}
+
+.thumbnail-header:hover {
+  background-color: var(--el-fill-color-lighter);
 }
 
 .workflow-name {

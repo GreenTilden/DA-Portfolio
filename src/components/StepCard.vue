@@ -264,7 +264,6 @@ const editTask = ref(props.step.task)
 const editTransferName = ref(props.step.transferName || '')
 
 // Template refs
-const editorPopover = ref<HTMLElement>()
 const taskInput = ref<HTMLInputElement>()
 
 // Computed instrument colors

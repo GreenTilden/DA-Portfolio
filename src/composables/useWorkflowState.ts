@@ -44,21 +44,29 @@ export function useWorkflowState() {
         instrumentConfig: state.instrumentConfig
       }
       localStorage.setItem('workflow-optimizer-state', JSON.stringify(stateToSave))
-      console.log('useWorkflowState - state saved to localStorage')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - state saved to localStorage')
+      }
     } catch (error) {
-      console.log('useWorkflowState - unable to save to localStorage:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - unable to save to localStorage:', error)
+      }
     }
   }
 
   // Load state from localStorage
   const loadState = () => {
-    console.log('useWorkflowState - loadState called')
-    console.log('useWorkflowState - environment:', process.env.NODE_ENV)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('useWorkflowState - loadState called')
+      console.log('useWorkflowState - environment:', process.env.NODE_ENV)
+    }
     
     // Try to load from localStorage (works in development and some production environments)
     try {
       const saved = localStorage.getItem('workflow-optimizer-state')
-      console.log('useWorkflowState - saved data:', saved)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - saved data:', saved)
+      }
       
       if (saved) {
         const data = JSON.parse(saved)
@@ -67,21 +75,40 @@ export function useWorkflowState() {
         if (data.instrumentConfig) {
           Object.assign(state.instrumentConfig, data.instrumentConfig)
         }
-        console.log('useWorkflowState - loaded workflows from localStorage:', state.workflows.length)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('useWorkflowState - loaded workflows from localStorage:', state.workflows.length)
+        }
       }
     } catch (error) {
-      console.log('useWorkflowState - localStorage not available or error loading:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - localStorage not available or error loading:', error)
+      }
     }
     
-    // Initialize default workflows if none exist
-    if (state.workflows.length === 0) {
-      console.log('useWorkflowState - creating default workflows')
+    // Initialize default workflows if none exist or if any generic workflows detected
+    const hasGenericWorkflows = state.workflows.some(w => 
+      !w.name || w.name.toLowerCase().includes('new workflow') || w.name.trim() === ''
+    )
+    
+    if (state.workflows.length === 0 || hasGenericWorkflows) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - creating/resetting to scientific workflows')
+        // Dev helper: add global function to reset workflows
+        if (typeof window !== 'undefined') {
+          (window as any).resetWorkflows = clearStorageAndReset
+        }
+      }
       state.workflows = createDefaultWorkflows()
-      console.log('useWorkflowState - default workflows created:', state.workflows.length)
-      console.log('useWorkflowState - first workflow:', state.workflows[0])
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - scientific workflows loaded:', state.workflows.length)
+        console.log('useWorkflowState - workflows:', state.workflows.map(w => w.name))
+        console.log('useWorkflowState - To reset: run resetWorkflows() in console')
+      }
       saveState()
     } else {
-      console.log('useWorkflowState - workflows already exist:', state.workflows.length)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - valid workflows already exist:', state.workflows.length)
+      }
     }
   }
 
@@ -262,6 +289,26 @@ export function useWorkflowState() {
     state.isOptimizing = false
   }
 
+  // Clear localStorage and force reload of scientific workflows
+  const clearStorageAndReset = () => {
+    try {
+      localStorage.removeItem('workflow-optimizer-state')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - localStorage cleared')
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('useWorkflowState - unable to clear localStorage:', error)
+      }
+    }
+    resetState()
+    state.workflows = createDefaultWorkflows()
+    saveState()
+    if (process.env.NODE_ENV === 'development') {
+      console.log('useWorkflowState - forced reset to scientific workflows complete')
+    }
+  }
+
   return {
     // State
     ...toRefs(state),
@@ -275,6 +322,7 @@ export function useWorkflowState() {
     updateWorkflows,
     updateSchedule,
     updateMetrics,
-    resetState
+    resetState,
+    clearStorageAndReset
   }
 }

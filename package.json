@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "build:analyze": "vite build --mode analyze",
+    "clean": "rm -rf dist node_modules/.vite",
+    "reset-workflows": "echo 'Open browser console and run: localStorage.removeItem(\"workflow-optimizer-state\"); location.reload()'",
+    "check-all": "npm run type-check && npm run build"
   },
   "dependencies": {
     "element-plus": "^2.9.10",
@@ -17,8 +21,7 @@
     "vue-draggable-next": "^2.2.1",
     "vue-router": "^4.5.1",
     "vue3-observe-visibility": "^1.0.3",
-    "vue3-particles": "^2.9.3",
-    "vuedraggable": "^4.1.0"
+    "vue3-particles": "^2.9.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",

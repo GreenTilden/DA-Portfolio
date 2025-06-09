@@ -203,12 +203,12 @@
         />
       </template>
       
-      <template #lane-editor="{ workflowId, laneId, pendingTask, openedFromFAB, onComplete }">
+      <template #lane-editor="{ workflowId, laneId, pendingTask, openedFromFAB: openedFromFab, onComplete }">
         <LaneEditorModal
           :workflow-id="workflowId"
           :lane-id="laneId"
           :pending-task="pendingTask"
-          :opened-from-fab="openedFromFAB"
+          :opened-from-f-a-b="openedFromFab"
           :on-complete="onComplete"
         />
       </template>
@@ -321,7 +321,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { useModalWorkflowEditor } from '@/composables/useModalWorkflowEditor'
 import { optimizeSchedule } from '@/utils/optimizationEngine'
@@ -340,12 +340,10 @@ import GanttChart from '@/components/workflow/GanttChart.vue'
 // State management
 const {
   workflows,
-  customTasks,
   instrumentConfig,
   schedule,
   metrics,
   isOptimizing,
-  updateWorkflows,
   updateSchedule,
   updateMetrics,
   loadState,
