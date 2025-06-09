@@ -131,6 +131,8 @@
                     @edit="handleEditStep"
                     @delete="handleDeleteStep"
                     @duration-change="handleStepDurationChange"
+                    @task-change="handleStepTaskChange"
+                    @transfer-name-change="handleStepTransferNameChange"
                   />
                 </div>
                 
@@ -385,6 +387,24 @@ const handleStepDurationChange = (stepId: string, newDuration: number) => {
   updateLaneSteps(newSteps)
 }
 
+const handleStepTaskChange = (stepId: string, newTask: string) => {
+  if (!selectedLane.value) return
+  
+  const newSteps = selectedLane.value.steps.map(s => 
+    s.id === stepId ? { ...s, task: newTask } : s
+  )
+  updateLaneSteps(newSteps)
+}
+
+const handleStepTransferNameChange = (stepId: string, transferName: string) => {
+  if (!selectedLane.value) return
+  
+  const newSteps = selectedLane.value.steps.map(s => 
+    s.id === stepId ? { ...s, transferName } : s
+  )
+  updateLaneSteps(newSteps)
+}
+
 const handleSaveStepEdit = (updatedStep: Step) => {
   if (!selectedLane.value) return
   
@@ -412,7 +432,7 @@ const handleMoveStepDown = (index: number) => {
   updateLaneSteps(steps)
 }
 
-// Desktop drag and drop
+// Enhanced desktop drag and drop with animations
 const handleStepDragStart = (event: DragEvent, step: Step, index: number) => {
   if (!event.dataTransfer) return
   
@@ -424,11 +444,20 @@ const handleStepDragStart = (event: DragEvent, step: Step, index: number) => {
     sourceIndex: index
   }
   
-  setDragData(event, dragItem)
+  const targetElement = event.target as HTMLElement
+  const stepElement = targetElement.closest('.step-item') as HTMLElement
+  
+  // Use enhanced drag data setting with visual effects
+  setDragData(event, dragItem, stepElement)
   
   dragState.isDragging = true
   dragState.draggedStep = step
   dragState.draggedIndex = index
+  
+  // Add dragging visual state
+  if (stepElement) {
+    stepElement.classList.add('dragging-item')
+  }
   
   event.dataTransfer.effectAllowed = 'move'
 }
@@ -437,23 +466,42 @@ const handleDragOver = (event: DragEvent) => {
   event.preventDefault()
   dragState.showDropZone = true
   
-  // Calculate drop index based on mouse position
+  // Enhanced drop calculation for vertical layout
   const container = event.currentTarget as HTMLElement
-  const steps = container.querySelectorAll('.workflow-step')
+  const steps = container.querySelectorAll('.step-item')
   
   let dropIndex = steps.length
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i] as HTMLElement
-    const rect = step.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    
-    if (event.clientX < centerX) {
-      dropIndex = i
-      break
+  
+  // Vertical layout detection and calculation
+  if (container.classList.contains('vertical-sortable')) {
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i] as HTMLElement
+      const rect = step.getBoundingClientRect()
+      const centerY = rect.top + rect.height / 2
+      
+      if (event.clientY < centerY) {
+        dropIndex = i
+        break
+      }
+    }
+  } else {
+    // Fallback for horizontal layout
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i] as HTMLElement
+      const rect = step.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      
+      if (event.clientX < centerX) {
+        dropIndex = i
+        break
+      }
     }
   }
   
   dragState.dropIndex = dropIndex
+  
+  // Add visual feedback to container
+  container.classList.add('drag-over-enhanced')
 }
 
 const handleDrop = (event: DragEvent) => {
@@ -502,10 +550,19 @@ const handleDragLeave = (event: DragEvent) => {
   
   if (!container.contains(related)) {
     dragState.showDropZone = false
+    container.classList.remove('drag-over-enhanced')
   }
 }
 
 const handleDragEnd = () => {
+  // Clean up visual states
+  document.querySelectorAll('.dragging-item').forEach(el => {
+    el.classList.remove('dragging-item')
+  })
+  document.querySelectorAll('.drag-over-enhanced').forEach(el => {
+    el.classList.remove('drag-over-enhanced')
+  })
+  
   dragState.isDragging = false
   dragState.draggedStep = null
   dragState.draggedIndex = -1
@@ -1103,15 +1160,47 @@ const handleInstrumentSelect = (instrument: any) => {
   }
 }
 
-/* Drag and drop visual enhancements */
+/* Enhanced drag and drop visual effects */
 .lane-steps.drag-over {
   border-color: var(--primary-color);
   background: rgba(var(--primary-color-rgb), 0.05);
 }
 
+.lane-steps.drag-over-enhanced {
+  border-color: var(--primary-color) !important;
+  background: rgba(var(--primary-color-rgb), 0.08) !important;
+  transform: scale(1.01);
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 20px rgba(74, 144, 226, 0.15);
+}
+
+/* Enhanced step item states */
+.step-item.dragging-item {
+  opacity: 0.6 !important;
+  transform: scale(0.98) rotate(1deg) !important;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  z-index: 1000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.step-item {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.step-item:not(.dragging-item):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 /* Touch drag feedback */
 .touch-drag-clone {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(1px);
+  border: 2px solid rgba(74, 144, 226, 0.3) !important;
+}
+
+.dragging-source {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
 /* Animation keyframes */
@@ -1124,8 +1213,81 @@ const handleInstrumentSelect = (instrument: any) => {
   }
 }
 
+@keyframes shimmerVertical {
+  0% { 
+    background-position: 0 -200%;
+    background-size: 100% 200%;
+  }
+  100% { 
+    background-position: 0 200%;
+    background-size: 100% 200%;
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Enhanced drop indicator styles */
 .enhanced-drop-indicator {
   animation: pulseGlow 1.2s ease-in-out infinite;
+}
+
+/* Drop zone animations */
+.drop-zone {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.drop-zone.active {
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+.drop-indicator {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Improved step reorder transitions */
+.step-reorder-move {
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.step-reorder-enter-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: slideInFromBottom 0.4s ease-out;
+}
+
+.step-reorder-leave-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.step-reorder-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.step-reorder-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
 }
 </style>

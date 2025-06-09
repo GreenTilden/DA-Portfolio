@@ -64,31 +64,65 @@ export function useTouchDragDrop(dragHandlers?: DragHandlers) {
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY)
     clone.style.display = ''
 
-    // Find workflow lane container
-    const laneSteps = elementBelow?.closest('.lane-steps')
+    // Enhanced target detection - check multiple selectors
+    const laneSteps = elementBelow?.closest('.lane-steps, .steps-list, .vertical-sortable')
     if (laneSteps) {
-      const lane = laneSteps.closest('.workflow-lane, .labware-lane')
-      const workflow = lane?.closest('.workflow-container, .workflow-section')
+      // Multiple ways to find parent containers for better compatibility
+      const lane = laneSteps.closest('.workflow-lane, .labware-lane, .lane-editor-modal')
+      const workflow = lane?.closest('.workflow-container, .workflow-section, .lane-editor-modal') || 
+                      laneSteps.closest('[data-workflow-id]')
       
-      if (lane && workflow) {
-        // Extract IDs from data attributes
-        const laneId = lane.getAttribute('data-lane-id')
-        const workflowId = workflow.getAttribute('data-workflow-id')
+      if (lane || workflow) {
+        // Extract IDs from data attributes with fallbacks
+        let laneId = laneSteps.getAttribute('data-lane-id') || 
+                     lane?.getAttribute('data-lane-id')
+        let workflowId = laneSteps.getAttribute('data-workflow-id') || 
+                        workflow?.getAttribute('data-workflow-id')
         
-        // Target found successfully
+        // Fallback to looking for IDs in parent modal if not found
+        if (!laneId || !workflowId) {
+          const modal = elementBelow?.closest('.lane-editor-modal')
+          if (modal) {
+            // These would come from the modal's props
+            const editorContainer = modal.querySelector('[data-workflow-id][data-lane-id]')
+            if (editorContainer) {
+              workflowId = workflowId || editorContainer.getAttribute('data-workflow-id')
+              laneId = laneId || editorContainer.getAttribute('data-lane-id')
+            }
+          }
+        }
         
-        // Calculate insertion index based on position
-        const steps = Array.from(laneSteps.querySelectorAll('.workflow-step'))
+        // Enhanced insertion index calculation for both horizontal and vertical layouts
+        const steps = Array.from(laneSteps.querySelectorAll('.workflow-step, .step-item'))
         let insertIndex = steps.length // Default to end
         
-        for (let i = 0; i < steps.length; i++) {
-          const step = steps[i] as HTMLElement
-          const rect = step.getBoundingClientRect()
-          const centerX = rect.left + rect.width / 2
+        if (steps.length > 0) {
+          // Detect layout direction
+          const firstStep = steps[0] as HTMLElement
+          const secondStep = steps[1] as HTMLElement
+          const isVertical = secondStep ? 
+            (secondStep.getBoundingClientRect().top > firstStep.getBoundingClientRect().bottom - 10) :
+            laneSteps.classList.contains('vertical-sortable')
           
-          if (touch.clientX < centerX) {
-            insertIndex = i
-            break
+          for (let i = 0; i < steps.length; i++) {
+            const step = steps[i] as HTMLElement
+            const rect = step.getBoundingClientRect()
+            
+            if (isVertical) {
+              // Vertical layout - check Y position
+              const centerY = rect.top + rect.height / 2
+              if (touch.clientY < centerY) {
+                insertIndex = i
+                break
+              }
+            } else {
+              // Horizontal layout - check X position
+              const centerX = rect.left + rect.width / 2
+              if (touch.clientX < centerX) {
+                insertIndex = i
+                break
+              }
+            }
           }
         }
         
@@ -99,7 +133,8 @@ export function useTouchDragDrop(dragHandlers?: DragHandlers) {
           laneSteps: laneSteps as HTMLElement,
           elementBelow,
           clientX: touch.clientX,
-          clientY: touch.clientY
+          clientY: touch.clientY,
+          isVertical: laneSteps.classList.contains('vertical-sortable')
         }
       }
     }
@@ -136,51 +171,100 @@ export function useTouchDragDrop(dragHandlers?: DragHandlers) {
     
     if (!dropTarget.laneSteps) return
     
+    const isVertical = dropTarget.isVertical || dropTarget.laneSteps.classList.contains('vertical-sortable')
+    
     const indicator = document.createElement('div')
     indicator.className = 'enhanced-drop-indicator'
-    indicator.style.cssText = `
-      width: 6px;
-      height: 60px;
-      background: linear-gradient(45deg, #4a90e2, #5aa3f0);
-      border-radius: 3px;
-      margin: 0 12px;
-      animation: pulseGlow 1.2s ease-in-out infinite;
-      position: relative;
-      z-index: 10001;
-      box-shadow: 0 0 15px rgba(74, 144, 226, 0.6), 0 0 30px rgba(74, 144, 226, 0.4);
-    `
     
-    // Add glowing dots at top and bottom
-    const topDot = document.createElement('div')
-    topDot.style.cssText = `
-      position: absolute;
-      top: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 16px;
-      height: 16px;
-      background: #4a90e2;
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(74, 144, 226, 0.8);
-    `
+    if (isVertical) {
+      // Vertical layout indicator
+      indicator.style.cssText = `
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #4a90e2, transparent);
+        border-radius: 2px;
+        margin: 8px 0;
+        animation: shimmerVertical 1.5s ease-in-out infinite;
+        position: relative;
+        z-index: 10001;
+        box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+      `
+      
+      // Add side dots for vertical
+      const leftDot = document.createElement('div')
+      leftDot.style.cssText = `
+        position: absolute;
+        left: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        background: #4a90e2;
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(74, 144, 226, 0.8);
+      `
+      
+      const rightDot = document.createElement('div')
+      rightDot.style.cssText = `
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        background: #4a90e2;
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(74, 144, 226, 0.8);
+      `
+      
+      indicator.appendChild(leftDot)
+      indicator.appendChild(rightDot)
+    } else {
+      // Horizontal layout indicator
+      indicator.style.cssText = `
+        width: 6px;
+        height: 60px;
+        background: linear-gradient(45deg, #4a90e2, #5aa3f0);
+        border-radius: 3px;
+        margin: 0 12px;
+        animation: pulseGlow 1.2s ease-in-out infinite;
+        position: relative;
+        z-index: 10001;
+        box-shadow: 0 0 15px rgba(74, 144, 226, 0.6), 0 0 30px rgba(74, 144, 226, 0.4);
+      `
+      
+      // Add glowing dots at top and bottom for horizontal
+      const topDot = document.createElement('div')
+      topDot.style.cssText = `
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 16px;
+        background: #4a90e2;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(74, 144, 226, 0.8);
+      `
+      
+      const bottomDot = document.createElement('div')
+      bottomDot.style.cssText = `
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 16px;
+        background: #4a90e2;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(74, 144, 226, 0.8);
+      `
+      
+      indicator.appendChild(topDot)
+      indicator.appendChild(bottomDot)
+    }
     
-    const bottomDot = document.createElement('div')
-    bottomDot.style.cssText = `
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 16px;
-      height: 16px;
-      background: #4a90e2;
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(74, 144, 226, 0.8);
-    `
-    
-    indicator.appendChild(topDot)
-    indicator.appendChild(bottomDot)
-    
-    const steps = dropTarget.laneSteps.querySelectorAll('.workflow-step')
+    const steps = dropTarget.laneSteps.querySelectorAll('.workflow-step, .step-item')
     if (dropTarget.insertIndex < steps.length) {
       steps[dropTarget.insertIndex].before(indicator)
     } else if (steps.length > 0) {
@@ -261,16 +345,21 @@ export function useTouchDragDrop(dragHandlers?: DragHandlers) {
     const deltaY = Math.abs(touch.clientY - touchState.startPosition.y)
     const totalDelta = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
     
-    // Check if we should start dragging - simplified logic
-    if (!touchState.dragStarted && totalDelta > 8) { // Reduced threshold from 10
+    // Check if we should start dragging - improved sensitivity
+    if (!touchState.dragStarted && totalDelta > 6) { // Even more sensitive
       event.preventDefault()
       
-      // Start the actual drag immediately
+      // Start the actual drag immediately with enhanced feedback
       touchState.isDragging = true
       touchState.dragStarted = true
       
       const targetElement = event.currentTarget as HTMLElement
       touchState.dragClone = createDragClone(targetElement, touch)
+      
+      // Enhanced visual feedback for source element
+      targetElement.classList.add('dragging-source')
+      targetElement.style.opacity = '0.5'
+      targetElement.style.transform = 'scale(0.95)'
       
       // Add haptic feedback on supported devices
       if ('vibrate' in navigator) {
@@ -433,16 +522,51 @@ export function useTouchDragDrop(dragHandlers?: DragHandlers) {
   }
 
   const cleanup = () => {
-    // Remove drag clone
+    // Remove drag clone with animation
     if (touchState.dragClone) {
-      touchState.dragClone.remove()
+      touchState.dragClone.style.transition = 'all 0.2s ease-out'
+      touchState.dragClone.style.opacity = '0'
+      touchState.dragClone.style.transform = 'scale(0.8)'
+      setTimeout(() => {
+        if (touchState.dragClone?.parentNode) {
+          touchState.dragClone.remove()
+        }
+      }, 200)
     }
     
-    // Remove all touch-related artifacts
+    // Remove enhanced visual feedback from source elements
+    document.querySelectorAll('.dragging-source').forEach(el => {
+      el.classList.remove('dragging-source')
+      const element = el as HTMLElement
+      element.style.opacity = ''
+      element.style.transform = ''
+    })
+    
+    // Remove all touch-related artifacts with animations
     document.querySelectorAll('.touch-drag-clone').forEach(el => el.remove())
     document.querySelectorAll('.touch-drop-indicator').forEach(el => el.remove())
-    document.querySelectorAll('.drop-indicator').forEach(el => el.remove())
-    document.querySelectorAll('.enhanced-drop-indicator').forEach(el => el.remove())
+    document.querySelectorAll('.drop-indicator').forEach(el => {
+      const element = el as HTMLElement
+      element.style.transition = 'all 0.2s ease-out'
+      element.style.opacity = '0'
+      element.style.transform = 'scale(0.9)'
+      setTimeout(() => {
+        if (element.parentNode) {
+          element.remove()
+        }
+      }, 200)
+    })
+    document.querySelectorAll('.enhanced-drop-indicator').forEach(el => {
+      const element = el as HTMLElement
+      element.style.transition = 'all 0.2s ease-out'
+      element.style.opacity = '0'
+      element.style.transform = 'scale(0.9)'
+      setTimeout(() => {
+        if (element.parentNode) {
+          element.remove()
+        }
+      }, 200)
+    })
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'))
     
     // Reset state
@@ -455,12 +579,44 @@ export function useTouchDragDrop(dragHandlers?: DragHandlers) {
     touchState.touchStartTime = null
     touchState.dragStarted = false
   }
+  
+  // Add enhanced styles for animations
+  const addTouchDragStyles = () => {
+    if (document.getElementById('touch-drag-styles')) return
+    
+    const style = document.createElement('style')
+    style.id = 'touch-drag-styles'
+    style.textContent = `
+      @keyframes shimmerVertical {
+        0% { background-position: 0 -200%; }
+        100% { background-position: 0 200%; }
+      }
+      
+      .dragging-source {
+        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+      }
+      
+      .enhanced-drop-indicator {
+        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+      
+      .touch-drag-clone {
+        backdrop-filter: blur(1px);
+        border: 2px solid rgba(74, 144, 226, 0.3);
+      }
+    `
+    document.head.appendChild(style)
+  }
+  
+  // Initialize enhanced styles
+  addTouchDragStyles()
 
   return {
     touchState,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
-    cleanup
+    cleanup,
+    addTouchDragStyles
   }
 }

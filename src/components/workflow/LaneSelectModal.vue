@@ -354,10 +354,11 @@ const getComplexityScore = (lane: Lane) => {
 }
 
 .lanes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: flex;
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
 }
 
 .lane-card {
@@ -371,6 +372,8 @@ const getComplexityScore = (lane: Lane) => {
   flex-direction: column;
   min-height: 280px;
   max-height: 400px;
+  min-width: 280px;
+  flex: 0 0 auto;
 }
 
 .lane-card:hover {
@@ -690,12 +693,15 @@ const getComplexityScore = (lane: Lane) => {
   }
   
   .lanes-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    overflow-x: visible;
   }
   
   .lane-card {
     min-height: 250px;
     max-height: none;
+    min-width: unset;
+    flex: 1 1 auto;
   }
 }
 </style>

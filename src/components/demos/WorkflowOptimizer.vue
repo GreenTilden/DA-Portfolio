@@ -143,6 +143,7 @@
                 :key="workflow.id"
                 :workflow="workflow"
                 @click="openWorkflowEditor(workflow.id)"
+                @lane-click="handleLaneClick"
               />
             </div>
           </div>
@@ -428,7 +429,21 @@ const openWorkflowCreation = () => {
 }
 
 const openWorkflowEditor = (workflowId: string) => {
-  openFromPreview(workflowId)
+  // Find the workflow
+  const workflow = workflows.value.find(w => w.id === workflowId)
+  
+  if (workflow) {
+    if (workflow.lanes.length === 1) {
+      // If only one lane, go directly to lane editor
+      openFromPreview(workflowId, workflow.lanes[0].id)
+    } else {
+      // If multiple lanes, go to lane selection
+      openFromPreview(workflowId)
+    }
+  } else {
+    // Fallback to workflow selection
+    openFromPreview()
+  }
 }
 
 const openTaskAddition = () => {
@@ -507,6 +522,10 @@ const handleMetricClicked = (metric: string) => {
 
 const handleTaskClicked = (task: any) => {
   console.log('Task clicked:', task)
+}
+
+const handleLaneClick = (workflowId: string, laneId: string) => {
+  openFromPreview(workflowId, laneId)
 }
 </script>
 
@@ -896,6 +915,9 @@ const handleTaskClicked = (task: any) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .fab-add-task:hover {

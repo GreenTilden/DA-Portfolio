@@ -30,6 +30,7 @@
         v-for="(lane, laneIndex) in workflow.lanes.slice(0, maxLanes)" 
         :key="lane.id"
         class="lane-row"
+        @click.stop="handleLaneClick(lane.id)"
       >
         <div class="lane-label">{{ lane.name }}</div>
         <div class="steps-row">
@@ -40,6 +41,10 @@
             :class="{ 
               'liquid-handler': step.type === 'Liquid Handler',
               'transfer-task': isTransferTask(step)
+            }"
+            :style="{
+              backgroundColor: getStepColor(step),
+              color: getStepTextColor(step)
             }"
             :title="`${step.type}: ${step.task}`"
             :data-lane-index="laneIndex"
@@ -105,7 +110,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import type { Workflow, Step } from '@/types/workflow'
-import { INSTRUMENT_ICONS, DEFAULT_DURATIONS } from '@/constants/instruments'
+import { INSTRUMENT_ICONS, DEFAULT_DURATIONS, getInstrumentColor, getInstrumentTextColor } from '@/constants/instruments'
+import { useTheme } from '@/composables/useTheme'
 
 interface Props {
   workflow: Workflow
@@ -114,6 +120,10 @@ interface Props {
   showConnections?: boolean
 }
 
+const emit = defineEmits<{
+  laneClick: [workflowId: string, laneId: string]
+}>()
+
 const props = withDefaults(defineProps<Props>(), {
   maxLanes: 3,
   maxStepsPerLane: 6,
@@ -121,6 +131,18 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const connectionsSvg = ref<SVGSVGElement | null>(null)
+
+// Theme integration
+const { currentTheme } = useTheme()
+
+// Map application themes to instrument color schemes
+const themeColorMapping = {
+  'forest': 'naturals',
+  'ocean': 'blues',
+  'monochrome': 'monochrome',
+  'purdue': 'default',
+  'pacers': 'default'
+} as const
 
 // Computed properties
 const totalSteps = computed(() => {
@@ -168,6 +190,20 @@ const getStepIcon = (step: Step) => {
 const isTransferTask = (step: Step) => {
   return step.type === 'Liquid Handler' && 
          step.task.toLowerCase().includes('transfer')
+}
+
+const getStepColor = (step: Step) => {
+  const colorScheme = themeColorMapping[currentTheme.value as keyof typeof themeColorMapping] || 'default'
+  return getInstrumentColor(step.type, colorScheme)
+}
+
+const getStepTextColor = (step: Step) => {
+  const colorScheme = themeColorMapping[currentTheme.value as keyof typeof themeColorMapping] || 'default'
+  return getInstrumentTextColor(step.type, colorScheme)
+}
+
+const handleLaneClick = (laneId: string) => {
+  emit('laneClick', props.workflow.id, laneId)
 }
 
 // Draw connections between liquid handler transfer steps
@@ -389,6 +425,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.lane-row:hover {
+  background: var(--hover-bg);
+  transform: translateX(2px);
 }
 
 .lane-label {
@@ -413,22 +458,15 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--background-alt);
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   font-size: 0.625rem;
-  color: var(--text-muted);
   transition: all 0.2s ease;
   cursor: default;
-}
-
-.step-block.liquid-handler {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .step-block.transfer-task {
-  background: rgba(var(--primary-color-rgb), 0.1);
   position: relative;
 }
 

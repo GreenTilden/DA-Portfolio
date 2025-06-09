@@ -5,6 +5,7 @@ export interface Step {
   task: string
   duration: number
   customIcon?: string
+  transferName?: string // For liquid handler transfers, names the connection group
 }
 
 export interface Lane {

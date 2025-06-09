@@ -35,7 +35,7 @@
       <div v-if="isEditable" class="step-actions">
         <button 
           class="action-btn"
-          @click.stop="$emit('edit', step)"
+          @click.stop="openFullEditor"
           title="Edit step"
         >
           <i class="fas fa-edit"></i>
@@ -113,7 +113,7 @@
           </button>
           <button 
             class="action-btn edit"
-            @click.stop="$emit('edit', step)"
+            @click.stop="openFullEditor"
             title="Edit step"
           >
             <i class="fas fa-edit"></i>
@@ -153,11 +153,67 @@
         </div>
       </div>
     </div>
+
+    <!-- Inline Edit Mode -->
+    <div v-if="showFullEditor" class="step-edit-mode">
+      <div class="edit-overlay"></div>
+      
+      <div class="edit-content">
+        <!-- Quick Task Edit -->
+        <div class="edit-field">
+          <input 
+            v-model="editTask"
+            type="text"
+            class="edit-input task-input"
+            placeholder="Task name"
+            @keyup.enter="saveFullEdit"
+            @keyup.escape="cancelFullEdit"
+            ref="taskInput"
+          />
+        </div>
+        
+        <!-- Transfer Name (only for Liquid Handler Transfer) -->
+        <div v-if="isLiquidHandlerTransfer" class="edit-field">
+          <input 
+            v-model="editTransferName"
+            type="text"
+            class="edit-input transfer-input"
+            placeholder="Connection name"
+            @keyup.enter="saveFullEdit"
+            @keyup.escape="cancelFullEdit"
+          />
+        </div>
+        
+        <!-- Duration Edit -->
+        <div class="edit-field duration-field">
+          <input 
+            v-model.number="editDuration"
+            type="number"
+            min="1"
+            max="600"
+            class="edit-input duration-input"
+            @keyup.enter="saveFullEdit"
+            @keyup.escape="cancelFullEdit"
+          />
+          <span class="duration-label">min</span>
+        </div>
+        
+        <!-- Edit Actions -->
+        <div class="edit-actions">
+          <button class="edit-btn cancel" @click="cancelFullEdit" title="Cancel">
+            <i class="fas fa-times"></i>
+          </button>
+          <button class="edit-btn save" @click="saveFullEdit" title="Save">
+            <i class="fas fa-check"></i>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import type { Step } from '@/types/workflow'
 import { INSTRUMENT_ICONS, getInstrumentColor, getInstrumentTextColor } from '@/constants/instruments'
 import { useTheme } from '@/composables/useTheme'
@@ -182,6 +238,8 @@ const emit = defineEmits<{
   edit: [step: Step]
   delete: [stepId: string]
   'duration-change': [stepId: string, newDuration: number]
+  'task-change': [stepId: string, newTask: string]
+  'transfer-name-change': [stepId: string, transferName: string]
   'move-up': []
   'move-down': []
 }>()
@@ -200,7 +258,14 @@ const themeColorMapping = {
 
 // Reactive state
 const showDurationEditor = ref(false)
+const showFullEditor = ref(false)
 const editDuration = ref(props.step.duration)
+const editTask = ref(props.step.task)
+const editTransferName = ref(props.step.transferName || '')
+
+// Template refs
+const editorPopover = ref<HTMLElement>()
+const taskInput = ref<HTMLInputElement>()
 
 // Computed instrument colors
 const instrumentColor = computed(() => {
@@ -219,6 +284,12 @@ const getStepIcon = (step: Step) => {
   return INSTRUMENT_ICONS[step.type] || 'fas fa-cog'
 }
 
+// Check if this is a liquid handler transfer task
+const isLiquidHandlerTransfer = computed(() => {
+  return props.step.type === 'Liquid Handler' && 
+         props.step.task.toLowerCase().includes('transfer')
+})
+
 const saveDuration = () => {
   if (editDuration.value && editDuration.value !== props.step.duration) {
     emit('duration-change', props.step.id, editDuration.value)
@@ -230,6 +301,44 @@ const cancelDuration = () => {
   editDuration.value = props.step.duration
   showDurationEditor.value = false
 }
+
+const openFullEditor = async () => {
+  editTask.value = props.step.task
+  editTransferName.value = props.step.transferName || ''
+  showFullEditor.value = true
+  
+  // Focus the task input after the popover appears
+  await nextTick()
+  taskInput.value?.focus()
+}
+
+const saveFullEdit = () => {
+  let hasChanges = false
+  
+  if (editDuration.value !== props.step.duration) {
+    emit('duration-change', props.step.id, editDuration.value)
+    hasChanges = true
+  }
+  
+  if (editTask.value !== props.step.task) {
+    emit('task-change', props.step.id, editTask.value)
+    hasChanges = true
+  }
+  
+  if (isLiquidHandlerTransfer.value && editTransferName.value !== (props.step.transferName || '')) {
+    emit('transfer-name-change', props.step.id, editTransferName.value)
+    hasChanges = true
+  }
+  
+  showFullEditor.value = false
+}
+
+const cancelFullEdit = () => {
+  editDuration.value = props.step.duration
+  editTask.value = props.step.task
+  editTransferName.value = props.step.transferName || ''
+  showFullEditor.value = false
+}
 </script>
 
 <style scoped>
@@ -237,19 +346,27 @@ const cancelDuration = () => {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
   overflow: hidden;
+  transform-origin: center;
 }
 
 .step-card.is-dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
+  opacity: 0.6;
+  transform: scale(0.98) rotate(1deg);
+  z-index: 1000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .step-card.is-selected {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+  transform: scale(1.02);
+}
+
+.step-card:not(.is-dragging) {
+  will-change: transform;
 }
 
 /* Desktop Layout */
@@ -513,6 +630,130 @@ const cancelDuration = () => {
   transform: scale(0.95);
 }
 
+/* Inline Edit Mode */
+.step-edit-mode {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(var(--primary-color-rgb), 0.1);
+  backdrop-filter: blur(1px);
+}
+
+.edit-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.75rem;
+  gap: 0.5rem;
+  background: var(--card-bg);
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+}
+
+.edit-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-field.duration-field {
+  justify-content: flex-start;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 0.375rem 0.5rem;
+  background: var(--background-alt);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  color: var(--text-light);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.task-input {
+  font-weight: 500;
+}
+
+.transfer-input {
+  font-size: 0.8125rem;
+}
+
+.duration-input {
+  width: 60px;
+  text-align: center;
+}
+
+.duration-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 25px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.375rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.edit-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+}
+
+.edit-btn.cancel {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.edit-btn.cancel:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.edit-btn.save {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.edit-btn.save:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+}
+
 /* Hover states for desktop */
 @media (hover: hover) {
   .step-card:hover {
@@ -541,6 +782,33 @@ const cancelDuration = () => {
   
   .step-actions {
     align-self: flex-end;
+  }
+  
+  /* Mobile edit mode adjustments */
+  .edit-content {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .edit-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+  
+  .edit-field.duration-field {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  
+  .edit-input {
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  .duration-input {
+    width: 80px;
   }
 }
 
