@@ -23,28 +23,6 @@
       <div class="demo-container">
         <component :is="demos[activeDemo].component"></component>
       </div>
-
-      <div class="demo-explanation">
-        <h2>{{ demos[activeDemo].title }}</h2>
-        <p>{{ demos[activeDemo].description }}</p>
-
-        <h3>Technical Implementation</h3>
-        <p>{{ demos[activeDemo].technicalDetails }}</p>
-
-        <div class="demo-features">
-          <h3>Key Features</h3>
-          <ul>
-            <li v-for="(feature, index) in demos[activeDemo].features" :key="index">
-              {{ feature }}
-            </li>
-          </ul>
-        </div>
-
-        <div class="real-world-applications">
-          <h3>Real-World Applications</h3>
-          <p>{{ demos[activeDemo].realWorldApplications }}</p>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -96,16 +74,10 @@ export default {
         {
           title: 'Workflow Optimization',
           component: WorkflowOptimizer,
-          description: 'This tool demonstrates how I approach laboratory workflow optimization by modeling, simulating, and visualizing complex multi-instrument processes to identify bottlenecks and improve efficiency.',
-          technicalDetails: 'The workflow optimizer uses discrete event simulation techniques to model laboratory operations. It calculates resource utilization, identifies bottlenecks, and simulates the effects of different optimization strategies on overall throughput and turnaround time.',
-          features: [
-            'Drag-and-drop workflow design',
-            'Bottleneck identification and analysis',
-            'Resource utilization visualization',
-            'What-if scenario modeling',
-            'Output metrics calculation'
-          ],
-          realWorldApplications: 'Workflow optimization is critical for high-throughput laboratories to maximize efficiency. By identifying bottlenecks and optimizing instrument scheduling, labs can significantly increase throughput, reduce turnaround times, and improve resource utilization without purchasing additional equipment.'
+          description: '',
+          technicalDetails: '',
+          features: [],
+          realWorldApplications: ''
         }
       ]
     }
