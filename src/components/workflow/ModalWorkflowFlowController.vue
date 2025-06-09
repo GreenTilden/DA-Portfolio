@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="''"
-    width="700px"
+    :width="dynamicModalWidth"
     class="workflow-flow-modal"
     :close-on-click-modal="false"
     :show-close="false"
@@ -62,8 +62,8 @@
             <!-- Condensed Workflow Overview using Element Plus -->
             <div class="workflow-overview">
               <el-scrollbar v-if="selectedWorkflow?.lanes.length" class="lanes-scrollbar">
-                <draggable
-                  :list="selectedWorkflow.lanes"
+                <VueDraggableNext
+                  :list="selectedWorkflow?.lanes || []"
                   class="lanes-container"
                   :animation="200"
                   handle=".lane-drag-handle"
@@ -107,8 +107,8 @@
                     <!-- Steps List -->
                     <div class="steps-container" @click="handleLaneSelect(lane.id)">
                       <el-scrollbar v-if="lane.steps.length" max-height="300px">
-                        <draggable 
-                          :list="lane.steps"
+                        <VueDraggableNext 
+                          :list="lane.steps || []"
                           class="steps-list"
                           :animation="200"
                           handle=".drag-handle"
@@ -138,7 +138,7 @@
                               </div>
                             </div>
                           </template>
-                        </draggable>
+                        </VueDraggableNext>
                       </el-scrollbar>
                       
                       <!-- Empty State -->
@@ -158,7 +158,7 @@
                     </div>
                     </el-card>
                   </template>
-                </draggable>
+                </VueDraggableNext>
               </el-scrollbar>
               
               <!-- Empty Workflow State -->
@@ -241,8 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import draggable from 'vuedraggable'
+import { computed, watch } from 'vue'
 import { 
   Delete, 
   More, 
@@ -257,6 +256,7 @@ import {
   Eleme,
   Rank
 } from '@element-plus/icons-vue'
+import { VueDraggableNext } from 'vue-draggable-next'
 import { useModalWorkflowEditor } from '@/composables/useModalWorkflowEditor'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { DEFAULT_DURATIONS } from '@/constants/instruments'
@@ -299,6 +299,80 @@ const isWorkflowBuilder = computed(() => {
   return currentStep.value === 'lane-selection'
 })
 
+// Calculate dynamic modal width based on number of lanes
+const dynamicModalWidth = computed(() => {
+  // Base width for workflow selection and lane editor steps
+  const baseWidth = 700
+  
+  // For workflow overview (lane-selection step), calculate based on lane count
+  if (currentStep.value === 'lane-selection' && selectedWorkflow.value?.lanes?.length) {
+    const laneCount = selectedWorkflow.value.lanes.length
+    const laneCardWidth = 340 // Each lane card width (measured actual width)
+    const gapWidth = 20 // Gap between cards
+    const containerPadding = 20 // Padding inside lanes-container (left + right)
+    const modalPadding = 48 // Modal dialog content padding (left + right)
+    const borderSpacing = 4 // Additional border/spacing buffer
+    const safetyBuffer = 20 // Extra buffer to ensure no cutoff
+    
+    // Calculate total content width needed
+    const contentWidth = (laneCount * laneCardWidth) + 
+                        ((laneCount - 1) * gapWidth) + 
+                        containerPadding + 
+                        modalPadding + 
+                        borderSpacing + 
+                        safetyBuffer
+    
+    // Get viewport width to ensure modal doesn't exceed screen
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
+    const maxModalWidth = Math.min(viewportWidth * 0.9, 1800) // Max 90% of viewport or 1800px
+    
+    // Use content width but cap at max width
+    const calculatedWidth = Math.min(contentWidth, maxModalWidth)
+    const finalWidth = Math.max(calculatedWidth, baseWidth)
+    
+    console.log('ModalWorkflowFlowController - dynamicModalWidth calculation:', {
+      currentStep: currentStep.value,
+      selectedWorkflowId: selectedWorkflowId.value,
+      laneCount,
+      laneCardWidth,
+      gapWidth,
+      containerPadding,
+      modalPadding,
+      borderSpacing,
+      safetyBuffer,
+      contentWidth,
+      viewportWidth,
+      maxModalWidth,
+      calculatedWidth,
+      finalWidth,
+      workflowName: selectedWorkflow.value?.name
+    })
+    
+    return `${finalWidth}px`
+  }
+  
+  console.log('ModalWorkflowFlowController - using base width:', {
+    currentStep: currentStep.value,
+    selectedWorkflowId: selectedWorkflowId.value,
+    hasLanes: !!selectedWorkflow.value?.lanes?.length
+  })
+  
+  // Default width for other steps
+  return `${baseWidth}px`
+})
+
+// Watch for modal state changes to debug width calculation
+watch([isModalOpen, currentStep, selectedWorkflowId], ([isOpen, step, workflowId]) => {
+  if (isOpen) {
+    console.log('ModalWorkflowFlowController - modal opened:', {
+      isOpen,
+      step,
+      workflowId,
+      calculatedWidth: dynamicModalWidth.value
+    })
+  }
+}, { immediate: false })
+
 // Get the selected workflow object
 const selectedWorkflow = computed(() => {
   console.log('ModalWorkflowFlowController - selectedWorkflowId:', selectedWorkflowId.value)
@@ -313,6 +387,16 @@ const selectedWorkflow = computed(() => {
   const workflow = workflows.value.find(w => w.id === selectedWorkflowId.value)
   console.log('ModalWorkflowFlowController - selectedWorkflow:', workflow)
   console.log('ModalWorkflowFlowController - selectedWorkflow lanes:', workflow?.lanes?.length)
+  
+  // Additional debugging for lanes data
+  if (workflow?.lanes) {
+    console.log('ModalWorkflowFlowController - lanes details:', workflow.lanes.map(lane => ({
+      id: lane.id,
+      name: lane.name,
+      stepsCount: lane.steps?.length || 0,
+      steps: lane.steps?.map(step => ({ type: step.type, task: step.task })) || []
+    })))
+  }
   
   return workflow
 })
@@ -441,7 +525,10 @@ const goBackToWorkflow = (): void => {
 }
 
 const handleBack = (): void => {
-  goBack()
+  // Implementation for going back in the modal flow
+  if (currentStep.value === 'lane-editor' && selectedWorkflowId.value) {
+    goToLaneSelection(selectedWorkflowId.value)
+  }
 }
 
 const handleClose = (): void => {
@@ -484,6 +571,9 @@ const handleLaneReorder = (): void => {
   // The draggable component with :list binding automatically updates the array
   // We just need to trigger a save to persist the changes
   if (selectedWorkflow.value && selectedWorkflowId.value) {
+    console.log('ModalWorkflowFlowController - handleLaneReorder called')
+    console.log('ModalWorkflowFlowController - current lanes:', selectedWorkflow.value.lanes)
+    
     // Force update by creating a new workflows array
     const updatedWorkflows = workflows.value.map(w => 
       w.id === selectedWorkflowId.value ? { ...w } : w
@@ -497,6 +587,11 @@ const handleLaneReorder = (): void => {
 .workflow-flow-modal {
   --step-color: var(--primary-color);
   --step-bg: var(--card-bg);
+}
+
+.workflow-flow-modal .el-dialog {
+  max-width: none !important;
+  margin: 5vh auto;
 }
 
 .modal-content {
@@ -789,16 +884,17 @@ const handleLaneReorder = (): void => {
   display: flex;
   gap: 20px;
   padding: 10px;
-  min-width: max-content;
+  width: max-content;
 }
 
 .lane-card {
   height: 400px;
   display: flex;
   flex-direction: column;
-  min-width: 320px;
-  width: 320px;
+  min-width: 340px;
+  width: 340px;
   flex-shrink: 0;
+  flex-grow: 0;
 }
 
 .lane-card .el-card__body {
@@ -985,6 +1081,12 @@ const handleLaneReorder = (): void => {
   .workflow-flow-modal {
     width: 95vw !important;
     max-width: none !important;
+  }
+  
+  .lanes-container {
+    flex-direction: column;
+    width: 100%;
+    min-width: unset;
   }
   
   .modal-footer {

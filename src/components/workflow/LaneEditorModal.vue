@@ -93,7 +93,7 @@
           >
             <transition-group name="step-reorder" tag="div" class="steps-list">
               <div 
-                v-for="(step, index) in selectedLane.steps" 
+                v-for="(step, index) in selectedLane?.steps || []" 
                 :key="step.id"
                 class="step-item"
                 :class="{ 
@@ -149,7 +149,7 @@
                   <button 
                     class="position-btn down"
                     @click="handleMoveStepDown(index)"
-                    :disabled="index === selectedLane.steps.length - 1"
+                    :disabled="index === (selectedLane?.steps?.length || 0) - 1"
                     title="Move down"
                   >
                     <i class="fas fa-chevron-down"></i>
@@ -160,7 +160,7 @@
             
             <!-- Drop Zone Indicators -->
             <div 
-              v-for="index in selectedLane.steps.length + 1" 
+              v-for="index in (selectedLane?.steps?.length || 0) + 1" 
               :key="`drop-${index - 1}`"
               class="drop-zone"
               :class="{ 'active': dragState.showDropZone && dragState.dropIndex === index - 1 }"
@@ -199,7 +199,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
-import type { Workflow, Lane, Step } from '@/types/workflow'
+import type { Step } from '@/types/workflow'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { useDragDrop } from '@/composables/useDragDrop'
 import { useTouchDragDrop } from '@/composables/useTouchDragDrop'
@@ -240,10 +240,10 @@ const dragState = reactive({
 
 // Touch drag drop setup
 const dragHandlers = {
-  handleDragOver: (event: any, workflowId: string, laneId: string) => {
+  handleDragOver: (event: any) => {
     handleDragOver(event)
   },
-  handleDrop: (event: any, workflowId: string, laneId: string) => {
+  handleDrop: (event: any) => {
     handleDrop(event)
   },
   handleDragEnd: () => {
@@ -252,7 +252,6 @@ const dragHandlers = {
 }
 
 const { 
-  touchState, 
   handleTouchStart: touchDragStart, 
   handleTouchMove: touchDragMove, 
   handleTouchEnd: touchDragEnd 
@@ -419,16 +418,20 @@ const handleSaveStepEdit = (updatedStep: Step) => {
 const handleMoveStepUp = (index: number) => {
   if (!selectedLane.value || index <= 0) return
   
-  const steps = [...selectedLane.value.steps]
-  [steps[index - 1], steps[index]] = [steps[index], steps[index - 1]]
+  const steps: Step[] = [...selectedLane.value.steps]
+  const temp = steps[index - 1]
+  steps[index - 1] = steps[index]
+  steps[index] = temp
   updateLaneSteps(steps)
 }
 
 const handleMoveStepDown = (index: number) => {
   if (!selectedLane.value || index >= selectedLane.value.steps.length - 1) return
   
-  const steps = [...selectedLane.value.steps]
-  [steps[index], steps[index + 1]] = [steps[index + 1], steps[index]]
+  const steps: Step[] = [...selectedLane.value.steps]
+  const temp = steps[index]
+  steps[index] = steps[index + 1]
+  steps[index + 1] = temp
   updateLaneSteps(steps)
 }
 
@@ -439,8 +442,8 @@ const handleStepDragStart = (event: DragEvent, step: Step, index: number) => {
   const dragItem = {
     ...step,
     isExistingStep: true,
-    sourceWorkflowId: props.workflowId,
-    sourceLaneId: props.laneId,
+    sourceWorkflowId: props.workflowId || undefined,
+    sourceLaneId: props.laneId || undefined,
     sourceIndex: index
   }
   
@@ -622,8 +625,8 @@ const handleTouchStart = (event: TouchEvent, step: Step, index: number) => {
   const dragItem = {
     ...step,
     isExistingStep: true,
-    sourceWorkflowId: props.workflowId,
-    sourceLaneId: props.laneId,
+    sourceWorkflowId: props.workflowId || undefined,
+    sourceLaneId: props.laneId || undefined,
     sourceIndex: index
   }
   

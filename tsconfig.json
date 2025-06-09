@@ -21,6 +21,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
 
 /* Path aliases */
     "baseUrl": ".",
@@ -33,11 +35,7 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "src/components/workflow/**/*",
-    "src/utils/**/*",
-    "src/types/**/*",
-    "src/composables/**/*",
-    "src/constants/**/*"
+    "src/**/*.js"
   ],
   "references": [{ "path": "./tsconfig.node.json" }],
   "exclude": ["node_modules", "dist"]
