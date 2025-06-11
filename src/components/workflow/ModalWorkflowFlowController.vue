@@ -347,12 +347,12 @@ const dynamicModalWidth = computed(() => {
   // For workflow overview (lane-selection step), calculate based on lane count
   if (currentStep.value === 'lane-selection' && selectedWorkflow.value?.lanes?.length) {
     const laneCount = selectedWorkflow.value.lanes.length
-    const laneCardWidth = 340 // Each lane card width (measured actual width)
-    const gapWidth = 20 // Gap between cards
-    const containerPadding = 20 // Padding inside lanes-container (left + right)
+    const laneCardWidth = 380 // Each lane card width (measured actual width)
+    const gapWidth = 24 // Gap between cards
+    const containerPadding = 24 // Padding inside lanes-container (left + right)
     const modalPadding = 48 // Modal dialog content padding (left + right)
     const borderSpacing = 4 // Additional border/spacing buffer
-    const safetyBuffer = 20 // Extra buffer to ensure no cutoff
+    const safetyBuffer = 40 // Extra buffer to ensure no cutoff
     
     // Calculate total content width needed
     const contentWidth = (laneCount * laneCardWidth) + 
@@ -364,7 +364,7 @@ const dynamicModalWidth = computed(() => {
     
     // Get viewport width to ensure modal doesn't exceed screen
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
-    const maxModalWidth = Math.min(viewportWidth * 0.9, 1800) // Max 90% of viewport or 1800px
+    const maxModalWidth = Math.min(viewportWidth * 0.95, 2000) // Max 95% of viewport or 2000px
     
     // Use content width but cap at max width
     const calculatedWidth = Math.min(contentWidth, maxModalWidth)
@@ -934,8 +934,8 @@ const handleLaneReorder = (): void => {
 
 .lanes-container {
   display: flex;
-  gap: 20px;
-  padding: 10px;
+  gap: 24px;
+  padding: 12px;
   width: max-content;
 }
 
@@ -943,8 +943,8 @@ const handleLaneReorder = (): void => {
   height: 400px;
   display: flex;
   flex-direction: column;
-  min-width: 340px;
-  width: 340px;
+  min-width: 380px;
+  width: 380px;
   flex-shrink: 0;
   flex-grow: 0;
 }
@@ -953,7 +953,7 @@ const handleLaneReorder = (): void => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 16px;
 }
 
 .lane-card.sortable-ghost {

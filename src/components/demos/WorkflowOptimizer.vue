@@ -453,28 +453,44 @@ const createExampleWorkflows = () => {
         {
           name: 'Media Exchange',
           steps: [
+            { type: 'Plate Reader', task: 'Check confluence', duration: 5 },
             { type: 'Liquid Handler', task: 'Aspirate old media', duration: 8 },
+            { type: 'Washer', task: 'Rinse wells', duration: 6 },
             { type: 'Dispenser', task: 'Add fresh media', duration: 5 },
-            { type: 'Incubator', task: 'Equilibrate', duration: 10 }
+            { type: 'Incubator', task: 'Equilibrate', duration: 15 },
+            { type: 'Plate Reader', task: 'Final check', duration: 3 }
+          ]
+        },
+        {
+          name: 'Cell Counting',
+          steps: [
+            { type: 'Liquid Handler', task: 'Sample cells', duration: 4 },
+            { type: 'Liquid Handler', task: 'Add trypan blue', duration: 3 },
+            { type: 'Plate Reader', task: 'Count cells', duration: 8 },
+            { type: 'Liquid Handler', task: 'Record results', duration: 2 }
           ]
         }
       ]
     },
     {
-      name: 'PCR Setup',
+      name: 'PCR Setup & Analysis',
       lanes: [
         {
           name: 'Master Mix Prep',
           steps: [
             { type: 'Liquid Handler', task: 'Prepare master mix', duration: 20 },
-            { type: 'Centrifuge', task: 'Quick spin', duration: 2 }
+            { type: 'Liquid Handler', task: 'Transfer to samples', duration: 12 },
+            { type: 'Centrifuge', task: 'Quick spin', duration: 2 },
+            { type: 'Plate Reader', task: 'Check volumes', duration: 4 }
           ]
         },
         {
           name: 'Sample Addition',
           steps: [
-            { type: 'Liquid Handler', task: 'Add DNA template', duration: 15 },
-            { type: 'Plate Reader', task: 'Initial read', duration: 5 }
+            { type: 'Liquid Handler', task: 'Add DNA template', duration: 10 },
+            { type: 'Centrifuge', task: 'Mix and spin', duration: 3 },
+            { type: 'Plate Reader', task: 'Pre-PCR read', duration: 5 },
+            { type: 'Incubator', task: 'Thermal cycling', duration: 120 }
           ]
         }
       ]
@@ -487,15 +503,18 @@ const createExampleWorkflows = () => {
           steps: [
             { type: 'Liquid Handler', task: 'Dilute samples', duration: 15 },
             { type: 'Incubator', task: 'Warm to room temp', duration: 20 },
-            { type: 'Liquid Handler', task: 'Transfer to plate', duration: 10 }
+            { type: 'Liquid Handler', task: 'Transfer to plate', duration: 10 },
+            { type: 'Centrifuge', task: 'Settle samples', duration: 3 },
+            { type: 'Plate Reader', task: 'Baseline read', duration: 5 }
           ]
         },
         {
           name: 'Antibody Binding',
           steps: [
-            { type: 'Liquid Handler', task: 'Add primary antibody', duration: 5 },
+            { type: 'Liquid Handler', task: 'Add primary antibody', duration: 8 },
             { type: 'Incubator', task: 'Incubate 1hr', duration: 60 },
-            { type: 'Washer', task: 'Wash 3x', duration: 15 }
+            { type: 'Washer', task: 'Wash 3x', duration: 15 },
+            { type: 'Liquid Handler', task: 'Add secondary antibody', duration: 6 }
           ]
         }
       ]
