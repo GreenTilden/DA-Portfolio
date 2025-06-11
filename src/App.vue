@@ -114,11 +114,13 @@ export default {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
     document.addEventListener('click', this.closeThemeMenu);
+    document.addEventListener('click', this.handleDocumentClick);
     this.setTheme('pacers');
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
     document.removeEventListener('click', this.closeThemeMenu);
+    document.removeEventListener('click', this.handleDocumentClick);
   },
   methods: {
     checkIfMobile() {
@@ -136,6 +138,7 @@ export default {
     },
     closeMenu() {
       this.menuActive = false;
+      this.showThemeMenu = false;
       document.body.style.overflow = '';
     },
     toggleThemeMenu(event) {
@@ -150,11 +153,18 @@ export default {
       if (!event.target.closest('.header-theme-selector')) {
         this.showThemeMenu = false;
       }
+    },
+    handleDocumentClick(event) {
+      // Close mobile menu if clicking outside of it
+      if (this.menuActive && !event.target.closest('.menu-toggle')) {
+        this.closeMenu();
+      }
     }
   },
   watch: {
     $route() {
       this.menuActive = false;
+      this.showThemeMenu = false;
       document.body.style.overflow = '';
     }
   }
