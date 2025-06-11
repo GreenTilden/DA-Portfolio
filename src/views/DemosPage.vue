@@ -44,40 +44,46 @@ export default {
       activeDemo: 0,
       demos: [
         {
-          title: 'Predictive Maintenance AI',
-          component: InstrumentControlSimulator, // Placeholder until AI component is ready
-          description: 'This demonstration showcases an AI system that can predict equipment failures before they occur by analyzing historical sensor data and identifying anomalous patterns.',
-          technicalDetails: 'Built using TensorFlow and Python, this LSTM (Long Short-Term Memory) neural network model analyzes time-series data from laboratory instruments to detect subtle anomalies that precede equipment failures. The model is trained on historical sensor data with labeled failure events.',
+          title: 'Liquid Handler Control',
+          component: LiquidHandlerVisualizer,
+          description: 'Interactive liquid handling simulation demonstrating real-time control and visualization of laboratory automation workflows.',
+          technicalDetails: 'Built with Vue 3 and real-time animation, this simulator showcases drag-and-drop protocol building, animated liquid transfers, and comprehensive metrics tracking.',
           features: [
-            'Real-time anomaly detection visualization',
-            'Multiple sensor data stream analysis',
-            'Configurable sensitivity thresholds',
-            'Historical trend comparison',
-            'Maintenance recommendation system'
+            'Real-time liquid transfer animation',
+            'Drag-and-drop labware placement',
+            'Protocol timeline visualization',
+            'Volume tracking and metrics',
+            'Preset protocol library'
           ],
-          realWorldApplications: 'This technology is being used in production laboratories to reduce unplanned downtime by up to 35%. By predicting potential failures days or weeks in advance, maintenance can be scheduled during off-hours, preventing disruptions to critical workflows.'
+          realWorldApplications: 'This interface pattern is used in production liquid handlers to visualize complex pipetting protocols, reducing setup errors and improving protocol development efficiency.'
         },
         {
           title: 'Laboratory Instrument Control',
           component: InstrumentControlSimulator,
-          description: 'This simulator demonstrates how I develop automation scripts for controlling laboratory instruments, showcasing real-time communication, error handling, and recovery procedures.',
-          technicalDetails: 'The simulator demonstrates the object-oriented approach I use when developing laboratory automation scripts, including proper error handling, logging, and recovery procedures. In real applications, these scripts are written in Python and C# to interface with instrument SDKs.',
+          description: 'Multi-instrument control dashboard showcasing real-time monitoring and control of various laboratory instruments.',
+          technicalDetails: 'The simulator demonstrates comprehensive instrument control patterns including real-time data visualization, method management, and event logging.',
           features: [
-            'Real-time instrument communication simulation',
-            'Comprehensive error handling and recovery',
-            'Dynamic code generation for different instruments',
-            'Language switching between Python and C#',
-            'Visualization of instrument operation states'
+            'Multi-instrument monitoring dashboard',
+            'Real-time parameter control',
+            'Method and protocol management',
+            'Event logging and notifications',
+            'Simulated data collection'
           ],
-          realWorldApplications: 'In production environments, these control scripts are used to automate liquid handlers, HPLC systems, mass spectrometers, and other laboratory instruments. By creating robust automation software, labs can increase throughput, reduce human error, and improve reproducibility of experiments.'
+          realWorldApplications: 'These control interfaces are used in production laboratories to manage multiple instruments simultaneously, improving workflow efficiency and data quality.'
         },
         {
           title: 'Workflow Optimization',
           component: WorkflowOptimizer,
-          description: '',
-          technicalDetails: '',
-          features: [],
-          realWorldApplications: ''
+          description: 'Advanced workflow scheduling and optimization engine for laboratory automation.',
+          technicalDetails: 'Features drag-and-drop workflow building, conflict detection, and intelligent scheduling algorithms.',
+          features: [
+            'Visual workflow builder',
+            'Real-time optimization engine',
+            'Conflict detection and resolution',
+            'Performance metrics analysis',
+            'Multi-lane scheduling'
+          ],
+          realWorldApplications: 'Optimization engines like this help laboratories reduce total run time by 30-40% through intelligent resource allocation and parallel processing.'
         }
       ]
     }
