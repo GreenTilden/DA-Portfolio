@@ -67,7 +67,6 @@ export default {
     return {
       viewType: this.$route.query.view || 'general',
       visibleCards: [],
-      animationFrameId: null,
       roleConfigs: {
         general: {
           role: 'Laboratory Automation Specialist',
@@ -130,69 +129,6 @@ export default {
   methods: {
     onVisibilityChange(isVisible, index) {
       if (isVisible) this.visibleCards[index] = true;
-    },
-    initParticleCanvas() {
-      const canvas = this.$refs.particleCanvas;
-      const ctx = canvas.getContext('2d');
-      const dpr = window.devicePixelRatio || 1;
-      const resize = () => {
-        canvas.width = canvas.offsetWidth * dpr;
-        canvas.height = canvas.offsetHeight * dpr;
-        ctx.scale(dpr, dpr);
-      };
-      resize();
-      window.addEventListener('resize', resize);
-
-      const colors = ['#FFD700', '#4A90E2'];
-      const particles = Array.from({ length: 10 }).map((_, i) => ({
-        x: Math.random() * canvas.offsetWidth,
-        y: Math.random() * canvas.offsetHeight,
-        dx: (Math.random() - 0.5) * 0.5,
-        dy: (Math.random() - 0.5) * 0.5,
-        radius: 3 + Math.random() * 2,
-        color: i < 4 ? colors[0] : colors[1]
-      }));
-
-      const draw = () => {
-        ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-        particles.forEach((p1, i) => {
-          const nearest = particles.filter((_, j) => j !== i).sort((a, b) => {
-            const d1 = Math.hypot(p1.x - a.x, p1.y - a.y);
-            const d2 = Math.hypot(p1.x - b.x, p1.y - b.y);
-            return d1 - d2;
-          }).slice(0, 2);
-
-          nearest.forEach(p2 => {
-            const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
-            grad.addColorStop(0, p1.color);
-            grad.addColorStop(1, p2.color);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          });
-        });
-
-        particles.forEach(p => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          ctx.fill();
-        });
-
-        particles.forEach(p => {
-          p.x += p.dx;
-          p.y += p.dy;
-          if (p.x < 0 || p.x > canvas.offsetWidth) p.dx *= -1;
-          if (p.y < 0 || p.y > canvas.offsetHeight) p.dy *= -1;
-        });
-
-        this.animationFrameId = requestAnimationFrame(draw);
-      };
-
-      draw();
     }
   },
   watch: {
@@ -205,15 +141,9 @@ export default {
     if (this.specialties && Array.isArray(this.specialties)) {
       this.visibleCards = new Array(this.specialties.length).fill(false);
     }
-    this.$nextTick(() => {
-      this.initParticleCanvas();
-    });
+    // ParticlesCanvas component handles particles animation
   },
-  beforeUnmount() {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-  }
+  // Animation cleanup handled by ParticlesCanvas component
 };
 </script>
 

@@ -14,20 +14,31 @@
           v-for="(demo, index) in demos" 
           :key="index"
           :class="['demo-button', { active: activeDemo === index }]"
-          @click="activeDemo = index"
+          @click="switchDemo(index)"
         >
           {{ demo.title }}
         </button>
       </div>
 
       <div class="demo-container">
-        <component :is="demos[activeDemo].component"></component>
+        <div v-if="componentError" class="error-message">
+          <h3>Demo temporarily unavailable</h3>
+          <p>We're experiencing technical difficulties with this demo. Please try another demo or refresh the page.</p>
+          <p><strong>Error details:</strong> {{ errorDetails }}</p>
+          <button @click="resetDemo" class="demo-button">Reset Demo</button>
+        </div>
+        <component 
+          v-else-if="demos[activeDemo] && demos[activeDemo].component"
+          :is="demos[activeDemo].component"
+          :key="activeDemo"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import InstrumentControlSimulator from '@/components/demos/InstrumentControlSimulator.vue'
 import LiquidHandlerVisualizer from '@/components/demos/LiquidHandlerVisualizer.vue'
 import WorkflowOptimizer from '@/components/demos/WorkflowOptimizer.vue'
@@ -39,13 +50,32 @@ export default {
     LiquidHandlerVisualizer,
     WorkflowOptimizer
   },
+  errorCaptured(err, instance, info) {
+    console.error('Error in demo component:', err, info)
+    this.componentError = true
+    this.errorDetails = `${err.message} (${info})`
+    // Prevent the error from propagating
+    return false
+  },
+  methods: {
+    resetDemo() {
+      this.componentError = false
+      this.activeDemo = (this.activeDemo + 1) % this.demos.length
+    },
+    switchDemo(index) {
+      this.componentError = false
+      this.activeDemo = index
+    }
+  },
   data() {
     return {
       activeDemo: 0,
+      componentError: false,
+      errorDetails: null,
       demos: [
         {
           title: 'Liquid Handler Control',
-          component: LiquidHandlerVisualizer,
+          component: markRaw(LiquidHandlerVisualizer),
           description: 'Interactive liquid handling simulation demonstrating real-time control and visualization of laboratory automation workflows.',
           technicalDetails: 'Built with Vue 3 and real-time animation, this simulator showcases drag-and-drop protocol building, animated liquid transfers, and comprehensive metrics tracking.',
           features: [
@@ -59,7 +89,7 @@ export default {
         },
         {
           title: 'Laboratory Instrument Control',
-          component: InstrumentControlSimulator,
+          component: markRaw(InstrumentControlSimulator),
           description: 'Multi-instrument control dashboard showcasing real-time monitoring and control of various laboratory instruments.',
           technicalDetails: 'The simulator demonstrates comprehensive instrument control patterns including real-time data visualization, method management, and event logging.',
           features: [
@@ -73,7 +103,7 @@ export default {
         },
         {
           title: 'Workflow Optimization',
-          component: WorkflowOptimizer,
+          component: markRaw(WorkflowOptimizer),
           description: 'Advanced workflow scheduling and optimization engine for laboratory automation.',
           technicalDetails: 'Features drag-and-drop workflow building, conflict detection, and intelligent scheduling algorithms.',
           features: [
@@ -89,6 +119,12 @@ export default {
     }
   },
   mounted() {
+    // Ensure all components are properly initialized
+    this.demos = this.demos.map(demo => ({
+      ...demo,
+      component: demo.component || null
+    }))
+    
     // Check if a specific demo was requested in the URL
     const demoParam = this.$route.query.demo;
     if (demoParam) {
@@ -232,6 +268,23 @@ export default {
 .real-world-applications p {
   color: var(--text-light);
 }
+
+.error-message {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-color);
+}
+
+.error-message h3 {
+  color: var(--error-color, #ef4444);
+  margin-bottom: 1rem;
+}
+
+.error-message p {
+  color: var(--text-light);
+  margin-bottom: 2rem;
+}
+
 @media (max-width: 768px) {
   .page-header h1 {
     font-size: 2rem;

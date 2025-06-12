@@ -1,5 +1,5 @@
 <template>
-  <div class="gantt-chart" v-if="schedule.length > 0">
+  <div class="gantt-chart" v-if="schedule && schedule.length > 0 && workflows && workflows.length > 0">
     <div class="gantt-header">
       <h4>Schedule Timeline</h4>
       <div class="gantt-controls">
@@ -23,7 +23,7 @@
       <div class="gantt-sidebar">
         <div class="gantt-header-cell">
           <span>Workflow / Lane</span>
-          <div class="header-stats">{{ workflowGroups.length }} workflows</div>
+          <div class="header-stats">{{ workflowGroups.length || 0 }} workflows</div>
         </div>
         
         <div v-for="group in workflowGroups" :key="group.workflowId" class="workflow-group">
@@ -221,21 +221,23 @@ const tooltip = ref({
 
 // Calculate the actual timeline width based on max end time
 const timelineWidth = computed(() => {
+  if (!props.schedule || props.schedule.length === 0) {
+    return 120 * currentPixelsPerMinute.value + 100
+  }
   const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
   return maxTime * currentPixelsPerMinute.value + 100
 })
 
 // Generate workflow groups with statistics
 const workflowGroups = computed(() => {
-  console.log('Computing workflow groups with schedule:', props.schedule)
-  console.log('Available workflows:', props.workflows)
+  if (!props.workflows || !props.schedule) {
+    return []
+  }
   
   const groups = props.workflows.map((workflow, index) => {
     const workflowTasks = props.schedule.filter(t => t.workflowId === workflow.id)
     const totalDuration = workflowTasks.reduce((sum, task) => sum + task.duration, 0)
     const taskCount = workflowTasks.length
-    
-    console.log(`Workflow ${workflow.id} has ${taskCount} tasks:`, workflowTasks)
     
     return {
       workflowId: workflow.id,
@@ -254,7 +256,9 @@ const workflowGroups = computed(() => {
 
 // Generate major time markers (every 30-60 minutes)
 const majorTimeMarkers = computed(() => {
-  const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
+  const maxTime = props.schedule && props.schedule.length > 0 
+    ? Math.max(...props.schedule.map(t => t.endTime), 120)
+    : 120
   const markers = []
   const interval = maxTime > 300 ? 60 : 30
   
@@ -267,7 +271,9 @@ const majorTimeMarkers = computed(() => {
 
 // Generate minor time markers (every 15 minutes)
 const minorTimeMarkers = computed(() => {
-  const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
+  const maxTime = props.schedule && props.schedule.length > 0 
+    ? Math.max(...props.schedule.map(t => t.endTime), 120)
+    : 120
   const markers = []
   
   for (let i = 15; i <= maxTime; i += 15) {
@@ -281,17 +287,17 @@ const minorTimeMarkers = computed(() => {
 
 // Show "now" indicator if within timeline
 const showNowIndicator = computed(() => {
-  const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
+  const maxTime = props.schedule && props.schedule.length > 0 
+    ? Math.max(...props.schedule.map(t => t.endTime), 120)
+    : 120
   return currentTime.value >= 0 && currentTime.value <= maxTime
 })
 
 // Get tasks for a specific lane - fixed to return individual tasks
 const getTasksForLane = (workflowId: string, laneId: string) => {
-  const tasks = props.schedule.filter(
+  return props.schedule.filter(
     task => task.workflowId === workflowId && task.laneId === laneId
   )
-  console.log(`Lane ${workflowId}-${laneId} has tasks:`, tasks)
-  return tasks
 }
 
 // Get icon for task type
@@ -301,14 +307,16 @@ const getTaskIcon = (type: string) => {
 
 // Get workflow name by ID
 const getWorkflowName = (workflowId?: string) => {
+  if (!props.workflows || !workflowId) return 'Unknown'
   const workflow = props.workflows.find(w => w.id === workflowId)
   return workflow?.name || 'Unknown'
 }
 
 // Get lane name by workflow and lane ID
 const getLaneName = (workflowId?: string, laneId?: string) => {
+  if (!props.workflows || !workflowId || !laneId) return 'Unknown'
   const workflow = props.workflows.find(w => w.id === workflowId)
-  const lane = workflow?.lanes.find(l => l.id === laneId)
+  const lane = workflow?.lanes?.find(l => l.id === laneId)
   return lane?.name || 'Unknown'
 }
 
@@ -321,11 +329,10 @@ const formatTime = (minutes: number) => {
 
 // Calculate optimal zoom based on container width
 const calculateOptimalZoom = () => {
-  if (ganttTimeline.value && props.schedule.length > 0) {
+  if (ganttTimeline.value && props.schedule && props.schedule.length > 0) {
     const containerWidth = ganttTimeline.value.offsetWidth - 100 // Account for padding
     const maxTime = Math.max(...props.schedule.map(t => t.endTime), 120)
     const optimalZoom = Math.max(1, Math.min(10, Math.floor(containerWidth / maxTime)))
-    console.log(`Calculating optimal zoom: containerWidth=${containerWidth}, maxTime=${maxTime}, optimal=${optimalZoom}`)
     return optimalZoom
   }
   return 2

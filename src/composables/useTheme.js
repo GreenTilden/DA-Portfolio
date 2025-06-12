@@ -28,6 +28,7 @@ const themes = {
     '--success-color': 'rgba(16, 185, 129, 1)',
     '--error-color': 'rgba(239, 68, 68, 1)',
     '--warning-color': 'rgba(245, 158, 11, 1)',
+    '--info-color': 'rgba(78, 204, 163, 1)',
     '--shadow-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.2)',
     '--shadow-md': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     '--shadow-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
@@ -59,9 +60,18 @@ const themes = {
     '--success-color': 'rgba(16, 185, 129, 1)',
     '--error-color': 'rgba(239, 68, 68, 1)',
     '--warning-color': 'rgba(245, 158, 11, 1)',
+    '--info-color': 'rgba(59, 130, 246, 1)',
     '--shadow-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.2)',
     '--shadow-md': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    '--shadow-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+    '--shadow-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    '--radius-lg': '16px',
+    '--radius-md': '12px',
+    '--radius-sm': '8px',
+    '--radius-xs': '4px',
+    '--spacing-lg': '1.5rem',
+    '--spacing-md': '1rem',
+    '--spacing-sm': '0.5rem',
+    '--spacing-xs': '0.25rem'
   },
   monochrome: {
     '--bg-color': 'rgba(26, 26, 26, 1)',
@@ -90,6 +100,7 @@ const themes = {
     '--success-color': 'rgba(16, 185, 129, 1)',
     '--error-color': 'rgba(239, 68, 68, 1)',
     '--warning-color': 'rgba(245, 158, 11, 1)',
+    '--info-color': 'rgba(160, 160, 160, 1)',
     '--shadow-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.25)',
     '--shadow-md': '0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -1px rgba(0, 0, 0, 0.08)',
     '--shadow-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.07)'
@@ -121,6 +132,7 @@ const themes = {
     '--success-color': 'rgba(16, 185, 129, 1)',
     '--error-color': 'rgba(239, 68, 68, 1)',
     '--warning-color': 'rgba(245, 158, 11, 1)',
+    '--info-color': 'rgba(207, 181, 59, 1)',
     '--shadow-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.2)',
     '--shadow-md': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     '--shadow-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
@@ -152,6 +164,7 @@ const themes = {
     '--success-color': 'rgba(16, 185, 129, 1)',
     '--error-color': 'rgba(239, 68, 68, 1)',
     '--warning-color': 'rgba(245, 158, 11, 1)',
+    '--info-color': 'rgba(74, 144, 226, 1)',
     '--shadow-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.2)',
     '--shadow-md': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     '--shadow-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
