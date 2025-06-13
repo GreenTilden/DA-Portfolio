@@ -1,12 +1,38 @@
 <template>
   <div class="liquid-handler-visualizer">
-    <el-card shadow="hover" class="main-card">
-      <template #header>
-        <div class="header-content">
-          <h3>Liquid Handler Control Simulator</h3>
-          <p class="subtitle">Real-time control interface for liquid handling operations</p>
+    <!-- Streamlined Header -->
+    <header class="optimizer-header">
+      <div class="header-content">
+        <div class="header-main">
+          <h1 class="page-title">Liquid Handler Control Simulator</h1>
+          <p class="page-description">Real-time control interface for liquid handling operations</p>
         </div>
-      </template>
+        <div class="header-controls">
+          <div class="header-actions">
+            <el-button 
+              class="control-btn help-btn" 
+              title="Help & Instructions"
+              type="info"
+              size="default"
+              circle
+            >
+              <i class="fas fa-question-circle"></i>
+            </el-button>
+            <el-button 
+              class="control-btn config-btn" 
+              title="Protocol Configuration"
+              type="info"
+              size="default"
+              circle
+            >
+              <i class="fas fa-cog"></i>
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <el-card shadow="hover" class="main-card">
       
       <!-- Control Panel -->
       <div class="control-panel">
@@ -61,7 +87,7 @@
                   @dragover.prevent
                   @dragenter.prevent
                   @click="handlePositionClick(position)"
-                  @touchstart="handlePositionTouchStart($event, position)"
+                  @touchstart="handlePositionTouchStart($event)"
                   @touchend="handlePositionTouchEnd($event, position)"
                 >
                   <div class="position-label">{{ position.label }}</div>
@@ -493,7 +519,7 @@ const handleMobileLabwareSelect = (labware: LabwareItem) => {
 
 // Mobile touch handling for deck positions
 let touchStartTime = 0
-const handlePositionTouchStart = (event: TouchEvent, position: DeckPosition) => {
+const handlePositionTouchStart = (event: TouchEvent) => {
   touchStartTime = Date.now()
   event.preventDefault()
 }
@@ -630,33 +656,101 @@ onUnmounted(() => {
 <style scoped>
 /* CSS Variables for theming */
 .liquid-handler-visualizer {
-  padding: 1rem;
+  min-height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  position: relative;
   --el-color-primary: var(--primary-color);
   --el-color-success: var(--success-color);
   --el-color-warning: var(--warning-color);
   --el-color-danger: var(--error-color);
 }
 
+/* Header styles */
+.optimizer-header {
+  background: linear-gradient(135deg, var(--section-bg) 0%, var(--background-alt) 100%);
+  border-bottom: 1px solid var(--border-color);
+  padding: 2rem;
+  position: relative;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 2rem;
+}
+
+.header-main {
+  flex: 1;
+}
+
+.page-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-light);
+  line-height: 1.2;
+}
+
+.page-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+}
+
+.control-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-light);
+  border-color: var(--primary-color);
+}
+
 /* Enhanced Card Styling */
 .main-card {
   background: var(--card-bg);
   border-color: var(--border-color);
+  margin: 0 auto;
+  max-width: 1400px;
+  margin-top: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
 }
 
-.main-card :deep(.el-card__header) {
-  background: var(--section-bg);
-  border-bottom-color: var(--border-color);
-}
-
-.header-content h3 {
-  margin: 0;
-  color: var(--text-color);
-}
-
-.subtitle {
-  color: var(--text-light);
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
+.main-card :deep(.el-card__body) {
+  padding: 2rem;
 }
 
 .control-panel {
@@ -674,17 +768,33 @@ onUnmounted(() => {
 }
 
 /* Tabs Styling */
+.demo-tabs {
+  background: var(--section-bg);
+  border-bottom: 1px solid var(--border-color);
+  margin: -2rem -2rem 2rem -2rem;
+}
+
 .demo-tabs :deep(.el-tabs__nav-wrap) {
   background: var(--section-bg);
-  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0 2rem;
 }
 
 .demo-tabs :deep(.el-tabs__item) {
-  color: var(--text-light);
+  color: var(--text-muted);
+  padding: 1rem 0;
+  margin-right: 2rem;
 }
 
 .demo-tabs :deep(.el-tabs__item.is-active) {
   color: var(--primary-color);
+}
+
+.demo-tabs :deep(.el-tabs__content) {
+  padding: 0;
+}
+
+.demo-tabs :deep(.el-tab-pane) {
+  padding: 0;
 }
 
 .visualization-area {
@@ -724,7 +834,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
   min-height: 150px;
@@ -751,7 +861,7 @@ onUnmounted(() => {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .deck-position.mobile-selectable:active {
@@ -761,7 +871,7 @@ onUnmounted(() => {
 .deck-position.pending {
   border-color: var(--primary-color);
   background: rgba(var(--primary-rgb, 74, 144, 226), 0.2);
-  animation: pulse 1.5s infinite;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes pulse {
@@ -859,7 +969,7 @@ onUnmounted(() => {
   border: 2px solid var(--border-color);
   border-radius: 0.5rem;
   cursor: grab;
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .labware-item:hover {
@@ -885,7 +995,7 @@ onUnmounted(() => {
 
 .protocol-card {
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .protocol-card:hover {
@@ -923,8 +1033,37 @@ onUnmounted(() => {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .liquid-handler-visualizer {
-    padding: 0.5rem;
+  .optimizer-header {
+    padding: 1.5rem 1rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+  
+  .header-main {
+    text-align: center;
+  }
+  
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .header-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .main-card :deep(.el-card__body) {
+    padding: 1rem;
+  }
+  
+  .demo-tabs :deep(.el-tabs__nav-wrap) {
+    padding: 0 1rem;
+    justify-content: center;
   }
   
   .visualization-area {
@@ -979,8 +1118,8 @@ onUnmounted(() => {
 /* Smooth theme transitions */
 .liquid-handler-visualizer,
 .liquid-handler-visualizer * {
-  transition: background-color 0.3s ease, 
-              border-color 0.3s ease, 
-              color 0.3s ease;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

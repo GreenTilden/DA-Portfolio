@@ -27,6 +27,37 @@ Line Z: Remove [code to remove]
 - Use `scoped` styles to prevent conflicts
 - Implement consistent spacing with rem units
 
+## Demo Component Layout Standards
+
+### Header Structure Requirements
+All demo components MUST follow the unified header pattern:
+- Use `<header class="optimizer-header">` with gradient background
+- Structure: `header-content > header-main + header-controls`
+- Title hierarchy: h1.page-title + p.page-description
+- Controls: Circle buttons for help and configuration actions
+
+### Layout Architecture
+- **Container**: `min-height: 100vh` with `background: var(--bg-color)`
+- **Content**: `max-width: 1400px` centered containers
+- **Padding**: `2rem` for desktop, `1rem` for mobile
+- **No el-card wrappers**: Use native header + content structure
+
+### Animation Consistency
+- **Standard transitions**: `transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1)`
+- **Pulse animations**: `2s` duration for breathing effects
+- **Hover effects**: Consistent transform and shadow patterns
+
+### Element Plus Integration
+- **Mandatory usage**: Always use Element Plus components instead of HTML elements
+- **Button standards**: Specify `type` and `size` attributes
+- **Color variables**: Map to theme variables (--el-color-primary: var(--primary-color))
+- **Touch targets**: Minimum 44px for mobile interfaces
+
+### Tab Content Guidelines
+- **Navigation padding**: `padding: 0 2rem` for tab containers
+- **Content spacing**: Proper margins to prevent border contact
+- **Element Plus tabs**: Use native tab styling over custom implementations
+
 ### Modal & Overlay Best Practices
 - Use CSS Grid for modal item layouts with responsive columns
 - Apply `aspect-ratio: 1` for square modal items (instruments/tasks)

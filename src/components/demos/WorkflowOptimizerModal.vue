@@ -223,7 +223,7 @@
     >
       <div class="instruments-grid">
         <div 
-          v-for="(tasks, instrument) in INSTRUMENTS"
+          v-for="instrument in Object.keys(INSTRUMENTS)"
           :key="instrument"
           class="instrument-item"
           @click="selectInstrument(instrument)"

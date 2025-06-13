@@ -10,14 +10,15 @@
       </header>
 
       <div class="demo-selection">
-        <button 
+        <el-button 
           v-for="(demo, index) in demos" 
           :key="index"
-          :class="['demo-button', { active: activeDemo === index }]"
+          :type="activeDemo === index ? 'primary' : 'default'"
           @click="switchDemo(index)"
+          size="large"
         >
           {{ demo.title }}
-        </button>
+        </el-button>
       </div>
 
       <div class="demo-container">
@@ -25,7 +26,7 @@
           <h3>Demo temporarily unavailable</h3>
           <p>We're experiencing technical difficulties with this demo. Please try another demo or refresh the page.</p>
           <p><strong>Error details:</strong> {{ errorDetails }}</p>
-          <button @click="resetDemo" class="demo-button">Reset Demo</button>
+          <el-button @click="resetDemo" type="primary">Reset Demo</el-button>
         </div>
         <component 
           v-else-if="demos[activeDemo] && demos[activeDemo].component"
@@ -183,28 +184,7 @@ export default {
   margin-bottom: 2rem;
 }
 
-.demo-button {
-  background-color: var(--bg-light);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.demo-button:hover {
-  background-color: #f0f4f8;
-  border-color: #cfd9e6;
-}
-
-.demo-button.active {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
+/* Using Element Plus buttons now */
 
 .demo-container {
   margin-bottom: 3rem;
@@ -294,9 +274,12 @@ export default {
     font-size: 1.1rem;
   }
   
-  .demo-button {
+  .demo-selection {
+    flex-direction: column;
+  }
+  
+  .demo-selection .el-button {
     width: 100%;
-    text-align: center;
   }
 }
 </style>

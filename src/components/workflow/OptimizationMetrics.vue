@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Metrics } from '@/types/workflow'
 
 interface Props {
@@ -162,6 +162,7 @@ interface Insight {
 
 const props = defineProps<Props>()
 
+// Used in template with $emit calls
 const emit = defineEmits<{
   'metric-clicked': [metric: string]
 }>()

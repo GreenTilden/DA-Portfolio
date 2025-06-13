@@ -66,7 +66,7 @@
                 class="action-btn delete"
                 @click="handleDeleteLane(lane.id)"
                 title="Delete lane"
-                :disabled="selectedWorkflow?.lanes.length <= 1"
+                :disabled="(selectedWorkflow?.lanes?.length || 0) <= 1"
               >
                 <i class="fas fa-trash"></i>
               </button>

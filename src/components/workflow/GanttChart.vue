@@ -30,6 +30,7 @@
           <div 
             class="workflow-group-header"
             :class="`workflow-${group.workflowId}`"
+            :style="{ background: getWorkflowColors[group.workflowId]?.background }"
             @click="toggleWorkflowGroup(group.workflowId)"
           >
             <div class="workflow-header-content">
@@ -96,9 +97,13 @@
             <div 
               class="workflow-group-timeline-header"
               :class="`workflow-${group.workflowId}`"
+              :style="{ background: getWorkflowColors[group.workflowId]?.background }"
               v-if="!group.collapsed"
             >
-              <div class="workflow-separator-line"></div>
+              <div 
+                class="workflow-separator-line"
+                :style="{ background: getWorkflowColors[group.workflowId]?.background }"
+              ></div>
             </div>
             
             <div v-if="!group.collapsed" class="workflow-lanes-timeline">
@@ -122,7 +127,9 @@
                   ]"
                   :style="{
                     left: `${task.startTime * currentPixelsPerMinute}px`,
-                    width: `${Math.max(task.duration * currentPixelsPerMinute, 60)}px`
+                    width: `${Math.max(task.duration * currentPixelsPerMinute, 60)}px`,
+                    background: getWorkflowColors[task.workflowId]?.background,
+                    color: getWorkflowColors[task.workflowId]?.text
                   }"
                   @click="$emit('task-clicked', task)"
                   @mouseenter="showTooltip($event, task)"
@@ -145,7 +152,11 @@
     
     <div class="gantt-legend">
       <div v-for="workflow in workflows" :key="workflow.id" class="legend-item">
-        <div class="legend-color" :class="`workflow-${workflow.id}`"></div>
+        <div 
+          class="legend-color" 
+          :class="`workflow-${workflow.id}`"
+          :style="{ background: getWorkflowColors[workflow.id]?.background }"
+        ></div>
         <span>{{ workflow.name }}</span>
       </div>
       <div class="legend-item">
@@ -193,7 +204,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import type { ScheduledTask, Workflow } from '@/types/workflow'
-import { INSTRUMENT_ICONS } from '@/constants/instruments'
+import { INSTRUMENT_ICONS, getInstrumentColor, getInstrumentTextColor, INSTRUMENT_COLOR_SCHEMES } from '@/constants/instruments'
+import { useTheme } from '@/composables/useTheme'
 
 interface Props {
   schedule: ScheduledTask[]
@@ -217,6 +229,28 @@ const tooltip = ref({
   visible: false,
   task: null as ScheduledTask | null,
   style: {}
+})
+
+// Theme integration
+const { currentTheme } = useTheme()
+
+// Generate theme-aware workflow colors
+const getWorkflowColors = computed(() => {
+  const instrumentTypes = Object.keys(INSTRUMENT_ICONS)
+  const workflowColors: Record<string, { background: string; text: string }> = {}
+  
+  props.workflows?.forEach((workflow, index) => {
+    const instrumentType = instrumentTypes[index % instrumentTypes.length]
+    const bgColor = getInstrumentColor(instrumentType, currentTheme.value)
+    const textColor = getInstrumentTextColor(instrumentType, currentTheme.value)
+    
+    workflowColors[workflow.id] = {
+      background: `linear-gradient(135deg, ${bgColor} 0%, ${bgColor}dd 100%)`,
+      text: textColor
+    }
+  })
+  
+  return workflowColors
 })
 
 // Calculate the actual timeline width based on max end time
@@ -464,7 +498,7 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0.375rem 0.5rem;
   border-radius: 0.25rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.875rem;
 }
 
@@ -547,7 +581,7 @@ onUnmounted(() => {
   min-height: 60px;
   padding: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-bottom: 1px solid var(--border-color);
   position: relative;
   background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 100%);
@@ -567,7 +601,7 @@ onUnmounted(() => {
 .collapse-icon {
   font-size: 0.75rem;
   color: var(--text-muted);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .workflow-name {
@@ -631,7 +665,7 @@ onUnmounted(() => {
   font-size: 0.875rem;
   color: var(--text-light);
   background-color: var(--section-bg);
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gantt-row-header.alternate-row {
@@ -711,7 +745,7 @@ onUnmounted(() => {
   height: 100%;
   background: #e74c3c;
   box-shadow: 0 0 4px rgba(231, 76, 60, 0.5);
-  animation: pulse-now 2s ease-in-out infinite;
+  animation: pulse-now 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .now-label {
@@ -765,7 +799,7 @@ onUnmounted(() => {
   position: relative;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   width: 100%;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gantt-row.alternate-row {
@@ -777,25 +811,27 @@ onUnmounted(() => {
   position: absolute;
   height: 32px;
   top: 4px;
-  border-radius: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 10px;
   font-size: 12px;
-  color: white;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
   white-space: nowrap;
   min-width: 60px;
+  backdrop-filter: blur(1px);
 }
 
 .gantt-task:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   z-index: 20;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .gantt-task-content {
@@ -808,7 +844,8 @@ onUnmounted(() => {
 .task-icon {
   font-size: 14px;
   flex-shrink: 0;
-  opacity: 0.9;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .task-info {
@@ -819,43 +856,26 @@ onUnmounted(() => {
 }
 
 .task-name {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 11px;
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .task-type {
   font-size: 10px;
-  opacity: 0.8;
+  opacity: 0.9;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 
-/* Workflow colors with gradients */
-.workflow-workflow-a, .workflow-workflow-a .workflow-separator-line {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-}
-
-.workflow-workflow-b, .workflow-workflow-b .workflow-separator-line {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-}
-
-.workflow-workflow-c, .workflow-workflow-c .workflow-separator-line {
-  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-}
-
-.workflow-workflow-d, .workflow-workflow-d .workflow-separator-line {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-}
-
-.workflow-workflow-e, .workflow-workflow-e .workflow-separator-line {
-  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-}
+/* Dynamic workflow colors based on theme */
 
 /* Conflict styling */
 .gantt-task.conflict {
@@ -876,7 +896,7 @@ onUnmounted(() => {
   min-width: 200px;
   max-width: 300px;
   backdrop-filter: blur(10px);
-  animation: tooltip-appear 0.2s ease-out;
+  animation: tooltip-appear 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes tooltip-appear {

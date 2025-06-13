@@ -3,7 +3,7 @@
     <!-- Horizontal Instruments Row -->
     <div class="instruments-horizontal-row">
       <div 
-        v-for="(tasks, instrument) in instruments"
+        v-for="instrument in Object.keys(instruments)"
         :key="instrument"
         class="instrument-container"
         @click="toggleInstrumentDrawer(instrument)"
@@ -33,6 +33,7 @@
                   v-for="(task, index) in getStandardTasks(instrument)"
                   :key="`${instrument}-${task}-${index}`"
                   :task="{
+                    id: `${instrument}-${task}-${index}`,
                     type: instrument,
                     task: task,
                     duration: defaultDurations[instrument]
@@ -91,7 +92,7 @@
                   <label>Instrument Type</label>
                   <select v-model="customTask.type" class="form-control">
                     <option 
-                      v-for="(tasks, instrument) in instruments" 
+                      v-for="instrument in Object.keys(instruments)" 
                       :key="instrument" 
                       :value="instrument"
                     >
@@ -150,11 +151,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, shallowRef } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import type { InstrumentTask, CustomTask, DragItem } from '@/types/workflow'
 import { INSTRUMENTS, DEFAULT_DURATIONS, INSTRUMENT_ICONS } from '@/constants/instruments'
-import { AVAILABLE_ICONS } from '@/constants/icons'
-import InstrumentDrawer from '@/components/InstrumentDrawer.vue'
+// Removed unused import AVAILABLE_ICONS
+// Removed unused import InstrumentDrawer
 import TaskCard from '@/components/TaskCard.vue'
 import DurationEditor from '@/components/DurationEditor.vue'
 
@@ -192,7 +193,7 @@ const customTask = reactive({
 // Data
 const instruments = INSTRUMENTS
 const defaultDurations = DEFAULT_DURATIONS
-const availableIcons = AVAILABLE_ICONS
+// Removed unused availableIcons variable
 
 // Computed
 const isCustomTaskValid = computed(() => {
@@ -205,12 +206,7 @@ const isCustomTaskValid = computed(() => {
   )
 })
 
-const customTaskPreview = computed(() => ({
-  type: customTask.type,
-  task: customTask.task || 'Task Name',
-  duration: customTask.duration,
-  customIcon: customTask.customIcon || undefined
-}))
+// Removed unused customTaskPreview computed property
 
 const customTasksForInstrument = computed(() => {
   const grouped: Record<string, CustomTask[]> = {}
@@ -229,22 +225,11 @@ const getInstrumentIcon = (type: string): string => {
   return INSTRUMENT_ICONS[type] || 'fas fa-cog'
 }
 
-const getStandardTasks = (instrument: string): string[] => {
+const getStandardTasks = (instrument: string): readonly string[] => {
   return instruments[instrument as keyof typeof instruments] || []
 }
 
-const getCombinedTasksForInstrument = (instrument: string): any[] => {
-  const standardTasks = getStandardTasks(instrument).map(task => ({
-    type: instrument,
-    task,
-    duration: defaultDurations[instrument],
-    isCustom: false
-  }))
-  
-  const customTasks = customTasksForInstrument.value[instrument] || []
-  
-  return [...standardTasks, ...customTasks]
-}
+// Removed unused getCombinedTasksForInstrument function
 
 const handleAddCustomTask = () => {
   if (!isCustomTaskValid.value) return

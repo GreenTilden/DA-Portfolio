@@ -8,7 +8,7 @@
           <div class="hero-content">
             <h1 class="hero-title">Automation Excellence</h1>
             <h2 class="hero-role">{{ currentRole }}</h2>
-            <p class="intro-paragraph">Leveraging over 10 years in laboratory automation designing, implementing, and optimizing scientific workflows for labratories. </p>
+            <p class="intro-paragraph">Leveraging over 10 years in laboratory automation designing, implementing, and optimizing scientific workflows for laboratories. </p>
             <p class="intro-paragraph">My mission is to empower laboratories to achieve their goals through innovative solutions that enhance productivity, accuracy, 
   and regulatory compliance.</p>
             <p class="tagline">{{ currentTagline }}</p>

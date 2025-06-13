@@ -225,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import type { Step } from '@/types/workflow'
 import { useDragDrop } from '@/composables/useDragDrop'
 import { useTouchDragDrop } from '@/composables/useTouchDragDrop'
@@ -243,9 +243,7 @@ const props = withDefaults(defineProps<Props>(), {
   canAddTask: true
 })
 
-const emit = defineEmits<{
-  'update:tasks': [tasks: Step[]]
-}>()
+// Removed unused emit
 
 // Refs
 const taskContainer = ref<HTMLElement | null>(null)
@@ -275,7 +273,6 @@ const dragHandlers = {
 }
 
 const { 
-  touchState, 
   handleTouchStart: touchDragStart, 
   handleTouchMove: touchDragMove, 
   handleTouchEnd: touchDragEnd 

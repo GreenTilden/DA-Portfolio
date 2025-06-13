@@ -31,9 +31,14 @@
           <el-tag :type="getWorkflowTagType(workflow.priority)" size="small">
             Priority {{ workflow.priority }}
           </el-tag>
-          <button class="add-lane-btn" @click="addNewLane(workflow)">
+          <el-button 
+            type="success" 
+            size="small" 
+            @click="addNewLane(workflow)"
+            class="add-lane-btn"
+          >
             <i class="fas fa-plus"></i> Add Lane
-          </button>
+          </el-button>
         </div>
       </div>
       
@@ -57,23 +62,38 @@
                   class="edit-name-input"
                 />
                 <div class="edit-actions">
-                  <button @click="saveLaneName(lane)" class="edit-action-btn save-btn">
+                  <el-button 
+                    @click="saveLaneName(lane)" 
+                    type="success" 
+                    size="small" 
+                    circle
+                    class="edit-action-btn save-btn"
+                  >
                     <i class="fas fa-check"></i>
-                  </button>
-                  <button @click="cancelEditLaneName(lane)" class="edit-action-btn cancel-btn">
+                  </el-button>
+                  <el-button 
+                    @click="cancelEditLaneName(lane)" 
+                    type="danger" 
+                    size="small" 
+                    circle
+                    class="edit-action-btn cancel-btn"
+                  >
                     <i class="fas fa-times"></i>
-                  </button>
+                  </el-button>
                 </div>
               </div>
             </div>
-            <button 
+            <el-button 
               class="remove-lane-btn-top" 
               @click="removeLane(workflow, lane)" 
               v-if="workflow.lanes.length > 1"
               title="Remove lane"
+              type="danger"
+              size="small"
+              circle
             >
               <i class="fas fa-trash-alt"></i>
-            </button>
+            </el-button>
           </div>
           
           <div 
@@ -102,7 +122,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, inject } from 'vue'
-import type { Workflow, Lane, Step, DragItem } from '@/types/workflow'
+import type { Workflow, Lane, Step } from '@/types/workflow'
 import WorkflowStep from './WorkflowStep.vue'
 
 interface Props {
@@ -118,7 +138,6 @@ const emit = defineEmits<{
 }>()
 
 // Inject drag handlers from parent
-const dragState = inject<any>('dragState')
 const dragHandlers = inject<any>('dragHandlers')
 
 // Name editing refs
@@ -254,7 +273,7 @@ const handleDrop = (event: DragEvent, workflow: Workflow, lane: Lane) => {
   dragHandlers.handleDrop(event, workflow.id, lane.id)
 }
 
-const handleStepDragStart = (event: DragEvent, step: Step) => {
+const handleStepDragStart = () => {
   // This will be handled by the WorkflowStep component
   // But we can add any additional logic here if needed
 }
@@ -313,7 +332,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   align-items: center;
   gap: 0.3rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .add-lane-btn:hover {
@@ -361,7 +380,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   background-color: var(--bg-color);
   border: 2px dashed var(--border-color);
   border-radius: 0.25rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow-x: auto;
   overflow-y: hidden;
@@ -413,7 +432,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
 }
 
@@ -511,7 +530,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   bottom: 0;
   background: transparent;
   pointer-events: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lane-steps.drag-over::before {
@@ -545,7 +564,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   justify-content: center;
   cursor: pointer;
   font-size: 0.8rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .remove-lane-btn:hover {
@@ -568,7 +587,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
 }
 
@@ -582,7 +601,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   font-size: 0.75rem;
   margin-left: 0.5rem;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--primary-color);
 }
 
@@ -623,7 +642,7 @@ const handleStepDragStart = (event: DragEvent, step: Step) => {
   cursor: pointer;
   padding: 0;
   font-size: 0.75rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .save-btn {

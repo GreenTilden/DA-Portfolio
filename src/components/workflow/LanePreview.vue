@@ -38,7 +38,7 @@
       <!-- Compact step blocks -->
       <div class="steps-row">
         <div 
-          v-for="(step, index) in lane.steps.slice(0, maxSteps)" 
+          v-for="step in lane.steps.slice(0, maxSteps)" 
           :key="step.id"
           class="step-dot"
           :class="getStepClass(step)"
@@ -127,6 +127,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxSteps: 8
 })
 
+// Used in template with $emit('select', lane.id)
 const emit = defineEmits<{
   select: [laneId: string]
 }>()

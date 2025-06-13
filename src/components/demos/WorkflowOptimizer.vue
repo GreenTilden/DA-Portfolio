@@ -9,22 +9,46 @@
         </div>
         <div class="header-controls">
           <div class="header-actions">
-            <button class="control-btn help-btn" @click="toggleInstructions" title="Help & Instructions">
+            <el-button 
+              class="control-btn help-btn" 
+              @click="toggleInstructions" 
+              title="Help & Instructions"
+              type="info"
+              size="default"
+              circle
+            >
               <i class="fas fa-question-circle"></i>
-            </button>
-            <button class="control-btn config-btn" @click="showInstrumentConfig = true" title="Instrument Configuration">
+            </el-button>
+            <el-button 
+              class="control-btn config-btn" 
+              @click="showInstrumentConfig = true" 
+              title="Instrument Configuration"
+              type="info"
+              size="default"
+              circle
+            >
               <i class="fas fa-cog"></i>
-            </button>
+            </el-button>
           </div>
-          <button class="optimize-button" @click="handleOptimizeSchedule" :disabled="isOptimizing || workflows.length === 0">
-            <div class="optimize-icon">
-              <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
+          <el-button 
+            class="optimize-button" 
+            @click="handleOptimizeSchedule" 
+            :disabled="isOptimizing || workflows.length === 0"
+            type="primary"
+            size="large"
+            :loading="isOptimizing"
+          >
+            <template #loading>
+              <i class="fas fa-spinner fa-spin"></i>
+            </template>
+            <div class="optimize-icon" v-if="!isOptimizing">
+              <i class="fas fa-magic"></i>
             </div>
             <div class="optimize-text">
               <span class="optimize-label">{{ isOptimizing ? 'Optimizing...' : 'Optimize Schedule' }}</span>
               <span class="optimize-count" v-if="workflows.length > 0">{{ workflows.length }} workflow{{ workflows.length === 1 ? '' : 's' }}</span>
             </div>
-          </button>
+          </el-button>
         </div>
       </div>
     </header>
@@ -118,9 +142,14 @@
             </div>
             <h3>No Workflows Yet</h3>
             <p>Create your first workflow to get started with laboratory automation optimization</p>
-            <button class="action-button primary" @click="openWorkflowCreation">
+            <el-button 
+              class="action-button" 
+              @click="openWorkflowCreation"
+              type="primary"
+              size="large"
+            >
               <i class="fas fa-plus"></i> Create Workflow
-            </button>
+            </el-button>
           </div>
 
           <!-- Workflow Grid -->
@@ -130,10 +159,15 @@
                 <i class="fas fa-project-diagram"></i>
                 Active Workflows ({{ workflows.length }})
               </h2>
-              <button class="action-button primary" @click="openWorkflowCreation">
+              <el-button 
+                class="action-button" 
+                @click="openWorkflowCreation"
+                type="primary"
+                size="default"
+              >
                 <i class="fas fa-plus"></i>
                 <span class="button-text">Create Workflow</span>
-              </button>
+              </el-button>
             </div>
 
             <!-- Workflow Thumbnails -->
@@ -158,9 +192,14 @@
             </div>
             <h3>No Schedule Generated</h3>
             <p>Click the Optimize button to generate an optimized schedule for your workflows</p>
-            <button class="action-button primary" @click="activeTab = 'builder'">
+            <el-button 
+              class="action-button" 
+              @click="activeTab = 'builder'"
+              type="primary"
+              size="large"
+            >
               <i class="fas fa-arrow-left"></i> Back to Builder
-            </button>
+            </el-button>
           </div>
 
           <!-- Results Content -->
@@ -210,14 +249,17 @@
 
     <!-- Floating Action Button for Adding Tasks -->
     <transition name="fab-scale">
-      <button 
+      <el-button 
         v-if="activeTab === 'builder' && workflows.length > 0"
         class="fab-add-task"
         @click="openTaskAddition"
         title="Add task to workflow"
+        type="primary"
+        size="large"
+        circle
       >
         <i class="fas fa-plus"></i>
-      </button>
+      </el-button>
     </transition>
 
     <!-- Modal Workflow Flow Controller -->
@@ -263,7 +305,7 @@
     >
       <div class="instruments-grid">
         <div 
-          v-for="(tasks, instrument) in INSTRUMENTS"
+          v-for="instrument in Object.keys(INSTRUMENTS)"
           :key="instrument"
           class="instrument-item"
           @click="selectInstrument(instrument)"
@@ -394,7 +436,7 @@ import LaneSelectModal from '@/components/workflow/LaneSelectModal.vue'
 import LaneEditorModal from '@/components/workflow/LaneEditorModal.vue'
 import MultiLaneEditor from '@/components/workflow/MultiLaneEditor.vue'
 import WorkflowThumbnail from '@/components/workflow/WorkflowThumbnail.vue'
-import OptimizationMetrics from '@/components/workflow/OptimizationMetrics.vue'
+// Removed unused import OptimizationMetrics
 import GanttChart from '@/components/workflow/GanttChart.vue'
 
 // State management
@@ -402,7 +444,6 @@ const {
   workflows,
   instrumentConfig,
   schedule,
-  metrics,
   isOptimizing,
   updateSchedule,
   updateMetrics,
@@ -562,23 +603,7 @@ const openWorkflowCreation = () => {
   openFromPreview()
 }
 
-const openWorkflowEditor = (workflowId: string) => {
-  // Find the workflow
-  const workflow = workflows.value.find(w => w.id === workflowId)
-  
-  if (workflow) {
-    if (workflow.lanes.length === 1) {
-      // If only one lane, go directly to lane editor
-      openFromPreview(workflowId, workflow.lanes[0].id)
-    } else {
-      // If multiple lanes, go to lane selection
-      openFromPreview(workflowId)
-    }
-  } else {
-    // Fallback to workflow selection
-    openFromPreview()
-  }
-}
+// Removed unused openWorkflowEditor function
 
 const openTaskAddition = () => {
   showInstrumentSelection.value = true
@@ -653,9 +678,7 @@ const saveInstrumentConfig = () => {
   showInstrumentConfig.value = false
 }
 
-const handleMetricClicked = (metric: string) => {
-  console.log('Metric clicked:', metric)
-}
+// Removed unused handleMetricClicked function
 
 const handleTaskClicked = (task: any) => {
   console.log('Task clicked:', task)
@@ -859,7 +882,7 @@ const generateOptimizationInsights = () => {
   border-radius: 8px;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 1rem;
 }
 
@@ -879,7 +902,7 @@ const generateOptimizationInsights = () => {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 180px;
 }
 
@@ -1050,7 +1073,7 @@ const generateOptimizationInsights = () => {
   font-weight: 500;
   cursor: pointer;
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-button:hover {
@@ -1069,7 +1092,7 @@ const generateOptimizationInsights = () => {
   height: 2px;
   background: var(--primary-color);
   transform: scaleX(0);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-button.active .tab-indicator {
@@ -1179,7 +1202,7 @@ const generateOptimizationInsights = () => {
   padding: 1.5rem;
   display: flex;
   gap: 1rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1252,7 +1275,7 @@ const generateOptimizationInsights = () => {
   font-size: 1.5rem;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -1281,7 +1304,7 @@ const generateOptimizationInsights = () => {
   border: 2px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .instrument-item:hover {
@@ -1323,7 +1346,7 @@ const generateOptimizationInsights = () => {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .task-item:hover {
@@ -1380,7 +1403,7 @@ const generateOptimizationInsights = () => {
 .progress-bar {
   height: 100%;
   background: var(--primary-color);
-  animation: loading-progress 2s ease-in-out infinite;
+  animation: loading-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes loading-progress {
@@ -1450,7 +1473,7 @@ const generateOptimizationInsights = () => {
   justify-content: center;
   border-radius: 6px;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .config-details {
@@ -1471,11 +1494,11 @@ const generateOptimizationInsights = () => {
 
 /* Transitions */
 .slide-fade-enter-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .slide-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .slide-fade-enter-from,
@@ -1486,7 +1509,7 @@ const generateOptimizationInsights = () => {
 
 .tab-fade-enter-active,
 .tab-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-fade-enter-from,
@@ -1497,7 +1520,7 @@ const generateOptimizationInsights = () => {
 
 .fab-scale-enter-active,
 .fab-scale-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fab-scale-enter-from,
@@ -1508,7 +1531,7 @@ const generateOptimizationInsights = () => {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-enter-from,

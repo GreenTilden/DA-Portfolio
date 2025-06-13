@@ -272,7 +272,6 @@ const drawConnections = async () => {
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
       
       // Create a curved path
-      const midX = (start.x + end.x) / 2
       const controlY1 = start.y - 15
       const controlY2 = end.y - 15
       

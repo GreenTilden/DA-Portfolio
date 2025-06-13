@@ -40,7 +40,6 @@ export function useTouchDragDropEnhanced(
     longPressDelay = 300,
     moveThreshold = 8,
     hapticFeedback = true,
-    showDropPreview = true,
     elasticScroll = true
   } = options
 
@@ -62,7 +61,6 @@ export function useTouchDragDropEnhanced(
   })
 
   // Visual feedback elements
-  const dropPreview = ref<HTMLElement | null>(null)
   const longPressIndicator = ref<HTMLElement | null>(null)
 
   // Haptic feedback helper
@@ -104,7 +102,7 @@ export function useTouchDragDropEnhanced(
   }
 
   // Create long press indicator
-  const createLongPressIndicator = (element: HTMLElement, touch: Touch): HTMLElement => {
+  const createLongPressIndicator = (touch: Touch): HTMLElement => {
     const indicator = document.createElement('div')
     indicator.className = 'long-press-indicator'
     indicator.style.cssText = `
@@ -343,7 +341,7 @@ export function useTouchDragDropEnhanced(
     targetElement.classList.add('touch-active')
     
     // Start long press timer
-    longPressIndicator.value = createLongPressIndicator(targetElement, touch)
+    longPressIndicator.value = createLongPressIndicator(touch)
     
     touchState.longPressTimer = setTimeout(() => {
       if (!touchState.dragStarted && touchState.startPosition) {

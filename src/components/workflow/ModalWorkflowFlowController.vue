@@ -330,14 +330,7 @@ const dialogVisible = computed({
 
 const steps = ['workflow-selection', 'lane-selection', 'multi-lane-editor', 'lane-editor'] as const
 
-const currentStepIndex = computed(() => {
-  return steps.indexOf(currentStep.value)
-})
-
-// Check if we're in workflow-builder mode (which is actually lane-selection)
-const isWorkflowBuilder = computed(() => {
-  return currentStep.value === 'lane-selection'
-})
+// Removed unused computed properties currentStepIndex and isWorkflowBuilder
 
 // Calculate dynamic modal width based on number of lanes
 const dynamicModalWidth = computed(() => {
@@ -457,12 +450,7 @@ const selectedLane = computed(() => {
   return selectedWorkflow.value.lanes.find(l => l.id === selectedLaneId.value) || null
 })
 
-// Get workflow number (for display)
-const getWorkflowNumber = (): string => {
-  if (!selectedWorkflow.value) return '1'
-  const index = workflows.value.findIndex(w => w.id === selectedWorkflow.value!.id)
-  return (index + 1).toString()
-}
+// Removed unused getWorkflowNumber function
 
 // Get total unique instruments across all lanes
 const getTotalInstruments = (): number => {
@@ -488,14 +476,7 @@ const getLaneDuration = (lane?: Lane): number => {
   return Math.round(total)
 }
 
-// Get unique instruments in a lane
-const getLaneInstruments = (lane: Lane): number => {
-  const instruments = new Set<string>()
-  lane.steps.forEach(step => {
-    instruments.add(step.type)
-  })
-  return instruments.size
-}
+// Removed unused getLaneInstruments function
 
 // Get step icon component for Element Plus
 const getStepIconComponent = (stepType: string) => {
@@ -523,19 +504,7 @@ const getStepColor = (stepType: string): string => {
   return colorMap[stepType] || '#409eff'
 }
 
-// Legacy icon helper (for backward compatibility)
-const getStepIcon = (step: any): string => {
-  if (step.customIcon) return step.customIcon
-  const iconMap: Record<string, string> = {
-    'Liquid Handler': 'fas fa-flask',
-    'Plate Reader': 'fas fa-microscope',
-    'Incubator': 'fas fa-thermometer-half',
-    'Centrifuge': 'fas fa-redo-alt',
-    'Washer': 'fas fa-shower',
-    'Dispenser': 'fas fa-tint'
-  }
-  return iconMap[step.type] || 'fas fa-cog'
-}
+// Removed unused getStepIcon function (legacy)
 
 // Event handlers
 const handleWorkflowSelect = (workflowId: string): void => {
@@ -574,12 +543,7 @@ const goBackToMultiLane = (): void => {
   }
 }
 
-const handleBack = (): void => {
-  // Implementation for going back in the modal flow
-  if (currentStep.value === 'lane-editor' && selectedWorkflowId.value) {
-    goToLaneSelection(selectedWorkflowId.value)
-  }
-}
+// Removed unused handleBack function
 
 const handleClose = (): void => {
   completeWorkflow()

@@ -1,5 +1,5 @@
-import { reactive, ref, computed } from 'vue'
-import type { Workflow, Lane, Step } from '@/types/workflow'
+import { reactive, computed } from 'vue'
+import type { Step } from '@/types/workflow'
 
 export type ModalStep = 'workflow-selection' | 'lane-selection' | 'multi-lane-editor' | 'lane-editor'
 

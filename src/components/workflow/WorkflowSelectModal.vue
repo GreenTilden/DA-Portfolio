@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+// Removed unused computed import
 import type { Workflow } from '@/types/workflow'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { INSTRUMENT_ICONS, DEFAULT_DURATIONS } from '@/constants/instruments'

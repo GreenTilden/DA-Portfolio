@@ -161,6 +161,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+// Used in template with $emit calls
 const emit = defineEmits<{
   'lane-click': [laneId: string]
   'add-lane': []

@@ -1,11 +1,38 @@
 <template>
   <div class="instrument-control-simulator">
-    <el-card shadow="hover">
-      <template #header>
-        <h3>Laboratory Instrument Control</h3>
-        <p class="subtitle">Real-time monitoring and control of laboratory instruments</p>
-      </template>
+    <!-- Streamlined Header -->
+    <header class="optimizer-header">
+      <div class="header-content">
+        <div class="header-main">
+          <h1 class="page-title">Laboratory Instrument Control</h1>
+          <p class="page-description">Real-time monitoring and control of laboratory instruments</p>
+        </div>
+        <div class="header-controls">
+          <div class="header-actions">
+            <el-button 
+              class="control-btn help-btn" 
+              title="Help & Instructions"
+              type="info"
+              size="default"
+              circle
+            >
+              <i class="fas fa-question-circle"></i>
+            </el-button>
+            <el-button 
+              class="control-btn config-btn" 
+              title="Instrument Configuration"
+              type="info"
+              size="default"
+              circle
+            >
+              <i class="fas fa-cog"></i>
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </header>
 
+    <div class="main-content">
       <!-- Instrument Selection and Status -->
       <div class="instrument-grid">
         <el-card 
@@ -64,18 +91,23 @@
                 type="success" 
                 @click="startInstrument"
                 :disabled="selectedInstrument.status === 'running'"
+                size="default"
               >
-                <i class="el-icon-video-play"></i> Start
+                <i class="fas fa-play"></i> Start
               </el-button>
               <el-button 
                 type="danger" 
                 @click="stopInstrument"
                 :disabled="selectedInstrument.status !== 'running'"
+                size="default"
               >
-                <i class="el-icon-video-pause"></i> Stop
+                <i class="fas fa-stop"></i> Stop
               </el-button>
-              <el-button @click="resetInstrument">
-                <i class="el-icon-refresh"></i> Reset
+              <el-button 
+                @click="resetInstrument"
+                size="default"
+              >
+                <i class="fas fa-undo"></i> Reset
               </el-button>
             </el-button-group>
           </div>
@@ -87,8 +119,8 @@
               <label>Temperature (°C)</label>
               <el-slider 
                 v-model="controlValues.temperature"
-                :min="selectedInstrument.tempRange[0]"
-                :max="selectedInstrument.tempRange[1]"
+                :min="selectedInstrument.tempRange?.[0] || 0"
+                :max="selectedInstrument.tempRange?.[1] || 100"
                 :marks="temperatureMarks"
                 show-input
               />
@@ -175,24 +207,80 @@
           </div>
         </div>
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ElNotification } from 'element-plus'
 
+// Types
+interface InstrumentMethod {
+  id: string
+  name: string
+  duration?: string
+  temp?: number
+  speed?: number
+  pressure?: number
+  wavelength?: number
+  cycles?: number
+  co2?: number
+}
+
+interface Instrument {
+  id: string
+  name: string
+  icon: string
+  status: 'idle' | 'running' | 'error' | 'maintenance'
+  temperature?: number
+  speed?: number
+  pressure?: number
+  humidity?: number
+  co2?: number
+  flowRate?: number
+  wavelength?: number
+  absorbance?: number
+  currentCycle?: number
+  totalCycles?: number
+  hasTemperature?: boolean
+  hasSpeed?: boolean
+  hasPressure?: boolean
+  hasTimer?: boolean
+  tempRange?: [number, number]
+  maxSpeed?: number
+  maxPressure?: number
+  methods?: InstrumentMethod[]
+}
+
+interface EventLogEntry {
+  timestamp: string
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+}
+
+interface DataPoint {
+  timestamp: number
+  value: number
+}
+
+interface ControlValues {
+  temperature: number
+  speed: number
+  pressure: number
+  runTime: number
+}
+
 // State
-const selectedInstrument = ref(null)
-const selectedMethod = ref('')
-const eventLog = ref([])
-const dataHistory = ref([])
-const chartInstance = ref(null)
-const chartCanvas = ref(null)
+const selectedInstrument = ref<Instrument | null>(null)
+const selectedMethod = ref<string>('')
+const eventLog = ref<EventLogEntry[]>([])
+const dataHistory = ref<DataPoint[]>([])
+// const chartInstance = ref<any>(null) // Removed unused variable
+const chartCanvas = ref<HTMLCanvasElement | null>(null)
 
 // Control values
-const controlValues = reactive({
+const controlValues = reactive<ControlValues>({
   temperature: 25,
   speed: 0,
   pressure: 0,
@@ -200,7 +288,7 @@ const controlValues = reactive({
 })
 
 // Instruments data
-const instruments = ref([
+const instruments = ref<Instrument[]>([
   {
     id: 'incubator',
     name: 'CO2 Incubator',
@@ -289,16 +377,16 @@ const instruments = ref([
     wavelength: 280,
     absorbance: 0,
     methods: [
-      { id: 'protein_quant', name: 'Protein Quantification', wavelength: 280 },
-      { id: 'dna_quant', name: 'DNA Quantification', wavelength: 260 },
-      { id: 'bradford', name: 'Bradford Assay', wavelength: 595 }
+      { id: 'protein_quant', name: 'Protein Quantification', duration: '5min', wavelength: 280 },
+      { id: 'dna_quant', name: 'DNA Quantification', duration: '3min', wavelength: 260 },
+      { id: 'bradford', name: 'Bradford Assay', duration: '10min', wavelength: 595 }
     ]
   }
 ])
 
 // Temperature marks for slider
 const temperatureMarks = computed(() => {
-  if (!selectedInstrument.value) return {}
+  if (!selectedInstrument.value?.tempRange) return {}
   const range = selectedInstrument.value.tempRange
   return {
     [range[0]]: `${range[0]}°C`,
@@ -307,7 +395,7 @@ const temperatureMarks = computed(() => {
 })
 
 // Methods
-const selectInstrument = (instrument) => {
+const selectInstrument = (instrument: Instrument) => {
   selectedInstrument.value = instrument
   selectedMethod.value = ''
   
@@ -319,8 +407,8 @@ const selectInstrument = (instrument) => {
   addEvent(`Selected ${instrument.name}`, 'info')
 }
 
-const getStatusType = (status) => {
-  const types = {
+const getStatusType = (status: string) => {
+  const types: Record<string, string> = {
     idle: 'info',
     running: 'success',
     error: 'danger',
@@ -406,7 +494,7 @@ const resetInstrument = () => {
 const applyMethod = () => {
   if (!selectedInstrument.value || !selectedMethod.value) return
   
-  const method = selectedInstrument.value.methods.find(m => m.id === selectedMethod.value)
+  const method = selectedInstrument.value.methods?.find(m => m.id === selectedMethod.value)
   if (!method) return
   
   // Apply method parameters
@@ -429,7 +517,7 @@ const applyMethod = () => {
   })
 }
 
-const addEvent = (message, type = 'info') => {
+const addEvent = (message: string, type: EventLogEntry['type'] = 'info') => {
   const timestamp = new Date().toLocaleTimeString()
   eventLog.value.unshift({ timestamp, message, type })
   
@@ -440,7 +528,7 @@ const addEvent = (message, type = 'info') => {
 }
 
 // Data collection simulation
-let dataInterval = null
+let dataInterval: ReturnType<typeof setInterval> | null = null
 
 const startDataCollection = () => {
   if (dataInterval) clearInterval(dataInterval)
@@ -526,7 +614,97 @@ watch(() => controlValues.pressure, (newVal) => {
 
 <style scoped>
 .instrument-control-simulator {
-  padding: 1rem;
+  min-height: 100vh;
+  background: var(--bg-color);
+  color: var(--text-color);
+  position: relative;
+  --el-color-primary: var(--primary-color);
+  --el-color-success: var(--success-color);
+  --el-color-warning: var(--warning-color);
+  --el-color-danger: var(--error-color);
+}
+
+/* Header styles */
+.optimizer-header {
+  background: linear-gradient(135deg, var(--section-bg) 0%, var(--background-alt) 100%);
+  border-bottom: 1px solid var(--border-color);
+  padding: 2rem;
+  position: relative;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 2rem;
+}
+
+.header-main {
+  flex: 1;
+}
+
+.page-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-light);
+  line-height: 1.2;
+}
+
+.page-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+}
+
+.control-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-light);
+  border-color: var(--primary-color);
+}
+
+.main-content {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  margin: 0 auto;
+  max-width: 1400px;
+  margin-top: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  padding: 2rem;
 }
 
 .subtitle {
@@ -544,7 +722,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .instrument-card {
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
@@ -554,7 +732,8 @@ watch(() => controlValues.pressure, (newVal) => {
 }
 
 .instrument-card.active {
-  border: 2px solid var(--primary);
+  border: 2px solid var(--primary-color);
+  background: var(--hover-bg);
 }
 
 .instrument-card.running::before {
@@ -564,12 +743,12 @@ watch(() => controlValues.pressure, (newVal) => {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--success);
-  animation: pulse 2s ease-in-out infinite;
+  background: var(--success-color);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .instrument-card.error::before {
-  background: var(--danger);
+  background: var(--error-color);
   animation: none;
 }
 
@@ -587,7 +766,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .instrument-icon {
   font-size: 2rem;
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .instrument-header h4 {
@@ -606,20 +785,20 @@ watch(() => controlValues.pressure, (newVal) => {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--text-light);
+  background: var(--text-muted);
 }
 
 .status-indicator.idle {
-  background: var(--text-light);
+  background: var(--text-muted);
 }
 
 .status-indicator.running {
-  background: var(--success);
-  animation: blink 1s ease-in-out infinite;
+  background: var(--success-color);
+  animation: blink 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .status-indicator.error {
-  background: var(--danger);
+  background: var(--error-color);
 }
 
 @keyframes blink {
@@ -641,7 +820,7 @@ watch(() => controlValues.pressure, (newVal) => {
 }
 
 .metric i {
-  color: var(--primary);
+  color: var(--primary-color);
 }
 
 .control-panel {
@@ -653,7 +832,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .control-panel h4 {
   margin-bottom: 1.5rem;
-  color: var(--text);
+  color: var(--text-color);
 }
 
 .control-group {
@@ -674,7 +853,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .control-item label {
   font-weight: 500;
-  color: var(--text);
+  color: var(--text-color);
 }
 
 .method-selection {
@@ -685,7 +864,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .method-selection label {
   font-weight: 500;
-  color: var(--text);
+  color: var(--text-color);
 }
 
 .data-visualization {
@@ -697,7 +876,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .data-visualization h4 {
   margin-bottom: 1rem;
-  color: var(--text);
+  color: var(--text-color);
 }
 
 .chart-container {
@@ -719,7 +898,7 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .event-log h4 {
   margin-bottom: 1rem;
-  color: var(--text);
+  color: var(--text-color);
 }
 
 .log-container {
@@ -737,23 +916,23 @@ watch(() => controlValues.pressure, (newVal) => {
   background: var(--bg);
   border-radius: 0.25rem;
   font-size: 0.9rem;
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--border-color);
 }
 
 .log-entry.success {
-  border-left-color: var(--success);
+  border-left-color: var(--success-color);
 }
 
 .log-entry.warning {
-  border-left-color: var(--warning);
+  border-left-color: var(--warning-color);
 }
 
 .log-entry.error {
-  border-left-color: var(--danger);
+  border-left-color: var(--error-color);
 }
 
 .log-entry.info {
-  border-left-color: var(--primary);
+  border-left-color: var(--primary-color);
 }
 
 .timestamp {
@@ -764,12 +943,12 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .message {
   flex: 1;
-  color: var(--text);
+  color: var(--text-color);
 }
 
 /* Transitions */
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-enter-from, .fade-leave-to {
@@ -778,17 +957,103 @@ watch(() => controlValues.pressure, (newVal) => {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .optimizer-header {
+    padding: 1.5rem 1rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+  
+  .header-main {
+    text-align: center;
+  }
+  
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .header-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
   .instrument-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .instrument-card {
+    min-height: 120px;
+    padding: 1rem;
   }
   
   .instrument-metrics {
     flex-wrap: wrap;
+    gap: 0.5rem;
   }
   
   .control-panel {
     padding: 1rem;
+    margin-bottom: 1rem;
   }
+  
+  .specific-controls {
+    gap: 1rem;
+  }
+  
+  .control-item {
+    gap: 0.75rem;
+  }
+  
+  .log-container {
+    max-height: 200px;
+  }
+  
+  .log-entry {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .chart-container {
+    height: 200px;
+  }
+  
+  /* Touch-friendly button sizing */
+  .el-button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .el-slider {
+    margin: 1rem 0;
+  }
+}
+
+/* Element Plus customizations */
+.instrument-control-simulator :deep(.el-button) {
+  border-color: var(--border-color);
+}
+
+.instrument-control-simulator :deep(.el-button--primary) {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.instrument-control-simulator :deep(.el-card) {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+.instrument-control-simulator :deep(.el-tag) {
+  border-color: var(--border-color);
 }
 
 /* Theme variables for Element Plus components */
@@ -802,5 +1067,21 @@ watch(() => controlValues.pressure, (newVal) => {
 
 .el-select {
   width: 100%;
+}
+
+/* Theme compatibility */
+.instrument-control-simulator {
+  --primary-rgb: var(--primary-color-rgb, 74, 144, 226);
+  --success-rgb: 16, 185, 129;
+  --warning-rgb: 245, 158, 11;
+  --error-rgb: 239, 68, 68;
+}
+
+/* Smooth theme transitions */
+.instrument-control-simulator,
+.instrument-control-simulator * {
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

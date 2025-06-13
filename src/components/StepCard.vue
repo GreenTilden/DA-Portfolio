@@ -312,21 +312,16 @@ const openFullEditor = async () => {
 }
 
 const saveFullEdit = () => {
-  let hasChanges = false
-  
   if (editDuration.value !== props.step.duration) {
     emit('duration-change', props.step.id, editDuration.value)
-    hasChanges = true
   }
   
   if (editTask.value !== props.step.task) {
     emit('task-change', props.step.id, editTask.value)
-    hasChanges = true
   }
   
   if (isLiquidHandlerTransfer.value && editTransferName.value !== (props.step.transferName || '')) {
     emit('transfer-name-change', props.step.id, editTransferName.value)
-    hasChanges = true
   }
   
   showFullEditor.value = false
@@ -345,7 +340,7 @@ const cancelFullEdit = () => {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   transform-origin: center;
