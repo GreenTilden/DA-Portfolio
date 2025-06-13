@@ -277,6 +277,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ElNotification } from 'element-plus'
 import type { ScheduledTask, Workflow } from '@/types/workflow'
 import { INSTRUMENT_ICONS, getInstrumentColor, getInstrumentTextColor } from '@/constants/instruments'
 import { useTheme } from '@/composables/useTheme'
@@ -578,22 +579,34 @@ const hideTooltip = () => {
 
 // Handle timeline scroll for better performance
 let scrollTimeout: ReturnType<typeof setTimeout> | null = null
-const handleScroll = () => {
+let lastScrollLeft = 0
+const handleScroll = (event: Event) => {
+  const target = event.target as HTMLElement
+  const currentScrollLeft = target.scrollLeft
+  
   // Throttle scroll events to improve performance
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
   }
+  
   scrollTimeout = setTimeout(() => {
-    // Could implement virtual scrolling here for very large schedules
+    // Sync horizontal scroll if needed
+    if (Math.abs(currentScrollLeft - lastScrollLeft) > 5) {
+      lastScrollLeft = currentScrollLeft
+      // Could implement virtual scrolling here for very large schedules
+    }
     scrollTimeout = null
   }, 16) // ~60fps throttling
 }
 
 // Export timeline as PNG
 const exportTimeline = () => {
-  // Implementation for exporting timeline
-  console.log('Exporting timeline...')
-  // TODO: Implement canvas export
+  ElNotification({
+    title: 'Export Feature',
+    message: 'Timeline export functionality coming soon',
+    type: 'info',
+    duration: 3000
+  })
 }
 
 // Toggle fullscreen mode
@@ -628,7 +641,6 @@ const isTaskMatchingSearch = (task: ScheduledTask): boolean => {
 
 // CSS variable updates
 const updateCSSVariables = () => {
-  const root = document.documentElement
   if (ganttTimeline.value) {
     const tlWidth = timelineWidth.value
     const ppm = currentPixelsPerMinute.value
@@ -662,12 +674,12 @@ onMounted(async () => {
     updateCSSVariables()
   }, 100)
   
-  // Update current time every 5 minutes for "now" indicator to reduce performance impact
+  // Update current time every minute for "now" indicator
   timeInterval = setInterval(() => {
     const now = new Date()
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     currentTime.value = Math.floor((now.getTime() - startOfDay.getTime()) / (1000 * 60))
-  }, 300000) // 5 minutes instead of 1 minute
+  }, 60000) // 1 minute for better UX
 })
 
 onUnmounted(() => {

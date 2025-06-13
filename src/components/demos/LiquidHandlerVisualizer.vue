@@ -32,7 +32,7 @@
       </div>
     </header>
 
-    <el-card shadow="hover" class="main-card">
+    <el-card shadow="hover" class="main-card" v-loading="isLoadingProtocol">
       
       <!-- Control Panel -->
       <div class="control-panel">
@@ -145,21 +145,13 @@
         
         <el-tab-pane label="Protocol Builder" name="builder">
           <!-- Protocol Builder Interface -->
-          <ProtocolBuilder
-            :protocol="currentProtocol"
-            :deck-positions="deckPositions"
-            :validation-errors="validationErrors"
-            :can-undo="canUndo"
-            :can-redo="canRedo"
-            @add-step="handleAddStep"
-            @edit-step="handleEditStep"
-            @remove-step="handleRemoveStep"
-            @move-step="handleMoveStep"
-            @clear-protocol="handleClearProtocol"
-            @undo="handleUndo"
-            @redo="handleRedo"
-            @step-selected="handleStepSelected"
-          />
+          <div class="protocol-builder-placeholder">
+            <el-empty description="Protocol Builder Coming Soon">
+              <el-button type="primary" @click="loadProtocol(presetProtocols[0])">
+                Load Example Protocol
+              </el-button>
+            </el-empty>
+          </div>
         </el-tab-pane>
         
         <el-tab-pane label="Execution Timeline" name="timeline">
@@ -190,6 +182,7 @@
       v-model="showProtocolModal"
       title="Select Protocol"
       width="600px"
+      :close-on-click-modal="false"
     >
       <div class="protocol-list">
         <el-card 
@@ -233,47 +226,32 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElNotification } from 'element-plus'
 import GanttChart from '@/components/workflow/GanttChart.vue'
 import OptimizationMetrics from '@/components/workflow/OptimizationMetrics.vue'
-import ProtocolBuilder from '@/components/liquid-handler/ProtocolBuilder.vue'
 import type { ScheduledTask, Workflow, Metrics } from '@/types/workflow'
 import type { 
   LabwareItem, 
   DeckPosition, 
   TransferStep, 
-  LiquidHandlerProtocol,
-  LiquidHandlerStep 
+  LiquidHandlerProtocol
 } from '@/types/liquidHandler'
-import { useLiquidHandlerState } from '@/composables/useLiquidHandlerState'
 
-// Create a local reactive state instead of using the singleton
-const localProtocol = ref({
-  id: 'protocol-1',
-  name: 'New Protocol',
-  description: '',
+// Protocol builder state (simplified for demo)
+interface DemoProtocol {
+  id: string
+  name: string
+  description: string
+  steps: any[]
+  created: Date
+  modified: Date
+}
+
+const currentProtocol = ref<DemoProtocol>({
+  id: 'demo-protocol-1',
+  name: 'Demo Protocol',
+  description: 'Example liquid handling protocol',
   steps: [],
   created: new Date(),
   modified: new Date()
 })
-
-const localValidationErrors = ref([])
-const localCanUndo = ref(false)
-const localCanRedo = ref(false)
-
-// Simple stub functions to replace the composable
-const addStep = (stepData) => { console.log('addStep:', stepData) }
-const editStep = (stepId, updates) => { console.log('editStep:', stepId, updates) }
-const removeStep = (stepId) => { console.log('removeStep:', stepId) }
-const moveStep = (fromIndex, toIndex) => { console.log('moveStep:', fromIndex, toIndex) }
-const clearProtocol = () => { console.log('clearProtocol') }
-const undo = () => { console.log('undo') }
-const redo = () => { console.log('redo') }
-const validateProtocol = () => { console.log('validateProtocol') }
-// const loadProtocolState = () => { console.log('loadProtocolState') }
-
-// Use local state instead of composable
-const currentProtocol = localProtocol
-const validationErrors = localValidationErrors
-const canUndo = localCanUndo
-const canRedo = localCanRedo
 
 // State
 const isRunning = ref(false)
@@ -284,7 +262,7 @@ const currentTransfer = ref<{ source?: string; destination?: string } | null>(nu
 const draggedLabware = ref<LabwareItem | null>(null)
 const activeTab = ref('deck')
 const showMobileLabwareDrawer = ref(false)
-const selectedStepIndex = ref(-1)
+const isLoadingProtocol = ref(false)
 const deckPositions = ref<DeckPosition[]>([
   { id: 'A1', label: 'A1', x: 100, y: 100, labware: null },
   { id: 'A2', label: 'A2', x: 300, y: 100, labware: null },
@@ -385,14 +363,14 @@ const protocolScheduledTasks = computed((): ScheduledTask[] => {
       laneId: 'builder-lane-1',
       laneName: 'Protocol Steps',
       stepIndex: index,
-      type: step.type || 'Liquid Handler',
+      type: 'Liquid Handler',
       task: step.task || 'Step',
       duration: duration,
       dependencies: [],
       startTime: startTime,
       endTime: currentTime,
       nest: 0,
-      instrument: step.type || 'Liquid Handler',
+      instrument: 'Liquid Handler',
       conflict: false
     }
   })
@@ -472,10 +450,34 @@ const reset = () => {
   })
 }
 
-const loadProtocol = (preset: LiquidHandlerProtocol) => {
+const loadProtocol = async (preset: LiquidHandlerProtocol) => {
+  isLoadingProtocol.value = true
+  
+  // Simulate async loading
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
   protocol.value = [...preset.steps]
+  // Also update the protocol builder state
+  currentProtocol.value = {
+    id: preset.id,
+    name: preset.name,
+    description: preset.description,
+    steps: preset.steps.map(step => ({
+      id: `step-${Date.now()}-${Math.random()}`,
+      task: step.name,
+      type: 'Liquid Handler',
+      duration: 1,
+      source: step.source,
+      destination: step.destination,
+      volume: step.volume
+    })),
+    created: new Date(),
+    modified: new Date()
+  }
   showProtocolModal.value = false
   reset()
+  
+  isLoadingProtocol.value = false
   
   ElNotification({
     title: 'Protocol Loaded',
@@ -593,65 +595,26 @@ const handlePositionClick = (position: DeckPosition) => {
 }
 
 const handleTaskClick = (task: ScheduledTask) => {
-  console.log('Task clicked:', task)
+  // Show task details in a notification
+  ElNotification({
+    title: task.task,
+    message: `${task.type} - ${task.duration} minutes`,
+    type: 'info',
+    duration: 3000
+  })
 }
 
 const handleMetricClick = (metric: string) => {
-  console.log('Metric clicked:', metric)
+  // Show metric details
+  ElNotification({
+    title: 'Metric Details',
+    message: `Viewing details for: ${metric}`,
+    type: 'info',
+    duration: 3000
+  })
 }
 
-// Protocol Builder Event Handlers
-const handleAddStep = (stepData: Omit<LiquidHandlerStep, 'id'>) => {
-  addStep(stepData)
-  validateProtocol()
-}
-
-const handleEditStep = (stepId: string, updates: Partial<LiquidHandlerStep>) => {
-  editStep(stepId, updates)
-  validateProtocol()
-}
-
-const handleRemoveStep = (stepId: string) => {
-  removeStep(stepId)
-  validateProtocol()
-}
-
-const handleMoveStep = (fromIndex: number, toIndex: number) => {
-  moveStep(fromIndex, toIndex)
-  validateProtocol()
-}
-
-const handleClearProtocol = () => {
-  clearProtocol()
-  validateProtocol()
-}
-
-const handleUndo = () => {
-  undo()
-  validateProtocol()
-}
-
-const handleRedo = () => {
-  redo()
-  validateProtocol()
-}
-
-const handleStepSelected = (stepIndex: number) => {
-  selectedStepIndex.value = stepIndex
-}
-
-// Keyboard shortcuts for undo/redo
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.ctrlKey || event.metaKey) {
-    if (event.key === 'z' && !event.shiftKey && canUndo.value) {
-      event.preventDefault()
-      handleUndo()
-    } else if ((event.key === 'y' || (event.key === 'z' && event.shiftKey)) && canRedo.value) {
-      event.preventDefault()
-      handleRedo()
-    }
-  }
-}
+// Placeholder for future protocol step management
 
 // Initialize with default labware
 onMounted(() => {
@@ -667,19 +630,10 @@ onMounted(() => {
     deckPositions.value[4].labware = { ...labwareTypes[0] }
   }
   
-  // Don't load state or validate on mount to prevent performance issues
-  // loadProtocolState()
-  
-  // Set up keyboard shortcuts
-  document.addEventListener('keydown', handleKeyDown)
   window.addEventListener('resize', checkMobile)
-  
-  // Don't validate on mount to prevent performance issues
-  // validateProtocol()
 })
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('resize', checkMobile)
 })
 </script>
@@ -1152,5 +1106,22 @@ onUnmounted(() => {
   transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
               border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
               color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Protocol Builder Placeholder */
+.protocol-builder-placeholder {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--section-bg);
+  border-radius: 0.5rem;
+  padding: 2rem;
+}
+
+.protocol-builder-placeholder :deep(.el-empty__description) {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  margin-top: 1rem;
 }
 </style>

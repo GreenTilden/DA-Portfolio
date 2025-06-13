@@ -1,151 +1,458 @@
 <template>
-    <div class="project-card">
-      <div class="project-image" v-if="image">
-        <img :src="image" :alt="title">
+  <el-card class="project-card" shadow="hover" :body-style="{ padding: '0' }" :class="{ 'featured': featured }">
+    <!-- Project Header with Featured Badge -->
+    <div class="project-header" v-if="featured || year">
+      <el-tag v-if="featured" type="success" size="small" class="featured-badge">
+        <i class="fas fa-star"></i>
+        Featured
+      </el-tag>
+      <el-tag v-if="year" type="info" size="small" effect="plain" class="year-badge">
+        {{ year }}
+      </el-tag>
+    </div>
+
+    <!-- Project Image/Video Thumbnail -->
+    <div class="project-image" v-if="image || (media && media.length > 0)">
+      <div v-if="demoType === 'video' && media[0]" class="video-thumbnail">
+        <el-image 
+          :src="media[0].thumbnail || '/images/video-placeholder.jpg'" 
+          :alt="title" 
+          fit="cover" 
+          class="card-image"
+        />
+        <div class="play-overlay">
+          <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="video-duration">Demo Video</div>
       </div>
-      <div class="project-content">
+      <el-image v-else :src="image" :alt="title" fit="cover" class="card-image" />
+    </div>
+
+    <div class="project-content">
+      <!-- Title and Subtitle -->
+      <div class="project-header-content">
         <h3 class="project-title">{{ title }}</h3>
-        <p class="project-description">{{ description }}</p>
-        <div class="project-technologies" v-if="technologies && technologies.length">
-          <span class="tech-tag" v-for="(tech, index) in technologies" :key="index">{{ tech }}</span>
-        </div>
-        <div class="project-links">
-          <a v-if="github" :href="github" target="_blank" rel="noopener" class="project-link github">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-            GitHub
-          </a>
-          <router-link v-if="demo" :to="demo" class="project-link demo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16l4-4-4-4"></path><path d="M8 12h8"></path></svg>
-            View Demo
-          </router-link>
-        </div>
+        <p v-if="subtitle" class="project-subtitle">{{ subtitle }}</p>
+      </div>
+      
+      <!-- Description -->
+      <p class="project-description">{{ description }}</p>
+      
+      <!-- Key Achievements -->
+      <div class="project-achievements" v-if="achievements && achievements.length">
+        <h4 class="achievements-title">Key Results:</h4>
+        <ul class="achievements-list">
+          <li v-for="achievement in achievements.slice(0, 2)" :key="achievement" class="achievement-item">
+            <i class="fas fa-check-circle"></i>
+            {{ achievement }}
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Technologies -->
+      <div class="project-technologies" v-if="technologies && technologies.length">
+        <el-tag 
+          v-for="tech in technologies.slice(0, 4)" 
+          :key="tech"
+          size="small"
+          type="info"
+          effect="plain"
+          class="tech-tag"
+        >
+          {{ tech }}
+        </el-tag>
+        <el-tag v-if="technologies.length > 4" size="small" type="info" effect="plain" class="tech-more">
+          +{{ technologies.length - 4 }} more
+        </el-tag>
+      </div>
+      
+      <!-- Action Links -->
+      <div class="project-links">
+        <el-button 
+          v-if="demo" 
+          @click="$router.push(demo)"
+          :type="demoType === 'video' ? 'success' : 'primary'"
+          size="default"
+          class="demo-btn"
+        >
+          <i :class="getDemoIcon"></i>
+          {{ getDemoButtonText }}
+        </el-button>
+        <el-button 
+          v-if="github" 
+          @click="openLink(github)"
+          size="default"
+          type="default"
+          class="github-btn"
+        >
+          <i :class="githubIcon"></i>
+          GitHub
+        </el-button>
+        <el-button 
+          v-if="externalLink" 
+          @click="openLink(externalLink)"
+          size="default"
+          type="info"
+          class="external-btn"
+        >
+          <i class="fas fa-external-link-alt"></i>
+          External Link
+        </el-button>
       </div>
     </div>
-  </template>
+  </el-card>
+</template>
   
-  <script>
-  export default {
-    name: 'ProjectCard',
-    props: {
-      title: {
-        type: String,
-        required: true
-      },
-      description: {
-        type: String,
-        required: true
-      },
-      image: {
-        type: String,
-        default: null
-      },
-      technologies: {
-        type: Array,
-        default: () => []
-      },
-      github: {
-        type: String,
-        default: null
-      },
-      demo: {
-        type: String,
-        default: null
-      }
-    }
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { ProjectMedia } from '@/constants/projects'
+
+interface Props {
+  title: string
+  subtitle?: string
+  description: string
+  image?: string | null
+  media?: ProjectMedia[]
+  technologies?: string[]
+  achievements?: string[]
+  github?: string | null
+  demo?: string | null
+  externalLink?: string
+  demoType?: 'interactive' | 'video' | 'gallery' | 'workflow'
+  featured?: boolean
+  year?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  subtitle: '',
+  image: null,
+  media: () => [],
+  technologies: () => [],
+  achievements: () => [],
+  github: null,
+  demo: null,
+  externalLink: '',
+  demoType: 'interactive',
+  featured: false,
+  year: undefined
+})
+
+// Icons using FontAwesome classes
+const githubIcon = computed(() => 'fab fa-github')
+
+const getDemoIcon = computed(() => {
+  switch (props.demoType) {
+    case 'video':
+      return 'fas fa-play'
+    case 'gallery':
+      return 'fas fa-images'
+    case 'workflow':
+      return 'fas fa-project-diagram'
+    default:
+      return 'fas fa-external-link-alt'
   }
-  </script>
-  
-  <style scoped>
-  .project-card {
-    background-color: var(--bg-light);
-    border-radius: 0.5rem;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+})
+
+const getDemoButtonText = computed(() => {
+  switch (props.demoType) {
+    case 'video':
+      return 'Watch Video'
+    case 'gallery':
+      return 'View Gallery'
+    case 'workflow':
+      return 'View Workflow'
+    default:
+      return 'View Demo'
   }
+})
+
+// Method for opening external links
+const openLink = (url: string) => {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+</script>
   
-  .project-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  .project-image img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-bottom: 1px solid var(--border-color);
-  }
-  
+<style scoped>
+.project-card {
+  height: 100%;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+}
+
+.project-card.featured {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 74, 144, 226), 0.15);
+}
+
+/* Project Header with Badges */
+.project-header {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.featured-badge {
+  background: linear-gradient(135deg, var(--success-color) 0%, #16a085 100%);
+  border-color: var(--success-color);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.year-badge {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+}
+
+/* Video Thumbnail Styling */
+.project-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.video-thumbnail {
+  position: relative;
+  cursor: pointer;
+}
+
+.card-image {
+  width: 100%;
+  height: 200px;
+  border-bottom: 1px solid var(--border-color);
+  transition: transform 0.3s ease;
+}
+
+.video-thumbnail:hover .card-image {
+  transform: scale(1.05);
+}
+
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 3rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s ease;
+}
+
+.video-thumbnail:hover .play-overlay {
+  transform: translate(-50%, -50%) scale(1.1);
+  color: var(--primary-color);
+}
+
+.video-duration {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Content Styling */
+.project-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.project-header-content {
+  margin-bottom: 1rem;
+}
+
+.project-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.project-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.project-description {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* Achievements Section */
+.project-achievements {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--section-bg);
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--primary-color);
+}
+
+.achievements-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.achievements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.achievement-item i {
+  color: var(--success-color);
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+/* Technologies */
+.project-technologies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tech-tag,
+.tech-more {
+  font-size: 0.7rem;
+  border-color: var(--border-color);
+  background: var(--section-bg);
+  color: var(--text-muted);
+}
+
+.tech-more {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Action Links */
+.project-links {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.demo-btn,
+.github-btn,
+.external-btn {
+  flex: 1;
+  min-width: 80px;
+  font-size: 0.875rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.github-btn {
+  border-color: var(--border-color);
+  background: var(--section-bg);
+  color: var(--text-color);
+}
+
+.github-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.demo-btn {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.demo-btn:hover {
+  background: var(--primary-color-dark);
+  border-color: var(--primary-color-dark);
+}
+
+.external-btn {
+  background: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.external-btn:hover {
+  opacity: 0.9;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
   .project-content {
-    padding: 1.5rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+    padding: 1rem;
   }
   
   .project-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--secondary-color);
-    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
   }
   
-  .project-description {
-    color: var(--text-light);
-    margin-bottom: 1.25rem;
-    flex-grow: 1;
+  .project-header {
+    top: 0.5rem;
+    right: 0.5rem;
   }
   
-  .project-technologies {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1.25rem;
+  .play-overlay {
+    font-size: 2.5rem;
   }
   
-  .tech-tag {
-    background-color: var(--hover-bg);
-    color: var(--primary-color);
+  .project-achievements {
+    padding: 0.75rem;
+  }
+  
+  .achievement-item {
     font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
   }
   
   .project-links {
-    display: flex;
-    gap: 1rem;
-    margin-top: auto;
-  }
-  
-  .project-link {
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 0.25rem;
-    transition: all 0.3s ease;
   }
   
-  .project-link.github {
-    color: var(--text-color);
-    background-color: var(--bg-color);
+  .demo-btn,
+  .github-btn,
+  .external-btn {
+    flex: none;
+    width: 100%;
   }
-  
-  .project-link.github:hover {
-    background-color: var(--border-color);
-  }
-  
-  .project-link.demo {
-    color: white;
-    background-color: var(--primary-color);
-  }
-  
-  .project-link.demo:hover {
-    background-color: var(--primary-dark);
-  }
-  </style>
+}
+
+/* Theme compatibility */
+.project-card,
+.project-card * {
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>

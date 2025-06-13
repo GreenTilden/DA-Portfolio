@@ -9,122 +9,136 @@
       </header>
 
       <div class="project-filters" v-if="showFilters">
-        <button 
-          v-for="(filter, index) in filters" 
-          :key="index"
-          :class="['filter-button', { active: activeFilter === filter.value }]"
-          @click="activeFilter = filter.value"
+        <el-button
+          v-for="filter in filters" 
+          :key="filter.value"
+          :type="activeFilter === filter.value ? 'primary' : 'default'"
+          :size="isMobile ? 'large' : 'default'"
+          @click="setActiveFilter(filter.value)"
+          class="filter-btn"
         >
           {{ filter.label }}
-        </button>
+        </el-button>
       </div>
 
-      <div class="projects-grid">
+      <div class="projects-grid" v-loading="isLoading">
         <div 
-          v-for="(project, index) in filteredProjects" 
-          :key="index" 
+          v-for="project in filteredProjects" 
+          :key="project.title" 
           class="project-item"
         >
           <ProjectCard 
             :title="project.title"
+            :subtitle="project.subtitle"
             :description="project.description"
             :image="project.image"
+            :media="project.media"
             :technologies="project.technologies"
+            :achievements="project.achievements"
             :github="project.github"
             :demo="project.demo"
+            :external-link="project.externalLink"
+            :demo-type="project.demoType"
+            :featured="project.featured"
+            :year="project.year"
           />
+        </div>
+        
+        <!-- Empty state -->
+        <div v-if="filteredProjects.length === 0 && !isLoading" class="empty-state">
+          <el-empty description="No projects found for this category">
+            <el-button type="primary" @click="setActiveFilter('all')">
+              View All Projects
+            </el-button>
+          </el-empty>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElNotification } from 'element-plus'
 import ProjectCard from '@/components/ProjectCard.vue'
+import { PROJECT_DATA, PROJECT_FILTERS, type Project } from '@/constants/projects'
 
-export default {
-  name: 'ProjectsView',
-  components: {
-    ProjectCard
-  },
-  data() {
-    return {
-      activeFilter: 'all',
-      showFilters: true,
-      filters: [
-        { label: 'All Projects', value: 'all' },
-        { label: 'AI/ML', value: 'ai' },
-        { label: 'Automation', value: 'automation' },
-        { label: 'Software', value: 'software' }
-      ],
-      projects: [
-        {
-          title: 'Predictive Maintenance AI',
-          description: 'LSTM-based time-series anomaly detection system for laboratory instruments. Identifies potential failures before they occur to prevent downtime.',
-          image: null,
-          technologies: ['Python', 'TensorFlow', 'Time Series Analysis'],
-          github: 'https://github.com/GreenTilden/predictive-maintenance',
-          demo: '/demos/predictive',
-          categories: ['ai', 'automation']
-        },
-        {
-          title: 'MLOps Pipeline',
-          description: 'End-to-end MLOps pipeline for model training, testing, and deployment with CI/CD workflows and monitoring capabilities.',
-          image: null,
-          technologies: ['Python', 'Azure ML', 'Docker', 'Kubernetes'],
-          github: 'https://github.com/GreenTilden/mlops-pipeline',
-          demo: null,
-          categories: ['ai', 'software']
-        },
-        {
-          title: 'Automated HPLC Sample Preparation',
-          description: 'Complete workflow for automated HPLC sample preparation using liquid handlers. Increased throughput by 300% while reducing human error.',
-          image: null,
-          technologies: ['Python', 'Tecan EVOware', 'Hamilton STAR'],
-          github: null,
-          demo: '/demos/liquid-handler',
-          categories: ['automation']
-        },
-        {
-          title: 'Laboratory Workflow Optimization',
-          description: 'Analyzed and optimized laboratory workflows, resulting in a 40% reduction in turnaround time for high-priority samples.',
-          image: null,
-          technologies: ['Process Mapping', 'Discrete Event Simulation', 'Python'],
-          github: null,
-          demo: '/demos/workflow',
-          categories: ['automation', 'software']
-        }
-      ]
-    }
-  },
-  computed: {
-    filteredProjects() {
-      if (this.activeFilter === 'all') {
-        return this.projects;
-      }
-      return this.projects.filter(project => 
-        project.categories.includes(this.activeFilter)
-      );
-    }
-  },
-  mounted() {
-    // Check if a category filter was specified in the URL
-    const categoryParam = this.$route.query.category;
-    if (categoryParam && this.filters.some(f => f.value === categoryParam)) {
-      this.activeFilter = categoryParam;
-    }
-    
-    // Check if ?view=ai-lead is set to modify content
-    if (this.$route.query.view === 'ai-lead') {
-      // Prioritize AI projects
-      this.projects.sort((a, b) => {
-        if (a.categories.includes('ai') && !b.categories.includes('ai')) return -1;
-        if (!a.categories.includes('ai') && b.categories.includes('ai')) return 1;
-        return 0;
-      });
-    }
-  }
+// State
+const activeFilter = ref('all')
+const showFilters = ref(true)
+const isLoading = ref(false)
+const isMobile = ref(false)
+const projects = ref<Project[]>([...PROJECT_DATA])
+
+// Router
+const route = useRoute()
+
+// Check mobile device
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
 }
+
+// Computed
+const filters = computed(() => PROJECT_FILTERS)
+
+const filteredProjects = computed(() => {
+  if (activeFilter.value === 'all') {
+    return projects.value
+  }
+  return projects.value.filter(project => 
+    project.categories.includes(activeFilter.value)
+  )
+})
+
+// Methods
+const setActiveFilter = async (filterValue: string) => {
+  if (filterValue === activeFilter.value) return
+  
+  isLoading.value = true
+  
+  // Simulate loading for better UX
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  activeFilter.value = filterValue
+  isLoading.value = false
+  
+  // Show notification for better feedback
+  const filterLabel = PROJECT_FILTERS.find(f => f.value === filterValue)?.label || 'Projects'
+  ElNotification({
+    title: 'Filter Applied',
+    message: `Showing ${filterLabel.toLowerCase()}`,
+    type: 'info',
+    duration: 2000
+  })
+}
+
+// Initialize component
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
+  // Check if a category filter was specified in the URL
+  const categoryParam = route.query.category as string
+  if (categoryParam && PROJECT_FILTERS.some(f => f.value === categoryParam)) {
+    activeFilter.value = categoryParam
+  }
+  
+  // Check if ?view=ai-lead is set to modify content
+  if (route.query.view === 'ai-lead') {
+    // Prioritize AI projects
+    projects.value.sort((a, b) => {
+      if (a.categories.includes('ai') && !b.categories.includes('ai')) return -1
+      if (!a.categories.includes('ai') && b.categories.includes('ai')) return 1
+      return 0
+    })
+  }
+})
+
+// Cleanup
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped>
@@ -158,27 +172,16 @@ export default {
   margin-bottom: 2rem;
 }
 
-.filter-button {
-  background-color: var(--bg-light);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.filter-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.filter-button:hover {
-  background-color: #f0f4f8;
-  border-color: #cfd9e6;
-}
-
-.filter-button.active {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
 }
 
 .projects-grid {
@@ -204,6 +207,31 @@ export default {
   color: var(--text-light);
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .projects-page {
+    padding: 1rem 0 2rem;
+  }
+  
+  .page-header h1 {
+    font-size: 2rem;
+  }
+  
+  .lead {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .project-filters {
+    gap: 0.5rem;
+    margin: 0 1rem 2rem 1rem;
+  }
+  
+  .filter-btn {
+    min-height: 44px; /* Touch-friendly minimum */
+  }
+}
+
 @media (min-width: 768px) {
   .projects-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -214,5 +242,13 @@ export default {
   .projects-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* Theme compatibility */
+.projects-page,
+.projects-page * {
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
