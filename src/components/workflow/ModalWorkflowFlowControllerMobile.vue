@@ -229,10 +229,13 @@ const dialogVisible = computed({
   }
 })
 
-const steps = ['workflow-selection', 'lane-selection', 'lane-editor'] as const
+const steps = ['workflow-selection', 'lane-selection', 'multi-lane-editor', 'lane-editor'] as const
 
 const currentStepIndex = computed(() => {
-  return steps.indexOf(currentStep.value)
+  // Map multi-lane-editor to lane-editor for progress calculation
+  const step = currentStep.value === 'multi-lane-editor' ? 'lane-editor' : currentStep.value
+  const stepIndex = steps.indexOf(step as typeof steps[number])
+  return stepIndex >= 0 ? stepIndex : 0
 })
 
 const progressPercentage = computed(() => {

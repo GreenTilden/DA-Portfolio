@@ -156,7 +156,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Workflow, Lane, Step } from '@/types/workflow'
+import type { Lane, Step } from '@/types/workflow'
 import { useWorkflowState } from '@/composables/useWorkflowState'
 import { INSTRUMENT_ICONS, DEFAULT_DURATIONS } from '@/constants/instruments'
 
