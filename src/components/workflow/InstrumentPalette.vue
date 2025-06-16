@@ -22,9 +22,15 @@
             <div class="drawer-content">
               <div class="drawer-header">
                 <h4>{{ instrument }}</h4>
-                <button class="close-btn" @click.stop="activeInstrument = null">
+                <el-button
+                  class="close-btn"
+                  type="danger"
+                  size="small"
+                  circle
+                  @click.stop="activeInstrument = null"
+                >
                   <i class="fas fa-times"></i>
-                </button>
+                </el-button>
               </div>
               
               <div class="tasks-list">
@@ -82,29 +88,33 @@
             <div class="drawer-content">
               <div class="drawer-header">
                 <h4>Create Custom Task</h4>
-                <button class="close-btn" @click.stop="showCustomTaskForm = false">
+                <el-button
+                  class="close-btn"
+                  type="danger"
+                  size="small"
+                  circle
+                  @click.stop="showCustomTaskForm = false"
+                >
                   <i class="fas fa-times"></i>
-                </button>
+                </el-button>
               </div>
               
               <div class="custom-form">
                 <div class="form-group">
                   <label>Instrument Type</label>
-                  <select v-model="customTask.type" class="form-control">
-                    <option 
+                  <el-select v-model="customTask.type" class="form-control" placeholder="Select instrument">
+                    <el-option 
                       v-for="instrument in Object.keys(instruments)" 
                       :key="instrument" 
                       :value="instrument"
-                    >
-                      {{ instrument }}
-                    </option>
-                  </select>
+                      :label="instrument"
+                    />
+                  </el-select>
                 </div>
                 
                 <div class="form-group">
                   <label>Task Name</label>
-                  <input 
-                    type="text" 
+                  <el-input 
                     v-model="customTask.task" 
                     class="form-control" 
                     placeholder="Enter task name"
@@ -123,14 +133,15 @@
                   />
                 </div>
                 
-                <button 
+                <el-button
                   class="create-btn"
+                  type="primary"
                   @click="handleAddCustomTask"
                   :disabled="!isCustomTaskValid"
                 >
                   <i class="fas fa-plus"></i>
                   Create Task
-                </button>
+                </el-button>
               </div>
             </div>
           </div>
@@ -419,24 +430,20 @@ const handleRemoveCustomTask = (task: CustomTask) => {
 }
 
 .close-btn {
-  width: 24px;
-  height: 24px;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-faded);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  min-width: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
   font-size: 0.75rem;
 }
 
-.close-btn:hover {
-  background: var(--error-color, #ef4444);
-  color: white;
-  border-color: var(--error-color, #ef4444);
+.close-btn:deep(.el-button) {
+  --el-button-bg-color: transparent;
+  --el-button-border-color: var(--border-color);
+  --el-button-text-color: var(--text-faded);
+  --el-button-hover-bg-color: var(--error-color, #ef4444);
+  --el-button-hover-border-color: var(--error-color, #ef4444);
+  --el-button-hover-text-color: white;
 }
 
 .tasks-list {
@@ -469,21 +476,23 @@ const handleRemoveCustomTask = (task: CustomTask) => {
   margin-bottom: var(--spacing-xs);
 }
 
-.form-control {
-  width: 100%;
+/* Element Plus form control styling */
+:deep(.form-control .el-input__inner),
+:deep(.form-control .el-select__wrapper) {
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-sm);
+  border-color: var(--border-color);
   color: var(--text-color);
   font-size: 0.875rem;
-  transition: border-color 0.2s ease;
 }
 
-.form-control:focus {
+:deep(.form-control .el-input__inner:focus),
+:deep(.form-control .el-select__wrapper:focus) {
   border-color: var(--primary-color);
-  outline: none;
   box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb, 59, 130, 246), 0.2);
+}
+
+:deep(.form-control .el-select__placeholder) {
+  color: var(--text-muted);
 }
 
 .duration-input {
@@ -492,30 +501,26 @@ const handleRemoveCustomTask = (task: CustomTask) => {
 
 .create-btn {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--primary-color);
-  color: var(--button-text-dark);
-  border: none;
-  border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  transition: all 0.2s ease;
+}
+
+.create-btn i {
+  margin-right: var(--spacing-xs);
+}
+
+.create-btn:deep(.el-button) {
+  --el-button-bg-color: var(--primary-color);
+  --el-button-text-color: var(--button-text-dark);
+  --el-button-hover-bg-color: var(--primary-dark);
+  --el-button-hover-text-color: var(--button-text-dark);
 }
 
 .create-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 .create-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
   transform: none;
 }
 

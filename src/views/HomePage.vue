@@ -14,10 +14,10 @@
             <p class="tagline">{{ currentTagline }}</p>
             <el-space wrap alignment="center" class="cta-buttons">
               <router-link to="/projects">
-                <button class="theme-button primary-button">View Projects</button>
+                <el-button class="theme-button primary-button" type="primary" size="large">View Projects</el-button>
               </router-link>
               <router-link to="/contact">
-                <button class="theme-button secondary-button">Contact Me</button>
+                <el-button class="theme-button secondary-button" type="info" size="large">Contact Me</el-button>
               </router-link>
             </el-space>
           </div>

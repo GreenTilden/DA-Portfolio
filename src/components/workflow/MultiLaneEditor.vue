@@ -161,12 +161,14 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Used in template with $emit calls
+// Used in template with $emit calls - TypeScript doesn't recognize template usage
 const emit = defineEmits<{
   'lane-click': [laneId: string]
   'add-lane': []
   'complete': []
 }>()
+// Mark as intentionally used in template to avoid TypeScript warning
+void emit
 
 const { workflows, updateWorkflows } = useWorkflowState()
 

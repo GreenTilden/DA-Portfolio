@@ -8,14 +8,14 @@
             <i class="fas fa-pen edit-icon"></i>
           </h4>
           <div v-else class="edit-name-container">
-            <input 
-              type="text" 
+            <el-input 
               v-model="workflow.editName" 
               @keyup.enter="saveWorkflowName(workflow)"
               @keyup.esc="cancelEditWorkflowName(workflow)"
               @blur="saveWorkflowName(workflow)"
               ref="workflowNameInput"
               class="edit-name-input"
+              size="small"
             />
             <div class="edit-actions">
               <button @click="saveWorkflowName(workflow)" class="edit-action-btn save-btn">
@@ -52,14 +52,14 @@
                 <i class="fas fa-pen edit-icon"></i>
               </span>
               <div v-else class="edit-name-container">
-                <input 
-                  type="text" 
+                <el-input 
                   v-model="lane.editName" 
                   @keyup.enter="saveLaneName(lane)"
                   @keyup.esc="cancelEditLaneName(lane)"
                   @blur="saveLaneName(lane)"
                   ref="laneNameInput"
                   class="edit-name-input"
+                  size="small"
                 />
                 <div class="edit-actions">
                   <el-button 
@@ -140,9 +140,9 @@ const emit = defineEmits<{
 // Inject drag handlers from parent
 const dragHandlers = inject<any>('dragHandlers')
 
-// Name editing refs
-const workflowNameInput = ref<HTMLInputElement[]>([])
-const laneNameInput = ref<HTMLInputElement[]>([])
+// Name editing refs - Element Plus input refs
+const workflowNameInput = ref<any[]>([])
+const laneNameInput = ref<any[]>([])
 
 // Get workflow tag type based on priority
 const getWorkflowTagType = (priority: number): string => {
@@ -616,13 +616,15 @@ const handleStepDragStart = () => {
   gap: 0.5rem;
 }
 
-.edit-name-input {
+/* Element Plus input styling for name editing */
+:deep(.edit-name-input .el-input__inner) {
   background-color: var(--bg-color);
-  border: 1px solid var(--primary-color);
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 1rem;
+  border-color: var(--primary-color);
   color: var(--text-light);
+  font-size: 1rem;
+}
+
+:deep(.edit-name-input) {
   width: 200px;
 }
 
@@ -678,7 +680,7 @@ const handleStepDragStart = () => {
     justify-content: space-between;
   }
   
-  .edit-name-input {
+  :deep(.edit-name-input) {
     width: 150px;
   }
 

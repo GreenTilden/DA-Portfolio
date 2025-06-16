@@ -1,30 +1,54 @@
 <template>
   <div class="workflow-optimizer">
-    <!-- Professional Header -->
+    <!-- Streamlined Header -->
     <header class="optimizer-header">
       <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon">
-            <i class="fas fa-project-diagram"></i>
-          </div>
-          <div class="header-text">
-            <h1>Workflow Optimizer</h1>
-            <p class="header-subtitle">Optimize laboratory automation workflows for maximum efficiency</p>
-          </div>
+        <div class="header-main">
+          <h1 class="page-title">Workflow Optimizer</h1>
+          <p class="page-description">Build and optimize laboratory automation workflows</p>
         </div>
-        <div class="header-actions">
-          <button class="action-button secondary" @click="toggleInstructions">
-            <i class="fas fa-question-circle"></i>
-            <span class="button-text">Help</span>
-          </button>
-          <button class="action-button secondary" @click="showInstrumentConfig = true">
-            <i class="fas fa-cog"></i>
-            <span class="button-text">Configure</span>
-          </button>
-          <button class="action-button primary" @click="handleOptimizeSchedule" :disabled="isOptimizing || workflows.length === 0">
-            <i :class="isOptimizing ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
-            <span class="button-text">{{ isOptimizing ? 'Optimizing...' : 'Optimize' }}</span>
-          </button>
+        <div class="header-controls">
+          <div class="header-actions">
+            <el-button 
+              class="control-btn help-btn" 
+              @click="toggleInstructions" 
+              title="Help & Instructions"
+              type="info"
+              size="default"
+              circle
+            >
+              <i class="fas fa-question-circle"></i>
+            </el-button>
+            <el-button 
+              class="control-btn config-btn" 
+              @click="showInstrumentConfig = true" 
+              title="Instrument Configuration"
+              type="info"
+              size="default"
+              circle
+            >
+              <i class="fas fa-cog"></i>
+            </el-button>
+          </div>
+          <el-button 
+            class="optimize-button" 
+            @click="handleOptimizeSchedule" 
+            :disabled="isOptimizing || workflows.length === 0"
+            type="primary"
+            size="large"
+            :loading="isOptimizing"
+          >
+            <template #loading>
+              <i class="fas fa-spinner fa-spin"></i>
+            </template>
+            <div class="optimize-icon" v-if="!isOptimizing">
+              <i class="fas fa-magic"></i>
+            </div>
+            <div class="optimize-text">
+              <span class="optimize-label">{{ isOptimizing ? 'Optimizing...' : 'Optimize Schedule' }}</span>
+              <span class="optimize-count" v-if="workflows.length > 0">{{ workflows.length }} workflow{{ workflows.length === 1 ? '' : 's' }}</span>
+            </div>
+          </el-button>
         </div>
       </div>
     </header>
@@ -462,87 +486,125 @@ const handleTaskClicked = (task: any) => {
 
 /* Header styles */
 .optimizer-header {
-  background: var(--section-bg);
+  background: linear-gradient(135deg, var(--section-bg) 0%, var(--background-alt) 100%);
   border-bottom: 1px solid var(--border-color);
-  padding: 1.5rem 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  padding: 2rem;
+  position: relative;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   max-width: 1400px;
   margin: 0 auto;
+  gap: 2rem;
 }
 
-.header-left {
+.header-main {
+  flex: 1;
+}
+
+.page-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-light);
+  line-height: 1.2;
+}
+
+.page-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+.header-controls {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.header-icon {
-  width: 60px;
-  height: 60px;
-  background: var(--primary-color);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-}
-
-.header-text h1 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-light);
-}
-
-.header-subtitle {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.action-button {
+.control-btn {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  justify-content: center;
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--text-light);
-  font-size: 0.875rem;
-  font-weight: 500;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
 }
 
-.action-button:hover {
+.control-btn:hover {
   background: var(--hover-bg);
+  color: var(--text-light);
   border-color: var(--primary-color);
 }
 
-.action-button.primary {
+.optimize-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
   background: var(--primary-color);
   color: white;
-  border-color: var(--primary-color);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 180px;
 }
 
-.action-button:disabled {
-  opacity: 0.5;
+.optimize-button:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.optimize-button:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+}
+
+.optimize-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+}
+
+.optimize-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.optimize-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.optimize-count {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 400;
 }
 
 /* Instructions overlay */
@@ -975,21 +1037,37 @@ const handleTaskClicked = (task: any) => {
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .optimizer-header {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
   }
   
   .header-content {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: stretch;
   }
   
-  .header-actions {
+  .header-main {
+    text-align: center;
+  }
+  
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .header-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .optimize-button {
+    min-width: 200px;
     justify-content: center;
   }
   
   .tab-navigation {
     padding: 0 1rem;
+    justify-content: center;
   }
   
   .tab-content-container {

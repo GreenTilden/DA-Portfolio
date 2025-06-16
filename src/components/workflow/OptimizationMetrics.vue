@@ -162,10 +162,12 @@ interface Insight {
 
 const props = defineProps<Props>()
 
-// Used in template with $emit calls
+// Used in template with $emit calls - TypeScript doesn't recognize template usage
 const emit = defineEmits<{
   'metric-clicked': [metric: string]
 }>()
+// Mark as intentionally used in template to avoid TypeScript warning
+void emit
 
 // Check if we have any metrics to display
 const hasMetrics = computed(() => {

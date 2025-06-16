@@ -43,23 +43,29 @@
     </div>
     
     <div class="step-actions">
-      <button 
+      <el-button
         v-if="showEditButton"
         class="action-btn edit-btn"
+        type="warning"
+        size="small"
+        circle
         @click.stop="$emit('edit-step', step)"
         title="Edit step"
       >
         <i class="fas fa-edit"></i>
-      </button>
+      </el-button>
       
-      <button 
+      <el-button
         v-if="showRemoveButton"
         class="action-btn remove-btn"
+        type="danger"
+        size="small"
+        circle
         @click.stop="$emit('remove-step', step)"
         title="Remove step"
       >
         <i class="fas fa-times"></i>
-      </button>
+      </el-button>
     </div>
     
     <!-- Validation indicators -->
@@ -308,36 +314,14 @@ const handleDragEnd = () => {
 }
 
 .action-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  min-width: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
   font-size: 0.75rem;
-  transition: all 0.2s ease;
-  padding: 0;
 }
 
-.edit-btn {
-  background-color: var(--step-color, var(--primary-color));
-  color: var(--button-text-dark);
-}
-
-.edit-btn:hover {
-  background-color: var(--primary-dark);
-  transform: scale(1.1);
-}
-
-.remove-btn {
-  background-color: var(--error-color);
-  color: var(--button-text-dark);
-}
-
-.remove-btn:hover {
-  background-color: var(--error-color);
+.action-btn:hover {
   transform: scale(1.1);
 }
 

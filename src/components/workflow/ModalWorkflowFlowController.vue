@@ -112,7 +112,7 @@
                           class="steps-list"
                           :animation="200"
                           handle=".drag-handle"
-                          @change="() => handleStepReorder(lane.id)"
+                          @change="() => handleStepReorder()"
                           item-key="id"
                         >
                           <template #item="{ element: step, index: stepIndex }">
@@ -327,8 +327,6 @@ const dialogVisible = computed({
     }
   }
 })
-
-const steps = ['workflow-selection', 'lane-selection', 'multi-lane-editor', 'lane-editor'] as const
 
 // Removed unused computed properties currentStepIndex and isWorkflowBuilder
 
@@ -568,7 +566,7 @@ const handleDeleteLane = (laneId: string): void => {
 }
 
 // Handle step reorder
-const handleStepReorder = (laneId: string): void => {
+const handleStepReorder = (): void => {
   // The draggable component with :list binding automatically updates the array
   // We just need to trigger a save to persist the changes
   if (selectedWorkflow.value && selectedWorkflowId.value) {

@@ -11,22 +11,28 @@
               </router-link>
             </div>
             <div class="header-theme-selector">
-              <button @click="toggleThemeMenu" class="theme-toggle" :class="{ active: showThemeMenu }">
+              <el-button
+                @click="toggleThemeMenu"
+                class="theme-toggle"
+                type="info"
+                :class="{ active: showThemeMenu }"
+              >
                 {{ getThemeDisplayName(currentTheme) }}
                 <svg class="dropdown-icon" :class="{ rotated: showThemeMenu }" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6,9 12,15 18,9"></polyline>
                 </svg>
-              </button>
+              </el-button>
               <div v-show="showThemeMenu" class="theme-dropdown">
-                <button 
+                <el-button
                   v-for="theme in availableThemes" 
                   :key="theme"
                   @click="selectTheme(theme)"
                   class="theme-choice"
-                  :class="{ active: currentTheme === theme }"
+                  :type="currentTheme === theme ? 'primary' : 'info'"
+                  size="small"
                 >
                   {{ getThemeDisplayName(theme) }}
-                </button>
+                </el-button>
               </div>
             </div>
           </div>
@@ -271,23 +277,18 @@ a:hover {
 }
 
 .theme-toggle {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
   font-size: 0.85rem;
   font-weight: 500;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
   min-width: 120px;
   justify-content: space-between;
   text-align: left;
   position: relative;
   z-index: 1;
+}
+
+.theme-toggle:deep(.el-button) {
+  padding: 0.35rem 0.7rem;
+  gap: 0.4rem;
 }
 
 [data-theme="monochrome"] .theme-toggle {
@@ -334,14 +335,9 @@ a:hover {
 .theme-choice {
   display: block;
   width: 100%;
-  padding: 0.6rem 1rem;
-  background: transparent;
-  color: var(--text-light);
-  border: none;
-  cursor: pointer;
   font-size: 0.75rem;
   text-align: left;
-  transition: all 0.2s ease;
+  border-radius: 0;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -349,25 +345,9 @@ a:hover {
   border-bottom: none;
 }
 
-.theme-choice:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-[data-theme="monochrome"] .theme-choice:hover {
-  background-color: #d0d0d0;
-  color: #000000;
-}
-
-.theme-choice.active {
-  background-color: var(--primary-color);
-  color: white;
-  font-weight: 600;
-}
-
-[data-theme="monochrome"] .theme-choice.active {
-  background-color: #d0d0d0;
-  color: #000000;
+.theme-choice:deep(.el-button) {
+  padding: 0.6rem 1rem;
+  justify-content: flex-start;
 }
 
 /* Navigation */

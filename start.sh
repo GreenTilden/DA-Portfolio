@@ -23,7 +23,5 @@ fi
 
 echo "✅ Cleanup complete. Starting fresh development server..."
 
-# Build and start development server
-npm run build
-sleep 1
+# Start development server (no build needed for dev mode)
 npm run dev -- --host

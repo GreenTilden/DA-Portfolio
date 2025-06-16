@@ -18,22 +18,28 @@
       <span class="task-duration">{{ task.duration }}min</span>
     </div>
     <div class="task-actions">
-      <button 
+      <el-button
         v-if="showEditButton"
         class="action-btn edit-btn"
+        type="primary"
+        size="small"
+        circle
         @click.stop="$emit('edit-duration', task)"
         title="Edit duration"
       >
         <i class="fas fa-clock"></i>
-      </button>
-      <button 
+      </el-button>
+      <el-button
         v-if="isCustom"
         class="action-btn remove-btn"
+        type="danger"
+        size="small"
+        circle
         @click.stop="$emit('remove', task)"
         title="Remove custom task"
       >
         <i class="fas fa-times"></i>
-      </button>
+      </el-button>
     </div>
   </div>
 </template>
@@ -171,36 +177,14 @@ const handleDragEnd = () => {
 }
 
 .action-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  min-width: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
   font-size: 0.75rem;
-  transition: all 0.2s ease;
-  padding: 0;
 }
 
-.edit-btn {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.edit-btn:hover {
-  background-color: var(--primary-dark);
-  transform: scale(1.1);
-}
-
-.remove-btn {
-  background-color: var(--error-color);
-  color: white;
-}
-
-.remove-btn:hover {
-  background-color: #dc2626;
+.action-btn:hover {
   transform: scale(1.1);
 }
 

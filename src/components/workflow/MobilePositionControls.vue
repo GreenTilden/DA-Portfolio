@@ -1,45 +1,50 @@
 <template>
   <div class="mobile-position-controls" :class="{ 'expanded': isExpanded }">
     <!-- Toggle Button -->
-    <button 
+    <el-button
       class="controls-toggle"
+      type="info"
       @click="toggleExpanded"
       :class="{ 'active': isExpanded }"
     >
       <i class="fas fa-arrows-alt"></i>
       <span>Position</span>
-    </button>
+    </el-button>
 
     <!-- Expanded Controls -->
     <transition name="controls-slide">
       <div v-if="isExpanded" class="controls-panel">
         <!-- Quick Actions -->
         <div class="quick-actions">
-          <button 
+          <el-button
             class="quick-btn"
+            type="primary"
             @click="handleMoveToStart"
             :disabled="!canMoveToStart"
             title="Move to start"
           >
             <i class="fas fa-angle-double-left"></i>
             <span>Start</span>
-          </button>
+          </el-button>
           
-          <button 
+          <el-button
             class="quick-btn"
+            type="primary"
             @click="handleMoveToEnd"
             :disabled="!canMoveToEnd"
             title="Move to end"
           >
             <i class="fas fa-angle-double-right"></i>
             <span>End</span>
-          </button>
+          </el-button>
         </div>
 
         <!-- Step-by-step Controls -->
         <div class="step-controls">
-          <button 
+          <el-button
             class="step-btn prev"
+            type="info"
+            circle
             @click="handleMovePrevious"
             :disabled="!canMovePrevious"
             @touchstart="startRepeating('prev')"
@@ -47,7 +52,7 @@
             @touchcancel="stopRepeating"
           >
             <i class="fas fa-chevron-left"></i>
-          </button>
+          </el-button>
           
           <div class="position-display">
             <span class="current-position">{{ currentPosition }}</span>
@@ -55,8 +60,10 @@
             <span class="total-positions">{{ totalPositions }}</span>
           </div>
           
-          <button 
+          <el-button
             class="step-btn next"
+            type="info"
+            circle
             @click="handleMoveNext"
             :disabled="!canMoveNext"
             @touchstart="startRepeating('next')"
@@ -64,43 +71,43 @@
             @touchcancel="stopRepeating"
           >
             <i class="fas fa-chevron-right"></i>
-          </button>
+          </el-button>
         </div>
 
         <!-- Direct Position Input -->
         <div class="direct-input">
           <label for="position-input">Go to position:</label>
           <div class="input-group">
-            <input 
+            <el-input-number 
               id="position-input"
-              v-model.number="targetPosition"
-              type="number"
+              v-model="targetPosition"
               :min="1"
               :max="totalPositions"
               class="position-input"
+              size="small"
               @keyup.enter="handleGoToPosition"
             />
-            <button 
+            <el-button
               class="go-btn"
+              type="primary"
               @click="handleGoToPosition"
               :disabled="!isValidTargetPosition"
             >
               Go
-            </button>
+            </el-button>
           </div>
         </div>
 
         <!-- Visual Position Slider -->
         <div class="position-slider">
-          <input 
-            type="range"
+          <el-slider 
             :min="1"
             :max="totalPositions"
-            :value="currentPosition"
+            :model-value="currentPosition"
             @input="handleSliderMove"
             @change="handleSliderRelease"
             class="slider"
-            :style="sliderStyle"
+            :show-tooltip="false"
           />
           <div class="slider-track">
             <div 
@@ -176,15 +183,7 @@ const isValidTargetPosition = computed(() => {
          targetPosition.value !== currentPosition.value
 })
 
-const sliderStyle = computed(() => {
-  const percentage = totalPositions.value > 1 
-    ? ((currentPosition.value - 1) / (totalPositions.value - 1)) * 100 
-    : 0
-  
-  return {
-    '--progress': `${percentage}%`
-  }
-})
+// Removed sliderStyle - Element Plus slider handles styling internally
 
 // Watch for position changes to update target input
 watch(currentPosition, (newPos) => {
@@ -247,10 +246,7 @@ const handleGoToPosition = () => {
   }
 }
 
-const handleSliderMove = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const newPosition = parseInt(target.value)
-  
+const handleSliderMove = (newPosition: number) => {
   if (newPosition !== currentPosition.value) {
     emit('moveToPosition', newPosition - 1)
     triggerHaptic(5) // Light haptic for slider
@@ -320,18 +316,12 @@ const clearRepeating = () => {
 
 .controls-toggle {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: transparent;
-  border: none;
-  color: var(--text-light);
   font-size: 1rem;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+}
+
+.controls-toggle i {
+  margin-right: 0.375rem;
 }
 
 .controls-toggle:active {
@@ -366,18 +356,20 @@ const clearRepeating = () => {
 
 .quick-btn {
   flex: 1;
+  font-size: 0.875rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.75rem;
-  background: var(--background-alt);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+}
+
+.quick-btn i {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.quick-btn span {
+  display: block;
 }
 
 .quick-btn:active:not(:disabled) {
@@ -405,18 +397,10 @@ const clearRepeating = () => {
 }
 
 .step-btn {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background-alt);
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  color: var(--text-muted);
+  min-width: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
   font-size: 1.125rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .step-btn:active:not(:disabled) {
@@ -472,33 +456,29 @@ const clearRepeating = () => {
   gap: 0.5rem;
 }
 
-.position-input {
+/* Element Plus input styling */
+:deep(.position-input) {
   flex: 1;
-  padding: 0.75rem;
+}
+
+:deep(.position-input .el-input__inner) {
   background: var(--background-alt);
-  border: 1px solid var(--border-light);
+  border-color: var(--border-light);
   border-radius: 8px;
   color: var(--text-light);
   font-size: 1rem;
   text-align: center;
+  padding: 0.75rem;
 }
 
-.position-input:focus {
-  outline: none;
+:deep(.position-input .el-input__inner:focus) {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
 }
 
 .go-btn {
-  padding: 0.75rem 1rem;
-  background: var(--primary-color);
-  border: none;
-  border-radius: 8px;
-  color: white;
   font-size: 0.875rem;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .go-btn:active:not(:disabled) {
@@ -516,41 +496,29 @@ const clearRepeating = () => {
   margin-bottom: 1rem;
 }
 
-.slider {
-  width: 100%;
-  height: 8px;
-  -webkit-appearance: none;
-  appearance: none;
+/* Element Plus slider styling */
+:deep(.slider .el-slider__runway) {
   background: var(--border-color);
+  height: 8px;
   border-radius: 4px;
-  outline: none;
-  cursor: pointer;
 }
 
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
+:deep(.slider .el-slider__bar) {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+:deep(.slider .el-slider__button) {
   width: 24px;
   height: 24px;
   background: var(--primary-color);
-  border-radius: 50%;
-  cursor: pointer;
+  border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
 
-.slider::-webkit-slider-thumb:active {
+:deep(.slider .el-slider__button:hover) {
   transform: scale(1.2);
-}
-
-.slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .slider-track {

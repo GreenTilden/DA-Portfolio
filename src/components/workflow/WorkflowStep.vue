@@ -22,20 +22,26 @@
       <span class="step-duration">{{ step.duration }}min</span>
     </div>
     <div class="step-actions">
-      <button 
+      <el-button
         class="action-btn edit-btn"
+        type="primary"
+        size="small"
+        circle
         @click.stop="$emit('edit-duration', step)"
         title="Edit duration"
       >
         <i class="fas fa-clock"></i>
-      </button>
-      <button 
+      </el-button>
+      <el-button
         class="action-btn remove-btn"
+        type="danger"
+        size="small"
+        circle
         @click.stop="$emit('remove')"
         title="Remove step"
       >
         <i class="fas fa-times"></i>
-      </button>
+      </el-button>
     </div>
   </div>
 </template>

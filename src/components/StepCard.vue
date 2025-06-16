@@ -33,20 +33,26 @@
       </div>
       
       <div v-if="isEditable" class="step-actions">
-        <button 
+        <el-button
           class="action-btn"
+          type="info"
+          size="small"
+          circle
           @click.stop="openFullEditor"
           title="Edit step"
         >
           <i class="fas fa-edit"></i>
-        </button>
-        <button 
+        </el-button>
+        <el-button
           class="action-btn delete"
+          type="danger"
+          size="small"
+          circle
           @click.stop="$emit('delete', step.id)"
           title="Delete step"
         >
           <i class="fas fa-trash"></i>
-        </button>
+        </el-button>
       </div>
     </div>
 
@@ -85,46 +91,59 @@
       <div v-if="isEditable" class="mobile-controls">
         <!-- Position Controls -->
         <div class="position-controls">
-          <button 
+          <el-button
             class="position-btn"
+            type="info"
+            size="small"
             @click.stop="$emit('move-up')"
             :disabled="index === 0"
             title="Move up"
           >
             <i class="fas fa-chevron-up"></i>
-          </button>
-          <button 
+          </el-button>
+          <el-button
             class="position-btn"
+            type="info"
+            size="small"
             @click.stop="$emit('move-down')"
             title="Move down"
           >
             <i class="fas fa-chevron-down"></i>
-          </button>
+          </el-button>
         </div>
         
         <!-- Action Controls -->
         <div class="action-controls">
-          <button 
+          <el-button
             class="action-btn duration"
+            type="primary"
+            size="small"
+            circle
             @click.stop="showDurationEditor = true"
             title="Edit duration"
           >
             <i class="fas fa-clock"></i>
-          </button>
-          <button 
+          </el-button>
+          <el-button
             class="action-btn edit"
+            type="warning"
+            size="small"
+            circle
             @click.stop="openFullEditor"
             title="Edit step"
           >
             <i class="fas fa-edit"></i>
-          </button>
-          <button 
+          </el-button>
+          <el-button
             class="action-btn delete"
+            type="danger"
+            size="small"
+            circle
             @click.stop="$emit('delete', step.id)"
             title="Delete step"
           >
             <i class="fas fa-trash"></i>
-          </button>
+          </el-button>
         </div>
       </div>
 
@@ -132,24 +151,36 @@
       <div v-if="showDurationEditor" class="duration-editor">
         <div class="duration-input-group">
           <label>Duration:</label>
-          <input 
-            v-model.number="editDuration"
-            type="number"
-            min="1"
-            max="600"
+          <el-input-number 
+            v-model="editDuration"
+            :min="1"
+            :max="600"
             class="duration-input"
+            size="small"
             @keyup.enter="saveDuration"
             @keyup.escape="cancelDuration"
           />
           <span>min</span>
         </div>
         <div class="duration-actions">
-          <button class="duration-btn cancel" @click="cancelDuration">
+          <el-button
+            class="duration-btn cancel"
+            type="danger"
+            size="small"
+            circle
+            @click="cancelDuration"
+          >
             <i class="fas fa-times"></i>
-          </button>
-          <button class="duration-btn save" @click="saveDuration">
+          </el-button>
+          <el-button
+            class="duration-btn save"
+            type="success"
+            size="small"
+            circle
+            @click="saveDuration"
+          >
             <i class="fas fa-check"></i>
-          </button>
+          </el-button>
         </div>
       </div>
     </div>
@@ -161,9 +192,8 @@
       <div class="edit-content">
         <!-- Quick Task Edit -->
         <div class="edit-field">
-          <input 
+          <el-input 
             v-model="editTask"
-            type="text"
             class="edit-input task-input"
             placeholder="Task name"
             @keyup.enter="saveFullEdit"
@@ -174,9 +204,8 @@
         
         <!-- Transfer Name (only for Liquid Handler Transfer) -->
         <div v-if="isLiquidHandlerTransfer" class="edit-field">
-          <input 
+          <el-input 
             v-model="editTransferName"
-            type="text"
             class="edit-input transfer-input"
             placeholder="Connection name"
             @keyup.enter="saveFullEdit"
@@ -186,12 +215,12 @@
         
         <!-- Duration Edit -->
         <div class="edit-field duration-field">
-          <input 
-            v-model.number="editDuration"
-            type="number"
-            min="1"
-            max="600"
+          <el-input-number 
+            v-model="editDuration"
+            :min="1"
+            :max="600"
             class="edit-input duration-input"
+            size="small"
             @keyup.enter="saveFullEdit"
             @keyup.escape="cancelFullEdit"
           />
@@ -200,12 +229,26 @@
         
         <!-- Edit Actions -->
         <div class="edit-actions">
-          <button class="edit-btn cancel" @click="cancelFullEdit" title="Cancel">
+          <el-button
+            class="edit-btn cancel"
+            type="danger"
+            size="small"
+            circle
+            @click="cancelFullEdit"
+            title="Cancel"
+          >
             <i class="fas fa-times"></i>
-          </button>
-          <button class="edit-btn save" @click="saveFullEdit" title="Save">
+          </el-button>
+          <el-button
+            class="edit-btn save"
+            type="success"
+            size="small"
+            circle
+            @click="saveFullEdit"
+            title="Save"
+          >
             <i class="fas fa-check"></i>
-          </button>
+          </el-button>
         </div>
       </div>
     </div>
@@ -436,29 +479,11 @@ const cancelFullEdit = () => {
 }
 
 .action-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
   font-size: 0.75rem;
-}
-
-.action-btn:hover {
-  background: var(--hover-bg);
-  color: var(--text-light);
-}
-
-.action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: #ef4444;
 }
 
 /* Mobile Layout */
@@ -514,30 +539,15 @@ const cancelFullEdit = () => {
 }
 
 .position-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background-alt);
-  border: 1px solid var(--border-light);
-  border-radius: 6px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
   font-size: 0.875rem;
 }
 
 .position-btn:active:not(:disabled) {
   transform: scale(0.9);
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.position-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 .action-btn.duration {
@@ -574,21 +584,18 @@ const cancelFullEdit = () => {
   font-weight: 500;
 }
 
-.duration-input {
-  flex: 1;
-  padding: 0.375rem 0.5rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  color: var(--text-light);
-  font-size: 0.875rem;
-  text-align: center;
+/* Element Plus input theming */
+:deep(.duration-input .el-input-number__decrease),
+:deep(.duration-input .el-input-number__increase) {
+  background: var(--background-alt);
+  border-color: var(--border-light);
 }
 
-.duration-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+:deep(.duration-input .el-input__inner) {
+  background: var(--card-bg);
+  border-color: var(--border-light);
+  color: var(--text-light);
+  text-align: center;
 }
 
 .duration-actions {
@@ -598,26 +605,11 @@ const cancelFullEdit = () => {
 }
 
 .duration-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
   font-size: 0.875rem;
-}
-
-.duration-btn.cancel {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.duration-btn.save {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
 }
 
 .duration-btn:active {
@@ -669,19 +661,15 @@ const cancelFullEdit = () => {
   justify-content: flex-start;
 }
 
-.edit-input {
-  flex: 1;
-  padding: 0.375rem 0.5rem;
+/* Element Plus input styling for edit mode */
+:deep(.edit-input .el-input__inner) {
   background: var(--background-alt);
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
+  border-color: var(--border-light);
   color: var(--text-light);
   font-size: 0.875rem;
-  transition: all 0.2s ease;
 }
 
-.edit-input:focus {
-  outline: none;
+:deep(.edit-input .el-input__inner:focus) {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
 }
@@ -694,8 +682,11 @@ const cancelFullEdit = () => {
   font-size: 0.8125rem;
 }
 
-.duration-input {
+:deep(.duration-input) {
   width: 60px;
+}
+
+:deep(.duration-input .el-input__inner) {
   text-align: center;
 }
 
@@ -714,38 +705,11 @@ const cancelFullEdit = () => {
 }
 
 .edit-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
   font-size: 0.75rem;
-}
-
-.edit-btn.cancel {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.edit-btn.cancel:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
-}
-
-.edit-btn.save {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-  border-color: rgba(34, 197, 94, 0.3);
-}
-
-.edit-btn.save:hover {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: #22c55e;
 }
 
 /* Hover states for desktop */
@@ -796,12 +760,12 @@ const cancelFullEdit = () => {
     justify-content: flex-start;
   }
   
-  .edit-input {
+  :deep(.edit-input .el-input__inner) {
     padding: 0.5rem;
     font-size: 1rem;
   }
   
-  .duration-input {
+  :deep(.duration-input) {
     width: 80px;
   }
 }

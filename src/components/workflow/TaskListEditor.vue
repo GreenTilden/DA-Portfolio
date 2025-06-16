@@ -3,42 +3,46 @@
     <!-- Editor Controls -->
     <div class="editor-controls">
       <div class="control-group">
-        <button 
+        <el-button
           class="control-btn"
+          type="primary"
           @click="handleAddTask"
           :disabled="!canAddTask"
         >
           <i class="fas fa-plus"></i>
           <span>Add Task</span>
-        </button>
+        </el-button>
         
-        <button 
+        <el-button
           class="control-btn"
+          type="danger"
           @click="handleClearAll"
           :disabled="tasks.length === 0"
         >
           <i class="fas fa-trash"></i>
           <span>Clear All</span>
-        </button>
+        </el-button>
       </div>
       
       <div class="view-controls">
-        <button 
+        <el-button
           class="view-btn"
-          :class="{ active: viewMode === 'grid' }"
+          :type="viewMode === 'grid' ? 'primary' : 'info'"
+          size="small"
           @click="viewMode = 'grid'"
           title="Grid view"
         >
           <i class="fas fa-th"></i>
-        </button>
-        <button 
+        </el-button>
+        <el-button
           class="view-btn"
-          :class="{ active: viewMode === 'list' }"
+          :type="viewMode === 'list' ? 'primary' : 'info'"
+          size="small"
           @click="viewMode = 'list'"
           title="List view"
         >
           <i class="fas fa-list"></i>
-        </button>
+        </el-button>
       </div>
     </div>
 
@@ -75,20 +79,26 @@
                   <i :class="getTaskIcon(task)"></i>
                 </div>
                 <div class="task-actions">
-                  <button 
+                  <el-button
                     class="action-btn"
+                    type="info"
+                    size="small"
+                    circle
                     @click="handleEditTask(task)"
                     title="Edit task"
                   >
                     <i class="fas fa-edit"></i>
-                  </button>
-                  <button 
+                  </el-button>
+                  <el-button
                     class="action-btn delete"
+                    type="danger"
+                    size="small"
+                    circle
                     @click="handleDeleteTask(task.id)"
                     title="Delete task"
                   >
                     <i class="fas fa-times"></i>
-                  </button>
+                  </el-button>
                 </div>
               </div>
               
@@ -155,38 +165,48 @@
               
               <!-- Position controls -->
               <div class="position-controls">
-                <button 
+                <el-button
                   class="position-btn"
+                  type="info"
+                  size="small"
                   @click.stop="handleMoveUp(index)"
                   :disabled="index === 0"
                   title="Move up"
                 >
                   <i class="fas fa-chevron-up"></i>
-                </button>
-                <button 
+                </el-button>
+                <el-button
                   class="position-btn"
+                  type="info"
+                  size="small"
                   @click.stop="handleMoveDown(index)"
                   :disabled="index === tasks.length - 1"
                   title="Move down"
                 >
                   <i class="fas fa-chevron-down"></i>
-                </button>
+                </el-button>
               </div>
               
               <!-- Actions -->
               <div class="task-actions-mobile">
-                <button 
+                <el-button
                   class="action-btn"
+                  type="info"
+                  size="small"
+                  circle
                   @click.stop="handleEditTask(task)"
                 >
                   <i class="fas fa-edit"></i>
-                </button>
-                <button 
+                </el-button>
+                <el-button
                   class="action-btn delete"
+                  type="danger"
+                  size="small"
+                  circle
                   @click.stop="handleDeleteTask(task.id)"
                 >
                   <i class="fas fa-times"></i>
-                </button>
+                </el-button>
               </div>
             </div>
           </div>
@@ -196,30 +216,38 @@
         <div v-if="tasks.length === 0" class="empty-tasks-mobile">
           <i class="fas fa-clipboard-list"></i>
           <p>No tasks yet</p>
-          <button class="add-first-task" @click="handleAddTask">
+          <el-button
+            class="add-first-task"
+            type="primary"
+            @click="handleAddTask"
+          >
             <i class="fas fa-plus"></i>
             Add First Task
-          </button>
+          </el-button>
         </div>
       </div>
     </div>
 
     <!-- Scroll Controls (Desktop) -->
     <div v-if="!isMobile && showScrollControls" class="scroll-controls">
-      <button 
+      <el-button
         class="scroll-btn left"
+        type="info"
+        circle
         @click="scrollLeft"
         :disabled="!canScrollLeft"
       >
         <i class="fas fa-chevron-left"></i>
-      </button>
-      <button 
+      </el-button>
+      <el-button
         class="scroll-btn right"
+        type="info"
+        circle
         @click="scrollRight"
         :disabled="!canScrollRight"
       >
         <i class="fas fa-chevron-right"></i>
-      </button>
+      </el-button>
     </div>
   </div>
 </template>
@@ -544,27 +572,15 @@ const scrollRight = () => {
 }
 
 .control-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-light);
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.control-btn:hover:not(:disabled) {
-  background: var(--hover-bg);
-  border-color: var(--primary-color);
+.control-btn i {
+  margin-right: 0.25rem;
 }
 
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.control-btn span {
+  margin-left: 0.125rem;
 }
 
 .view-controls {
@@ -576,27 +592,10 @@ const scrollRight = () => {
 }
 
 .view-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.view-btn:hover {
-  background: var(--card-bg);
-  color: var(--text-light);
-}
-
-.view-btn.active {
-  background: var(--primary-color);
-  color: white;
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
 }
 
 .task-list-container {
@@ -682,29 +681,11 @@ const scrollRight = () => {
 }
 
 .action-btn {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
   font-size: 0.625rem;
-}
-
-.action-btn:hover {
-  background: var(--hover-bg);
-  color: var(--text-light);
-}
-
-.action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: #ef4444;
 }
 
 .task-content {
@@ -867,29 +848,11 @@ const scrollRight = () => {
 }
 
 .position-btn {
-  width: 28px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background-alt);
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  min-width: 28px !important;
+  width: 28px !important;
+  height: 24px !important;
+  padding: 0 !important;
   font-size: 0.75rem;
-}
-
-.position-btn:hover:not(:disabled) {
-  background: var(--hover-bg);
-  color: var(--text-light);
-  border-color: var(--primary-color);
-}
-
-.position-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 .task-actions-mobile {
@@ -915,22 +878,15 @@ const scrollRight = () => {
 }
 
 .add-first-task {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 6px;
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+}
+
+.add-first-task i {
+  margin-right: 0.375rem;
 }
 
 .add-first-task:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
 }
 
 /* Scroll controls */
@@ -947,30 +903,8 @@ const scrollRight = () => {
 }
 
 .scroll-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  color: var(--text-light);
-  cursor: pointer;
-  transition: all 0.2s ease;
   pointer-events: auto;
   box-shadow: var(--shadow-md);
-}
-
-.scroll-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.scroll-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 /* View mode variations */

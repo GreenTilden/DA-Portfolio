@@ -110,24 +110,24 @@
 
     <!-- Tab Navigation -->
     <nav class="tab-navigation">
-      <button 
+      <el-button
         class="tab-button"
-        :class="{ active: activeTab === 'builder' }"
+        :type="activeTab === 'builder' ? 'primary' : 'info'"
         @click="activeTab = 'builder'"
       >
         <i class="fas fa-tools"></i>
         <span>Workflow Builder</span>
         <div class="tab-indicator"></div>
-      </button>
-      <button 
+      </el-button>
+      <el-button
         class="tab-button"
-        :class="{ active: activeTab === 'results' }"
+        :type="activeTab === 'results' ? 'primary' : 'info'"
         @click="activeTab = 'results'"
       >
         <i class="fas fa-chart-gantt"></i>
         <span>Schedule Results</span>
         <div class="tab-indicator"></div>
-      </button>
+      </el-button>
     </nav>
 
     <!-- Tab Content -->

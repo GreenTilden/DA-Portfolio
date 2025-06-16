@@ -30,14 +30,16 @@
             @keyup.enter="handleSave"
           />
           <div class="duration-hints">
-            <button 
+            <el-button
               v-for="hint in durationHints" 
               :key="hint"
               class="hint-btn"
+              type="info"
+              size="small"
               @click="editedDuration = hint"
             >
               {{ hint }}min
-            </button>
+            </el-button>
           </div>
         </div>
       </div>
@@ -237,20 +239,7 @@ const handleClose = () => {
 }
 
 .hint-btn {
-  padding: 0.4rem 0.8rem;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 0.25rem;
-  color: var(--text-light);
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.hint-btn:hover {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
 }
 
 .duration-comparison {

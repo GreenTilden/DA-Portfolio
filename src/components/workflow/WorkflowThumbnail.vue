@@ -22,10 +22,15 @@
           {{ totalDuration }}m
         </span>
       </div>
-      <button class="edit-workflow-btn" @click.stop="handleWorkflowClick">
+      <el-button
+        class="edit-workflow-btn"
+        type="primary"
+        size="small"
+        @click.stop="handleWorkflowClick"
+      >
         <i class="fas fa-edit"></i>
         <span>Edit Workflow</span>
-      </button>
+      </el-button>
     </div>
 
     <!-- Lanes Preview -->
@@ -434,21 +439,14 @@ onMounted(() => {
 
 .edit-workflow-btn {
   margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 6px;
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+}
+
+.edit-workflow-btn i {
+  margin-right: 0.25rem;
 }
 
 .edit-workflow-btn:hover {
-  background: var(--primary-dark);
   transform: translateY(-1px);
 }
 

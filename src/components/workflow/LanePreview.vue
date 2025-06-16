@@ -127,10 +127,12 @@ const props = withDefaults(defineProps<Props>(), {
   maxSteps: 8
 })
 
-// Used in template with $emit('select', lane.id)
+// Used in template with $emit('select', lane.id) - TypeScript doesn't recognize template usage
 const emit = defineEmits<{
   select: [laneId: string]
 }>()
+// Mark as intentionally used in template to avoid TypeScript warning
+void emit
 
 // Computed properties
 const duration = computed(() => {
